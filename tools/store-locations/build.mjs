@@ -31,7 +31,13 @@ const OUT = join(ROOT, 'data', 'locations.json');
 const BRANDS_FILE = join(HERE, 'brands.json');
 
 /** Public Overpass servers, tried in order. Both are free and need no key. */
-const ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter'];
+const ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+];
+/** If more than this share of chains can't be downloaded, give up and publish nothing. */
+const MAX_FAILED_SHARE = 0.25;
 const USER_AGENT = 'ArmedForcesPerks-store-locations/1.0 (+https://armedforcesperks.com; monthly job)';
 
 /** Two places of the same chain closer than this are the same store mapped twice. */
@@ -87,18 +93,22 @@ export function loadBrands(raw) {
   });
 }
 
-export function buildQuery(brands) {
-  const lines = [];
-  for (const b of brands) {
-    if (b.wikidata) lines.push(`  nwr["brand:wikidata"="${b.wikidata}"](area.us);`);
-    else {
-      lines.push(`  nwr["brand"="${b.brand}"](area.us);`);
-      lines.push(`  nwr["name"="${b.brand}"](area.us);`);
-    }
-  }
+/** U.S. states and DC, plus Puerto Rico, Guam, the Virgin Islands, American Samoa, Northern Marianas. */
+const AREAS = ['US', 'PR', 'GU', 'VI', 'AS', 'MP'];
+
+/**
+ * One small query per chain. (A single query for every chain at once is too heavy for the
+ * public servers: it timed out with 504 errors.)
+ */
+export function buildQuery(brand) {
+  const lines = brand.wikidata
+    ? [`  nwr["brand:wikidata"="${brand.wikidata}"](area.us);`]
+    : [`  nwr["brand"="${brand.brand}"](area.us);`, `  nwr["name"="${brand.brand}"](area.us);`];
   return [
-    '[out:json][timeout:900][maxsize:2000000000];',
-    'area["ISO3166-1"~"^(US|PR|GU|VI|AS|MP)$"]["boundary"="administrative"]->.us;',
+    '[out:json][timeout:180];',
+    '(',
+    ...AREAS.map((c) => `  area["ISO3166-1"="${c}"]["boundary"="administrative"];`),
+    ')->.us;',
     '(',
     ...lines,
     ');',
@@ -221,8 +231,8 @@ export function toStores(elements, brands) {
  * If a brand shrank by more than half (usually someone's OSM mistake, or Overpass returning
  * partial data), keep last month's stores for that brand instead. Returns the merged rows.
  */
-export function guardAgainstDrops(result, brands, previous) {
-  const warnings = [];
+export function guardAgainstDrops(result, brands, previous, failed = new Set()) {
+  const warnings = [...[...failed].map((k) => `${brands.find((b) => b.key === k)?.name ?? k}: download failed, kept last month's stores.`)];
   if (!previous || !Array.isArray(previous.brands) || !Array.isArray(previous.stores)) return { ...result, warnings };
   const prevIndex = new Map(previous.brands.map((b, i) => [i, b.key]));
   const prevByKey = new Map();
@@ -234,14 +244,16 @@ export function guardAgainstDrops(result, brands, previous) {
   }
   const prevTotal = previous.stores.length;
   const newTotal = result.stores.length;
-  if (prevTotal >= 500 && newTotal < prevTotal * TOTAL_DROP_LIMIT) {
+  if (!failed.size && prevTotal >= 500 && newTotal < prevTotal * TOTAL_DROP_LIMIT) {
     throw new Error(`Store count fell from ${prevTotal} to ${newTotal}. Not publishing; check Overpass and OSM.`);
   }
   const keep = new Set();
   for (const b of brands) {
     const before = prevByKey.get(b.key)?.length ?? 0;
     const now = result.counts[b.key] ?? 0;
-    if (before >= 20 && now < before * BRAND_DROP_LIMIT) {
+    if (failed.has(b.key)) {
+      keep.add(b.key);
+    } else if (before >= 20 && now < before * BRAND_DROP_LIMIT) {
       keep.add(b.key);
       warnings.push(`${b.name}: ${before} → ${now} stores. Kept last month's ${before} instead; check OSM.`);
     } else if (before > 0 && now === 0) {
@@ -269,16 +281,18 @@ export function guardAgainstDrops(result, brands, previous) {
 // Download
 // ---------------------------------------------------------------------------
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 async function overpass(query) {
   let lastError;
   for (const url of ENDPOINTS) {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': USER_AGENT },
           body: 'data=' + encodeURIComponent(query),
-          signal: AbortSignal.timeout(20 * 60 * 1000),
+          signal: AbortSignal.timeout(4 * 60 * 1000),
         });
         if (!res.ok) throw new Error(`${url} answered ${res.status}`);
         const json = await res.json();
@@ -288,8 +302,8 @@ async function overpass(query) {
       } catch (e) {
         lastError = e;
         console.warn(`Overpass attempt ${attempt} at ${url} failed: ${e.message}`);
-        // Be polite: wait before trying again (1, 2, then 4 minutes).
-        if (attempt < 3) await new Promise((r) => setTimeout(r, 60_000 * 2 ** (attempt - 1)));
+        // Be polite: wait a bit before trying again.
+        await sleep(30_000 * attempt);
       }
     }
   }
@@ -304,18 +318,45 @@ async function main() {
   const brands = loadBrands(JSON.parse(readFileSync(BRANDS_FILE, 'utf8')));
   const input = argValue('--input');
   let raw;
+  const failed = new Set();
   if (input) {
     raw = JSON.parse(readFileSync(input, 'utf8'));
   } else {
-    console.log(`Asking Overpass for ${brands.length} chains…`);
-    raw = await overpass(buildQuery(brands));
+    const seen = new Set();
+    raw = { elements: [], osm3s: null };
+    for (const [i, b] of brands.entries()) {
+      try {
+        const res = await overpass(buildQuery(b));
+        let n = 0;
+        for (const el of res.elements) {
+          const id = `${el.type}/${el.id}`;
+          if (seen.has(id)) continue;
+          seen.add(id);
+          raw.elements.push(el);
+          n++;
+        }
+        raw.osm3s ??= res.osm3s;
+        console.log(`${i + 1}/${brands.length} ${b.name}: ${n} places`);
+      } catch (e) {
+        failed.add(b.key);
+        console.warn(`${i + 1}/${brands.length} ${b.name}: FAILED (${e.message})`);
+        // Three chains in a row failing means the servers are down: stop instead of waiting for hours.
+        if (brands.slice(Math.max(0, i - 2), i + 1).every((x) => failed.has(x.key)) && i >= 2) {
+          throw new Error('Overpass servers are not answering. Not publishing; the next run will try again.');
+        }
+      }
+      await sleep(3000); // one request at a time, with a pause, per Overpass's usage policy
+    }
+    if (failed.size > brands.length * MAX_FAILED_SHARE) {
+      throw new Error(`${failed.size} of ${brands.length} chains failed to download. Not publishing; try again later.`);
+    }
     const saveRaw = argValue('--save-raw');
     if (saveRaw) writeFileSync(saveRaw, JSON.stringify(raw));
   }
   const osmDate = typeof raw.osm3s?.timestamp_osm_base === 'string' ? raw.osm3s.timestamp_osm_base.slice(0, 10) : null;
 
   const previous = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : null;
-  const result = guardAgainstDrops(toStores(raw.elements, brands), brands, previous);
+  const result = guardAgainstDrops(toStores(raw.elements, brands), brands, previous, failed);
 
   const file = {
     schema: 1,
