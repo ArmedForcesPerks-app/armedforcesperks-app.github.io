@@ -1,0 +1,70 @@
+# Refreshes data/locations.json (stores for the app's "Near me" map) from OpenStreetMap.
+# Free: runs on GitHub Actions (free for public repositories) and the public Overpass API.
+#
+# - Monthly on the 3rd at 09:17 UTC, or any time from Actions > Store locations > Run workflow.
+# - Pull requests that change tools/store-locations/ run the tests and a trial download
+#   without publishing anything.
+# - If a chain suddenly loses more than half its stores, last month's stores are kept for it
+#   and the run summary says so. If the whole list collapses, nothing is published and the
+#   run fails (GitHub emails the repository owner).
+name: Store locations
+
+on:
+  schedule:
+    - cron: '17 9 3 * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tools/store-locations/**'
+      - '.github/workflows/store-locations.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-locations
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tools/store-locations/test.mjs
+      - name: Trial download (nothing is published)
+        if: github.event_name == 'pull_request'
+        run: node tools/store-locations/build.mjs --dry-run
+
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build store list
+        run: node tools/store-locations/build.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data/locations.json && git ls-files --error-unmatch data/locations.json >/dev/null 2>&1; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/locations.json
+          git commit -m "Update store locations from OpenStreetMap"
+          git push
+          # Ask GitHub Pages to rebuild the site (a push from this job may not start it on its own).
+          curl -sS -X POST -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
