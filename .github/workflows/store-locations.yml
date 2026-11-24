@@ -45,7 +45,7 @@ jobs:
         timeout-minutes: 80
         env:
           ONLY: ${{ !contains(github.event.pull_request.labels.*.name, 'full store trial') && '--only homedepot,regal,amc' || '' }}
-        run: node tools/store-locations/build.mjs --dry-run $ONLY --report report.md
+        run: node tools/store-locations/build.mjs --dry-run $ONLY --budget-min 70 --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:
@@ -67,7 +67,7 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 150
     permissions:
       contents: write
       pages: write
@@ -82,7 +82,7 @@ jobs:
         with:
           node-version: 22
       - name: Build store list
-        run: node tools/store-locations/build.mjs --report report.md
+        run: node tools/store-locations/build.mjs --budget-min 120 --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:

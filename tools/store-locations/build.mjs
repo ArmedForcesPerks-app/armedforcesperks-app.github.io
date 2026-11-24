@@ -423,12 +423,18 @@ const progress = [];
 function log(line) {
   console.log(line);
   progress.push(line);
+  // Keep the report file current, so a run that's stopped part way still shows how far it got.
+  const reportFile = argValue('--report');
+  if (reportFile) writeFileSync(reportFile, ['## Store locations: still downloading (or stopped)', '', '```', ...progress, '```', ''].join('\n'));
 }
 
 /** Tries each server once. Failed chains get one more round at the end (see main). */
+/** The server that answered last is asked first next time, so one slow server doesn't cost every chain minutes. */
+let preferred = 0;
 async function overpass(query) {
   const errors = [];
-  for (const url of ENDPOINTS) {
+  const order = [...ENDPOINTS.slice(preferred), ...ENDPOINTS.slice(0, preferred)];
+  for (const url of order) {
     const host = new URL(url).host;
     try {
       const res = await fetch(url, {
@@ -441,6 +447,7 @@ async function overpass(query) {
       const json = await res.json();
       if (json.remark && /runtime error|timed out|out of memory/i.test(json.remark)) throw new Error(json.remark.slice(0, 120));
       if (!Array.isArray(json.elements)) throw new Error('no elements in answer');
+      preferred = ENDPOINTS.indexOf(url);
       return { json, host };
     } catch (e) {
       errors.push(`${host}: ${e.message}`);
@@ -472,6 +479,16 @@ async function main() {
     const seen = new Set();
     raw = { elements: [], osm3s: null };
     let streak = 0;
+    // Stop starting new chains after this many minutes (the job has a hard limit). Chains not
+    // reached count as failed, so they keep last month's stores.
+    const budgetMin = Number(argValue('--budget-min') ?? 0);
+    const deadline = budgetMin > 0 ? Date.now() + budgetMin * 60_000 : Infinity;
+    const outOfTime = (b, label) => {
+      if (Date.now() < deadline) return false;
+      failed.add(b.key);
+      log(`${label} ${b.name}: SKIPPED (out of time)`);
+      return true;
+    };
     const fetchChain = async (b, label) => {
       const started = Date.now();
       try {
@@ -497,12 +514,12 @@ async function main() {
       }
       await sleep(3000); // one request at a time, with a pause, per Overpass's usage policy
     };
-    for (const [i, b] of brands.entries()) await fetchChain(b, `${i + 1}/${brands.length}`);
+    for (const [i, b] of brands.entries()) if (!outOfTime(b, `${i + 1}/${brands.length}`)) await fetchChain(b, `${i + 1}/${brands.length}`);
     // One more try for chains that failed (servers are often only briefly busy).
-    if (failed.size) {
+    if (failed.size && Date.now() + 60_000 < deadline) {
       streak = 0;
       await sleep(60_000);
-      for (const b of brands.filter((x) => failed.has(x.key))) await fetchChain(b, 'retry');
+      for (const b of brands.filter((x) => failed.has(x.key))) if (!outOfTime(b, 'retry')) await fetchChain(b, 'retry');
     }
     if (failed.size > brands.length * MAX_FAILED_SHARE) {
       throw new Error(`${failed.size} of ${brands.length} chains failed to download. Not publishing; try again later.`);
