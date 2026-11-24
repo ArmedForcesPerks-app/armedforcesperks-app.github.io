@@ -10,7 +10,7 @@
   ],
   "brands": [
     { "key": "adidas", "name": "Adidas", "deals": ["AFP-0001"], "match": { "wikidata": "Q3895" } },
-    { "key": "amc", "name": "AMC Theatres", "deals": [], "dealNames": ["AMC", "AMC Theaters", "AMC Movie Theatres"], "match": { "wikidata": "Q294721" }, "participating": true },
+    { "key": "amc", "name": "AMC Theatres", "deals": [], "dealNames": ["AMC", "AMC Theaters", "AMC Movie Theatres"], "match": { "wikidata": "Q294721" }, "participating": true, "onlyListed": "participating/amc.json" },
     { "key": "ariat", "name": "Ariat", "deals": ["AFP-0005"], "match": { "brand": "Ariat" } },
     { "key": "asics", "name": "ASICS", "deals": [], "dealNames": ["Asics"], "match": { "wikidata": "Q327247" } },
     { "key": "autozone", "name": "AutoZone", "deals": ["AFP-0009"], "match": { "wikidata": "Q4826087" } },

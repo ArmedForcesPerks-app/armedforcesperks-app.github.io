@@ -144,3 +144,20 @@ test('Regal places are dropped from the map unless listed', () => {
   assert.equal(r.counts.regal, 1);
   assert.equal(r.skipped.notListed, 1);
 });
+
+test('AMC: only theatres on the participating list', async () => {
+  const { onList, theatreKey } = await import('./build.mjs');
+  const amc = brands.find((b) => b.key === 'amc');
+  assert.ok(amc.listed.length > 400);
+  assert.equal(theatreKey('AMC DINE-IN Vestavia Hills 10'), 'vestaviahills');
+  assert.equal(theatreKey('AMC CLASSIC Dothan Pavilion 12'), 'dothanpavilion');
+  assert.equal(theatreKey('AMC Glendora 12 @ 210/57'), 'glendora');
+  assert.ok(onList({ name: 'AMC Westgate 20', 'addr:state': 'AZ' }, amc.listed));
+  assert.ok(onList({ name: 'AMC Classic Dothan Pavilion 12' }, amc.listed));
+  assert.ok(onList({ name: 'AMC Orange 30', 'addr:state': 'CA' }, amc.listed));
+  // "Orange" is short: without a state, "AMC Orange Park" is only matched as itself (it is listed in FL).
+  assert.ok(!onList({ name: 'AMC Orange Village', 'addr:state': 'OH' }, amc.listed));
+  assert.ok(!onList({ name: 'AMC Empire 25', 'addr:state': 'NJ' }, amc.listed), 'wrong state');
+  assert.ok(!onList({ name: 'AMC Lincoln Square 13', 'addr:state': 'CA' }, amc.listed));
+  assert.ok(!onList({ name: 'AMC Some Unlisted 12', 'addr:state': 'TX' }, amc.listed));
+});

@@ -185,7 +185,10 @@ function baseTheatreKey(name, dropNumbers) {
   const s = String(name ?? '')
     .toLowerCase()
     .replace(/&/g, ' and ')
-    .replace(/\b(regal|cinemas?|edwards|ua|united artists|cinebarre|rpx|imax|4dx|screenx|stadium|luxury|theatres?|theaters?|movies?)\b/g, ' ')
+    .replace(/\ban amc theatre\b/g, ' ')
+    .replace(/\bdine-?\s?in\b/g, ' ')
+    .replace(/@.*$/, ' ')
+    .replace(/\b(amc|classic|regal|cinemas?|edwards|ua|united artists|cinebarre|rpx|imax|4dx|screenx|stadium|luxury|theatres?|theaters?|movies?)\b/g, ' ')
     .replace(/\band\b/g, ' ');
   return (dropNumbers ? s.replace(/\b\d+\b/g, ' ') : s).replace(/[^a-z0-9]/g, '');
 }
@@ -194,7 +197,8 @@ function loadListed(raw, where) {
   if (!raw || !Array.isArray(raw.theatres) || raw.theatres.length === 0) throw new Error(`${where}: participating list is empty`);
   return raw.theatres.map(([state, city, name], i) => {
     const key = theatreKey(name);
-    if (!/^[A-Z]{2}$/.test(state) || !city || !key) throw new Error(`${where}: participating entry ${i} is incomplete`);
+    // City may be blank when the business lists theatres by state only (AMC).
+    if (!/^[A-Z]{2}$/.test(state) || typeof city !== 'string' || !key) throw new Error(`${where}: participating entry ${i} is incomplete`);
     return { state, city: placeKey(city), key, name };
   });
 }
@@ -210,10 +214,14 @@ export function onList(tags, list) {
   const city = placeKey(tags['addr:city']);
   return list.some((e) => {
     if (state && state !== e.state) return false;
-    if (!names.some((n) => n === e.key || n.includes(e.key) || (e.key.includes(n) && n.length >= 5))) return false;
+    // A partial name match ("dimondcenter" in "dimondcenterimax") needs a long name or a known state,
+    // so short names like "orange" don't match "Orange Park" in another state.
+    const partialOk = Boolean(state) || e.key.length >= 8;
+    if (!names.some((n) => n === e.key || (partialOk && (n.includes(e.key) || (e.key.includes(n) && n.length >= 5))))) return false;
     // Same name in another city (e.g. "Regal Augusta" in Maine vs Georgia): only trust it if the city matches,
     // or OSM doesn't say the city.
-    return !city || city === e.city || city.includes(e.city) || e.city.includes(city) || n2(e, names);
+    if (!e.city || !city) return true;
+    return city === e.city || city.includes(e.city) || e.city.includes(city) || n2(e, names);
   });
 }
 
