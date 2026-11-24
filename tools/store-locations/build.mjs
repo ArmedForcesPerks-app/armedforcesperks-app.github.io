@@ -69,7 +69,9 @@ export function loadBrands(raw) {
     if (keys.has(b.key)) throw new Error(`${where}: duplicate key`);
     keys.add(b.key);
     if (typeof b.name !== 'string' || !b.name.trim()) throw new Error(`${where}: missing name`);
-    if (!Array.isArray(b.deals) || !b.deals.length || !b.deals.every((d) => /^AFP-\d{4,}$/.test(d))) {
+    // Deals may be empty: the build looks deals up by name each run (a chain with no current
+    // deal is still downloaded, so it appears as soon as its deal is back in the sheet).
+    if (!Array.isArray(b.deals) || !b.deals.every((d) => /^AFP-\d{4,}$/.test(d))) {
       throw new Error(`${where}: deals must be AFP-#### IDs`);
     }
     const m = b.match ?? {};
@@ -80,6 +82,11 @@ export function loadBrands(raw) {
     if (hasBrand && /["\\]/.test(m.brand)) throw new Error(`${where}: brand text can't contain quotes`);
     const exclude = b.excludeName ? new RegExp(b.excludeName, 'i') : null;
     const req = b.requireTag && typeof b.requireTag === 'object' ? Object.entries(b.requireTag) : [];
+    let listed = null;
+    if (b.onlyListed !== undefined) {
+      if (typeof b.onlyListed !== 'string' || !/^participating\/[a-z0-9-]+\.json$/.test(b.onlyListed)) throw new Error(`${where}: bad onlyListed`);
+      listed = loadListed(JSON.parse(readFileSync(join(HERE, b.onlyListed), 'utf8')), where);
+    }
     return {
       key: b.key,
       name: b.name.trim(),
@@ -89,6 +96,9 @@ export function loadBrands(raw) {
       brand: hasBrand ? m.brand : null,
       exclude,
       requireTag: req,
+      listed,
+      /** Other names the deal sheet may use for this business, e.g. "Regal Cinemas". */
+      dealNames: Array.isArray(b.dealNames) ? b.dealNames.filter((n) => typeof n === 'string') : [],
     };
   });
 }
@@ -132,6 +142,99 @@ export function isClosed(tags) {
   return false;
 }
 
+// ---------------------------------------------------------------------------
+// Participating-locations lists (e.g. Regal's military pricing is only at listed theatres)
+// ---------------------------------------------------------------------------
+
+const STATES = {
+  alabama: 'AL', alaska: 'AK', 'american samoa': 'AS', arizona: 'AZ', arkansas: 'AR', california: 'CA', colorado: 'CO',
+  connecticut: 'CT', delaware: 'DE', 'district of columbia': 'DC', florida: 'FL', georgia: 'GA', guam: 'GU', hawaii: 'HI',
+  idaho: 'ID', illinois: 'IL', indiana: 'IN', iowa: 'IA', kansas: 'KS', kentucky: 'KY', louisiana: 'LA', maine: 'ME',
+  maryland: 'MD', massachusetts: 'MA', michigan: 'MI', minnesota: 'MN', mississippi: 'MS', missouri: 'MO', montana: 'MT',
+  nebraska: 'NE', nevada: 'NV', 'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY',
+  'north carolina': 'NC', 'north dakota': 'ND', 'northern mariana islands': 'MP', ohio: 'OH', oklahoma: 'OK', oregon: 'OR',
+  pennsylvania: 'PA', 'puerto rico': 'PR', 'rhode island': 'RI', 'south carolina': 'SC', 'south dakota': 'SD',
+  tennessee: 'TN', texas: 'TX', utah: 'UT', vermont: 'VT', virginia: 'VA', 'virgin islands': 'VI', washington: 'WA',
+  'west virginia': 'WV', wisconsin: 'WI', wyoming: 'WY',
+};
+
+function stateCode(v) {
+  const t = String(v ?? '').trim();
+  if (/^[A-Za-z]{2}$/.test(t)) return t.toUpperCase();
+  return STATES[t.toLowerCase()] ?? '';
+}
+
+/** Lowercase letters/digits only, with "Fort"/"Ft", "Mount"/"Mt" and "Saint"/"St" made the same. */
+function placeKey(v) {
+  return String(v ?? '')
+    .toLowerCase()
+    .replace(/\bft\b\.?/g, 'fort')
+    .replace(/\bmt\b\.?/g, 'mount')
+    .replace(/\bst\b\.?/g, 'saint')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+/** The part of a theatre name that tells it apart: "Regal Edwards Aliso Viejo & RPX" -> "alisoviejo". */
+export function theatreKey(name) {
+  const key = baseTheatreKey(name, true);
+  // "Regal Cinema 99": nothing left once the generic words go, so keep the number.
+  return key || baseTheatreKey(name, false).replace(/cinemas?/g, '');
+}
+
+function baseTheatreKey(name, dropNumbers) {
+  const s = String(name ?? '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/\ban amc theatre\b/g, ' ')
+    .replace(/\bdine-?\s?in\b/g, ' ')
+    .replace(/@.*$/, ' ')
+    .replace(/\b(amc|classic|regal|cinemas?|edwards|ua|united artists|cinebarre|rpx|imax|4dx|screenx|stadium|luxury|theatres?|theaters?|movies?)\b/g, ' ')
+    .replace(/\band\b/g, ' ');
+  return (dropNumbers ? s.replace(/\b\d+\b/g, ' ') : s).replace(/[^a-z0-9]/g, '');
+}
+
+function loadListed(raw, where) {
+  if (!raw || !Array.isArray(raw.theatres) || raw.theatres.length === 0) throw new Error(`${where}: participating list is empty`);
+  return raw.theatres.map(([state, city, name, aliases], i) => {
+    // Other names OSM uses for the same theatre, e.g. "Galleria at Tyler" for "Tyler Galleria".
+    const keys = [name, ...(Array.isArray(aliases) ? aliases : [])].map(theatreKey).filter(Boolean);
+    // City may be blank when the business lists theatres by state only (AMC).
+    if (!/^[A-Z]{2}$/.test(state) || typeof city !== 'string' || !keys.length) throw new Error(`${where}: participating entry ${i} is incomplete`);
+    return { state, city: placeKey(city), keys, name };
+  });
+}
+
+/**
+ * True if an OSM place is one of the listed locations.
+ *  1. By name: the OSM name matches a listed theatre name (or alias). Where OSM gives a state,
+ *     it must match. Short names ("orange") must match exactly unless the state is known, and
+ *     must also be in the listed city when OSM gives one.
+ *  2. By place, for OSM theatres with only a generic name ("AMC", "Regal Cinemas"): OSM must
+ *     give the state and city, and a listed theatre in that state must be in that city or be
+ *     named after it ("AMC Porter Ranch 9" in Porter Ranch).
+ */
+export function onList(tags, list) {
+  const names = [tags.name, tags.official_name, tags.alt_name, tags.old_name, tags.branch].filter(Boolean).map(theatreKey).filter((k) => k.length >= 2);
+  const state = stateCode(tags['addr:state']);
+  const city = placeKey(tags['addr:city']);
+  const byName = list.some((e) => {
+    if (state && state !== e.state) return false;
+    return e.keys.some((key) => {
+      const partialOk = Boolean(state) || key.length >= 8;
+      const hit = names.some((n) => n === key || (partialOk && (n.includes(key) || (key.includes(n) && n.length >= 5))));
+      if (!hit) return false;
+      // A short name in another city (e.g. "Regal Augusta" in Maine vs Georgia) needs the city to match.
+      if (key.length >= 8 || !e.city || !city) return true;
+      return city === e.city || city.includes(e.city) || e.city.includes(city);
+    });
+  });
+  if (byName) return true;
+  if (!state || city.length < 4) return false;
+  // Only for generic names: a theatre with its own name that didn't match is not on the list.
+  if (names.some((n) => n.length >= 4)) return false;
+  return list.some((e) => e.state === state && (e.city === city || e.keys.some((k) => k === city || (city.length >= 5 && k.startsWith(city)))));
+}
+
 export function brandFor(tags, brands) {
   for (const b of brands) {
     if (b.wikidata) {
@@ -144,6 +247,7 @@ export function brandFor(tags, brands) {
     }
     if (b.requireTag.some(([k, v]) => tags[k] !== v)) continue;
     if (b.exclude && (b.exclude.test(tags.name ?? '') || b.exclude.test(tags.branch ?? ''))) continue;
+    if (b.listed && !onList(tags, b.listed)) return { notListed: true };
     return b;
   }
   return null;
@@ -185,12 +289,18 @@ function meters(a, b) {
 /** Returns { stores: [[brandIndex, lat, lon, label]], counts: {key: n}, skipped: {...} }. */
 export function toStores(elements, brands) {
   const byBrand = new Map(brands.map((b) => [b.key, []]));
-  const skipped = { closed: 0, noBrand: 0, noCoords: 0, duplicate: 0 };
+  const skipped = { closed: 0, noBrand: 0, noCoords: 0, duplicate: 0, notListed: 0 };
+  const notListedNames = [];
   for (const el of elements) {
     const tags = el.tags ?? {};
     const brand = brandFor(tags, brands);
     if (!brand) {
       skipped.noBrand++;
+      continue;
+    }
+    if (brand.notListed) {
+      skipped.notListed++;
+      if (notListedNames.length < 200) notListedNames.push([tags.name, tags['addr:city'], tags['addr:state']].filter(Boolean).join(', ') || '(no name)');
       continue;
     }
     if (isClosed(tags)) {
@@ -220,7 +330,7 @@ export function toStores(elements, brands) {
     counts[b.key] = list.length;
     for (const s of list) stores.push([i, s.at[0], s.at[1], s.label]);
   });
-  return { stores, counts, skipped };
+  return { stores, counts, skipped, notListedNames };
 }
 
 // ---------------------------------------------------------------------------
@@ -286,7 +396,8 @@ export function businessKey(name) {
 export function matchDeals(brands, deals) {
   const out = new Map();
   for (const b of brands) {
-    out.set(b.key, deals.filter((d) => businessKey(d.name) === businessKey(b.name)).map((d) => d.id));
+    const names = new Set([b.name, ...(b.dealNames ?? [])].map(businessKey));
+    out.set(b.key, deals.filter((d) => names.has(businessKey(d.name))).map((d) => d.id));
   }
   return out;
 }
@@ -402,7 +513,9 @@ async function main() {
   const osmDate = typeof raw.osm3s?.timestamp_osm_base === 'string' ? raw.osm3s.timestamp_osm_base.slice(0, 10) : null;
 
   const previous = !only && existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : null;
-  const result = guardAgainstDrops(toStores(raw.elements, brands), brands, previous, failed);
+  const built = toStores(raw.elements, brands);
+  const notListed = built.notListedNames ?? [];
+  const result = guardAgainstDrops(built, brands, previous, failed);
 
   // Deal IDs follow the deal sheet and can be renumbered, so look each chain's deal up by name
   // in the site's current deal list (data/deals.json) instead of trusting brands.json.
@@ -424,13 +537,16 @@ async function main() {
     `## Store locations`,
     ``,
     `OSM data as of ${osmDate ?? 'unknown'}. ${result.stores.length} stores from ${brands.length} chains.`,
-    `Skipped: ${result.skipped.closed} closed, ${result.skipped.duplicate} duplicates, ${result.skipped.noCoords} without a usable position, ${result.skipped.noBrand} other matches.`,
+    `Skipped: ${result.skipped.closed} closed, ${result.skipped.duplicate} duplicates, ${result.skipped.noCoords} without a usable position, ${result.skipped.noBrand} other matches, ${result.skipped.notListed ?? 0} not on a participating-locations list.`,
     ``,
     `| Chain | Stores |`,
     `| --- | ---: |`,
     ...brands.map((b) => `| ${b.name} | ${result.counts[b.key] ?? 0} |`),
   ];
   if (result.warnings.length) lines.push('', '### Check these', '', ...result.warnings.map((w) => `- ${w}`));
+  if (raw.elements.length && notListed.length) {
+    lines.push('', '### Left off: not on a participating-locations list', '', ...notListed.sort().map((n) => `- ${n}`));
+  }
   if (progress.length) lines.push('', '### Download log', '', '```', ...progress, '```');
   const summary = lines.join('\n');
   console.log(summary);

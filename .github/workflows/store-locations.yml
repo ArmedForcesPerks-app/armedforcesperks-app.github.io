@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: 22
       - run: node --test tools/store-locations/test.mjs
-      # A quick check with three chains that the download still works (all chains if the pull
+      # A quick check with three chains (Regal and AMC among them, to check their participating-theatre lists) that the download still works (all chains if the pull
       # request has the "full store trial" label). It's a heads-up only: the free map servers
       # are sometimes busy, so a failed trial doesn't fail the check (and doesn't email anyone).
       # The "Store locations report" check shows what happened.
@@ -44,7 +44,7 @@ jobs:
         continue-on-error: true
         timeout-minutes: 80
         env:
-          ONLY: ${{ !contains(github.event.pull_request.labels.*.name, 'full store trial') && '--only homedepot,outback,amc' || '' }}
+          ONLY: ${{ !contains(github.event.pull_request.labels.*.name, 'full store trial') && '--only homedepot,regal,amc' || '' }}
         run: node tools/store-locations/build.mjs --dry-run $ONLY --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
