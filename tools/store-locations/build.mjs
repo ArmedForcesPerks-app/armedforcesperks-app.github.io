@@ -282,32 +282,38 @@ export function guardAgainstDrops(result, brands, previous, failed = new Set()) 
 // ---------------------------------------------------------------------------
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/** Progress lines, also kept for the run report. */
+const progress = [];
+function log(line) {
+  console.log(line);
+  progress.push(line);
+}
 
+/** Tries each server once. Failed chains get one more round at the end (see main). */
 async function overpass(query) {
-  let lastError;
+  const errors = [];
   for (const url of ENDPOINTS) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': USER_AGENT },
-          body: 'data=' + encodeURIComponent(query),
-          signal: AbortSignal.timeout(4 * 60 * 1000),
-        });
-        if (!res.ok) throw new Error(`${url} answered ${res.status}`);
-        const json = await res.json();
-        if (json.remark && /runtime error|timed out|out of memory/i.test(json.remark)) throw new Error(`${url}: ${json.remark}`);
-        if (!Array.isArray(json.elements)) throw new Error(`${url}: no elements in answer`);
-        return json;
-      } catch (e) {
-        lastError = e;
-        console.warn(`Overpass attempt ${attempt} at ${url} failed: ${e.message}`);
-        // Be polite: wait a bit before trying again.
-        await sleep(30_000 * attempt);
-      }
+    const host = new URL(url).host;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': USER_AGENT },
+        body: 'data=' + encodeURIComponent(query),
+        signal: AbortSignal.timeout(200_000),
+      });
+      if (!res.ok) throw new Error(`answered ${res.status}`);
+      const json = await res.json();
+      if (json.remark && /runtime error|timed out|out of memory/i.test(json.remark)) throw new Error(json.remark.slice(0, 120));
+      if (!Array.isArray(json.elements)) throw new Error('no elements in answer');
+      return { json, host };
+    } catch (e) {
+      errors.push(`${host}: ${e.message}`);
+      console.warn(`  ${host} failed: ${e.message}`);
+      // Be polite: wait before asking the next server (longer if we were told to slow down).
+      await sleep(/429/.test(e.message) ? 60_000 : 15_000);
     }
   }
-  throw lastError;
+  throw new Error(errors.join('; '));
 }
 
 // ---------------------------------------------------------------------------
@@ -315,7 +321,12 @@ async function overpass(query) {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const brands = loadBrands(JSON.parse(readFileSync(BRANDS_FILE, 'utf8')));
+  const allBrands = loadBrands(JSON.parse(readFileSync(BRANDS_FILE, 'utf8')));
+  // --only a,b,c: a quick trial with a few chains (pull requests use this). Never publishes.
+  const only = argValue('--only')?.split(',').filter(Boolean);
+  if (only && !DRY_RUN) throw new Error('--only is for trial runs; add --dry-run.');
+  const brands = only ? allBrands.filter((b) => only.includes(b.key)) : allBrands;
+  if (only && brands.length !== only.length) throw new Error(`Unknown chain in --only: ${only.join(', ')}`);
   const input = argValue('--input');
   let raw;
   const failed = new Set();
@@ -324,28 +335,38 @@ async function main() {
   } else {
     const seen = new Set();
     raw = { elements: [], osm3s: null };
-    for (const [i, b] of brands.entries()) {
+    let streak = 0;
+    const fetchChain = async (b, label) => {
+      const started = Date.now();
       try {
-        const res = await overpass(buildQuery(b));
+        const { json, host } = await overpass(buildQuery(b));
         let n = 0;
-        for (const el of res.elements) {
+        for (const el of json.elements) {
           const id = `${el.type}/${el.id}`;
           if (seen.has(id)) continue;
           seen.add(id);
           raw.elements.push(el);
           n++;
         }
-        raw.osm3s ??= res.osm3s;
-        console.log(`${i + 1}/${brands.length} ${b.name}: ${n} places`);
+        raw.osm3s ??= json.osm3s;
+        failed.delete(b.key);
+        streak = 0;
+        log(`${label} ${b.name}: ${n} places (${host}, ${Math.round((Date.now() - started) / 1000)}s)`);
       } catch (e) {
         failed.add(b.key);
-        console.warn(`${i + 1}/${brands.length} ${b.name}: FAILED (${e.message})`);
-        // Three chains in a row failing means the servers are down: stop instead of waiting for hours.
-        if (brands.slice(Math.max(0, i - 2), i + 1).every((x) => failed.has(x.key)) && i >= 2) {
-          throw new Error('Overpass servers are not answering. Not publishing; the next run will try again.');
-        }
+        streak++;
+        log(`${label} ${b.name}: FAILED after ${Math.round((Date.now() - started) / 1000)}s (${e.message})`);
+        // Three chains in a row failing on every server means the servers are down: stop instead of waiting for hours.
+        if (streak >= 3) throw new Error('Overpass servers are not answering. Not publishing; the next run will try again.');
       }
       await sleep(3000); // one request at a time, with a pause, per Overpass's usage policy
+    };
+    for (const [i, b] of brands.entries()) await fetchChain(b, `${i + 1}/${brands.length}`);
+    // One more try for chains that failed (servers are often only briefly busy).
+    if (failed.size) {
+      streak = 0;
+      await sleep(60_000);
+      for (const b of brands.filter((x) => failed.has(x.key))) await fetchChain(b, 'retry');
     }
     if (failed.size > brands.length * MAX_FAILED_SHARE) {
       throw new Error(`${failed.size} of ${brands.length} chains failed to download. Not publishing; try again later.`);
@@ -355,7 +376,7 @@ async function main() {
   }
   const osmDate = typeof raw.osm3s?.timestamp_osm_base === 'string' ? raw.osm3s.timestamp_osm_base.slice(0, 10) : null;
 
-  const previous = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : null;
+  const previous = !only && existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : null;
   const result = guardAgainstDrops(toStores(raw.elements, brands), brands, previous, failed);
 
   const file = {
@@ -381,9 +402,12 @@ async function main() {
     ...brands.map((b) => `| ${b.name} | ${result.counts[b.key] ?? 0} |`),
   ];
   if (result.warnings.length) lines.push('', '### Check these', '', ...result.warnings.map((w) => `- ${w}`));
+  if (progress.length) lines.push('', '### Download log', '', '```', ...progress, '```');
   const summary = lines.join('\n');
   console.log(summary);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary + '\n');
+  const reportFile = argValue('--report');
+  if (reportFile) writeFileSync(reportFile, summary + '\n');
 
   if (DRY_RUN) return;
   // Only rewrite the file when the stores actually changed, so unchanged months don't make commits.
@@ -407,6 +431,8 @@ async function main() {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   main().catch((e) => {
     console.error(e.message);
+    const reportFile = argValue('--report');
+    if (reportFile) writeFileSync(reportFile, ['## Store locations: run failed', '', e.message, '', '```', ...progress, '```', ''].join('\n'));
     process.exit(1);
   });
 }
