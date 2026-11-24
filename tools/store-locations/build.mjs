@@ -277,6 +277,31 @@ export function guardAgainstDrops(result, brands, previous, failed = new Set()) 
   return { stores, counts, skipped: result.skipped, warnings };
 }
 
+/** Business name reduced for comparing ("The Home Depot" = "Home Depot", "&" = "and"). Same rule as the app. */
+export function businessKey(name) {
+  return String(name).toLowerCase().replace(/&/g, 'and').replace(/^the\s+/, '').replace(/[^a-z0-9]/g, '');
+}
+
+/** Maps chain key -> current deal IDs, found by business name in data/deals.json. */
+export function matchDeals(brands, deals) {
+  const out = new Map();
+  for (const b of brands) {
+    out.set(b.key, deals.filter((d) => businessKey(d.name) === businessKey(b.name)).map((d) => d.id));
+  }
+  return out;
+}
+
+function currentDealIds(brands, warnings) {
+  const path = join(ROOT, 'data', 'deals.json');
+  if (!existsSync(path)) return new Map();
+  const raw = JSON.parse(readFileSync(path, 'utf8'));
+  const map = matchDeals(brands, Array.isArray(raw) ? raw : raw.deals ?? []);
+  for (const b of brands) {
+    if (!map.get(b.key).length) warnings.push(`${b.name}: no deal with this name in data/deals.json, so the app won't show these stores.`);
+  }
+  return map;
+}
+
 // ---------------------------------------------------------------------------
 // Download
 // ---------------------------------------------------------------------------
@@ -379,6 +404,10 @@ async function main() {
   const previous = !only && existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : null;
   const result = guardAgainstDrops(toStores(raw.elements, brands), brands, previous, failed);
 
+  // Deal IDs follow the deal sheet and can be renumbered, so look each chain's deal up by name
+  // in the site's current deal list (data/deals.json) instead of trusting brands.json.
+  const dealIds = currentDealIds(brands, result.warnings);
+
   const file = {
     schema: 1,
     generated: new Date().toISOString().slice(0, 10),
@@ -387,7 +416,7 @@ async function main() {
     attribution: '© OpenStreetMap contributors',
     notice:
       'Store locations from OpenStreetMap (openstreetmap.org/copyright), available under the Open Database License (opendatacommons.org/licenses/odbl/1-0/). Locations can be missing, closed or out of date.',
-    brands: brands.map((b) => ({ key: b.key, name: b.name, deals: b.deals, participating: b.participating })),
+    brands: brands.map((b) => ({ key: b.key, name: b.name, deals: dealIds.get(b.key) ?? b.deals, participating: b.participating })),
     stores: result.stores,
   };
 

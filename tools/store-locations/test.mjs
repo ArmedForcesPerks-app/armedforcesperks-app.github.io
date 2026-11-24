@@ -83,3 +83,30 @@ test('a collapse of the whole list stops the update', () => {
   const previous = { brands: brands.map((b) => ({ key: b.key })), stores: Array.from({ length: 1000 }, () => [0, 30, -90, '']) };
   assert.throws(() => guardAgainstDrops({ stores: [], counts: {}, skipped: {} }, brands, previous), /Not publishing/);
 });
+
+test('chains find their current deal IDs by business name', async () => {
+  const { matchDeals } = await import('./build.mjs');
+  const deals = [
+    { id: 'AFP-0056', name: 'Home Depot' },
+    { id: 'AFP-0031', name: "Dave & Buster's" },
+  ];
+  const m = matchDeals(
+    [
+      { key: 'homedepot', name: 'The Home Depot' },
+      { key: 'davebusters', name: 'Dave and Busters' },
+      { key: 'gone', name: 'Gone Chain' },
+    ],
+    deals,
+  );
+  assert.deepEqual(m.get('homedepot'), ['AFP-0056']);
+  assert.deepEqual(m.get('davebusters'), ['AFP-0031']);
+  assert.deepEqual(m.get('gone'), []);
+});
+
+test('every chain in brands.json has a deal in the site deal list', async () => {
+  const { matchDeals } = await import('./build.mjs');
+  const brands = JSON.parse(readFileSync(new URL('./brands.json', import.meta.url), 'utf8')).brands;
+  const raw = JSON.parse(readFileSync(new URL('../../data/deals.json', import.meta.url), 'utf8'));
+  const m = matchDeals(brands, raw.deals ?? raw);
+  for (const b of brands) assert.ok(m.get(b.key).length, b.name);
+});
