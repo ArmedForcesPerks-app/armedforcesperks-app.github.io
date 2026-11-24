@@ -38,6 +38,21 @@ const ENDPOINTS = [
 ];
 /** If more than this share of chains can't be downloaded, give up and publish nothing. */
 const MAX_FAILED_SHARE = 0.25;
+
+/** The public servers were too busy this time. With --soft-fail-days, this isn't an error (see main). */
+class RetryLater extends Error {}
+
+/** Days since the published file was made, or Infinity if there isn't one. */
+function fileAgeDays() {
+  if (!existsSync(OUT)) return Infinity;
+  try {
+    const generated = JSON.parse(readFileSync(OUT, 'utf8')).generated;
+    const ms = Date.parse(`${generated}T00:00:00Z`);
+    return Number.isFinite(ms) ? (Date.now() - ms) / 86_400_000 : Infinity;
+  } catch {
+    return Infinity;
+  }
+}
 const USER_AGENT = 'ArmedForcesPerks-store-locations/1.0 (+https://armedforcesperks.com; monthly job)';
 
 /** Two places of the same chain closer than this are the same store mapped twice. */
@@ -464,6 +479,12 @@ async function overpass(query) {
 // ---------------------------------------------------------------------------
 
 async function main() {
+  // --if-older-than N: the daily schedule only does a real run once the list is N days old.
+  const minAge = Number(argValue('--if-older-than') ?? 0);
+  if (minAge > 0 && fileAgeDays() < minAge) {
+    console.log(`The store list is under ${minAge} days old. Nothing to do today.`);
+    return;
+  }
   const allBrands = loadBrands(JSON.parse(readFileSync(BRANDS_FILE, 'utf8')));
   // --only a,b,c: a quick trial with a few chains (pull requests use this). Never publishes.
   const only = argValue('--only')?.split(',').filter(Boolean);
@@ -479,6 +500,7 @@ async function main() {
     const seen = new Set();
     raw = { elements: [], osm3s: null };
     let streak = 0;
+    let pauses = 0;
     // Stop starting new chains after this many minutes (the job has a hard limit). Chains not
     // reached count as failed, so they keep last month's stores.
     const budgetMin = Number(argValue('--budget-min') ?? 0);
@@ -504,13 +526,21 @@ async function main() {
         raw.osm3s ??= json.osm3s;
         failed.delete(b.key);
         streak = 0;
+        pauses = 0;
         log(`${label} ${b.name}: ${n} places (${host}, ${Math.round((Date.now() - started) / 1000)}s)`);
       } catch (e) {
         failed.add(b.key);
         streak++;
         log(`${label} ${b.name}: FAILED after ${Math.round((Date.now() - started) / 1000)}s (${e.message})`);
         // Three chains in a row failing on every server means the servers are down: stop instead of waiting for hours.
-        if (streak >= 3) throw new Error('Overpass servers are not answering. Not publishing; the next run will try again.');
+        // Three chains in a row failing on every server: the servers are overloaded. Give them a
+        // few minutes; after three such pauses with nothing working, give up for today.
+        if (streak >= 3) {
+          if (++pauses >= 3) throw new RetryLater('Overpass servers are not answering. Not publishing; the next run will try again.');
+          log(`Servers look overloaded. Waiting 5 minutes (pause ${pauses} of 2)…`);
+          streak = 0;
+          await sleep(5 * 60_000);
+        }
       }
       await sleep(3000); // one request at a time, with a pause, per Overpass's usage policy
     };
@@ -522,7 +552,7 @@ async function main() {
       for (const b of brands.filter((x) => failed.has(x.key))) if (!outOfTime(b, 'retry')) await fetchChain(b, 'retry');
     }
     if (failed.size > brands.length * MAX_FAILED_SHARE) {
-      throw new Error(`${failed.size} of ${brands.length} chains failed to download. Not publishing; try again later.`);
+      throw new RetryLater(`${failed.size} of ${brands.length} chains failed to download. Not publishing; the next run will try again.`);
     }
     const saveRaw = argValue('--save-raw');
     if (saveRaw) writeFileSync(saveRaw, JSON.stringify(raw));
@@ -576,7 +606,8 @@ async function main() {
   const same =
     previous &&
     JSON.stringify({ ...previous, generated: '', osmDate: '' }) === JSON.stringify({ ...file, generated: '', osmDate: '' });
-  if (same) {
+  // (Still rewritten once it's 20 days old, so its date shows the list was checked recently.)
+  if (same && fileAgeDays() < 20) {
     console.log('No store changes. File left as is.');
     return;
   }
@@ -593,8 +624,14 @@ async function main() {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   main().catch((e) => {
     console.error(e.message);
+    // --soft-fail-days N: busy servers aren't an error (no failure email) as long as the published
+    // list is under N days old, or there isn't one yet. The daily schedule simply tries again.
+    const softDays = Number(argValue('--soft-fail-days') ?? 0);
+    const age = fileAgeDays();
+    const soft = e instanceof RetryLater && softDays > 0 && (age === Infinity || age < softDays);
     const reportFile = argValue('--report');
-    if (reportFile) writeFileSync(reportFile, ['## Store locations: run failed', '', e.message, '', '```', ...progress, '```', ''].join('\n'));
-    process.exit(1);
+    const title = soft ? '## Store locations: servers busy, will try again tomorrow' : '## Store locations: run failed';
+    if (reportFile) writeFileSync(reportFile, [title, '', e.message, '', '```', ...progress, '```', ''].join('\n'));
+    process.exit(soft ? 0 : 1);
   });
 }

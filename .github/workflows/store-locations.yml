@@ -1,7 +1,10 @@
 # Refreshes data/locations.json (stores for the app's "Near me" map) from OpenStreetMap.
 # Free: runs on GitHub Actions (free for public repositories) and the public Overpass API.
 #
-# - Monthly on the 3rd at 09:17 UTC, or any time from Actions > Store locations > Run workflow.
+# - Checked daily at 04:17 UTC (a quiet time for the public servers); a real download happens
+#   once the list is 27 days old. Or any time from Actions > Store locations > Run workflow.
+# - If the public servers are too busy, the run ends quietly (no failure email) and the next
+#   day's run tries again. It only fails (and emails) if the list gets over 40 days old.
 # - Pull requests that change tools/store-locations/ run the tests and a trial download
 #   without publishing anything.
 # - If a chain suddenly loses more than half its stores, last month's stores are kept for it
@@ -11,7 +14,7 @@ name: Store locations
 
 on:
   schedule:
-    - cron: '17 9 3 * *'
+    - cron: '17 4 * * *'
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
@@ -82,7 +85,7 @@ jobs:
         with:
           node-version: 22
       - name: Build store list
-        run: node tools/store-locations/build.mjs --budget-min 120 --report report.md
+        run: node tools/store-locations/build.mjs --budget-min 120 --soft-fail-days 40 ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }} --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:
@@ -101,6 +104,10 @@ jobs:
           PY
       - name: Commit if changed
         run: |
+          if [ ! -f data/locations.json ]; then
+            echo "No store list yet (the servers were busy). The next run will try again."
+            exit 0
+          fi
           if git diff --quiet -- data/locations.json && git ls-files --error-unmatch data/locations.json >/dev/null 2>&1; then
             echo "No changes."
             exit 0
