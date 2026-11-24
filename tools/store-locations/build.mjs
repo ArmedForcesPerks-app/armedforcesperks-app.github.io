@@ -18,6 +18,7 @@
  *   node tools/store-locations/build.mjs --input raw.json  # use a saved Overpass response instead
  *   node tools/store-locations/build.mjs --save-raw raw.json  # also keep the raw response
  *   node tools/store-locations/build.mjs --dry-run       # print the summary, don't write
+ *   node tools/store-locations/build.mjs --fill          # only download chains the last run missed
  *
  * No npm packages needed (Node 22+).
  */
@@ -29,6 +30,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
 const OUT = join(ROOT, 'data', 'locations.json');
 const BRANDS_FILE = join(HERE, 'brands.json');
+/** Which chains the last run couldn't download (or got from an out-of-date server); filled in daily. */
+const STATUS = join(ROOT, 'data', 'locations-status.json');
+/** A server whose map data is older than this is a stale copy; its answers are not used. */
+const MAX_DATA_AGE_DAYS = 14;
 
 /** Public Overpass servers, tried in order. Both are free and need no key. */
 const ENDPOINTS = [
@@ -41,6 +46,16 @@ const MAX_FAILED_SHARE = 0.25;
 
 /** The public servers were too busy this time. With --soft-fail-days, this isn't an error (see main). */
 class RetryLater extends Error {}
+
+/** Chains still missing from the published list, from the status file. */
+function missingChains() {
+  try {
+    const m = JSON.parse(readFileSync(STATUS, 'utf8')).missing;
+    return Array.isArray(m) ? m.filter((k) => typeof k === 'string') : [];
+  } catch {
+    return [];
+  }
+}
 
 /** Days since the published file was made, or Infinity if there isn't one. */
 function fileAgeDays() {
@@ -356,8 +371,8 @@ export function toStores(elements, brands) {
  * If a brand shrank by more than half (usually someone's OSM mistake, or Overpass returning
  * partial data), keep last month's stores for that brand instead. Returns the merged rows.
  */
-export function guardAgainstDrops(result, brands, previous, failed = new Set()) {
-  const warnings = [...[...failed].map((k) => `${brands.find((b) => b.key === k)?.name ?? k}: download failed, kept last month's stores.`)];
+export function guardAgainstDrops(result, brands, previous, failed = new Set(), quiet = new Set()) {
+  const warnings = [...[...failed].filter((k) => !quiet.has(k)).map((k) => `${brands.find((b) => b.key === k)?.name ?? k}: download failed, kept last month's stores.`)];
   if (!previous || !Array.isArray(previous.brands) || !Array.isArray(previous.stores)) return { ...result, warnings };
   const prevIndex = new Map(previous.brands.map((b, i) => [i, b.key]));
   const prevByKey = new Map();
@@ -446,11 +461,16 @@ function log(line) {
 /** Tries each server once. Failed chains get one more round at the end (see main). */
 /** The server that answered last is asked first next time, so one slow server doesn't cost every chain minutes. */
 let preferred = 0;
+/** Servers found serving out-of-date map data this run; skipped from then on. */
+const staleHosts = new Set();
+/** Oldest map-data date of the answers used (so the file never claims fresher data than it has). */
+let oldestOsmBase = null;
 async function overpass(query) {
   const errors = [];
   const order = [...ENDPOINTS.slice(preferred), ...ENDPOINTS.slice(0, preferred)];
   for (const url of order) {
     const host = new URL(url).host;
+    if (staleHosts.has(host)) continue;
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -462,6 +482,13 @@ async function overpass(query) {
       const json = await res.json();
       if (json.remark && /runtime error|timed out|out of memory/i.test(json.remark)) throw new Error(json.remark.slice(0, 120));
       if (!Array.isArray(json.elements)) throw new Error('no elements in answer');
+      const base = json.osm3s?.timestamp_osm_base;
+      const baseMs = typeof base === 'string' ? Date.parse(base) : NaN;
+      if (Number.isFinite(baseMs) && Date.now() - baseMs > MAX_DATA_AGE_DAYS * 86_400_000) {
+        staleHosts.add(host);
+        throw new Error(`its map data is from ${base.slice(0, 10)} (out of date; not using this server again this run)`);
+      }
+      if (typeof base === 'string' && (!oldestOsmBase || base < oldestOsmBase)) oldestOsmBase = base;
       preferred = ENDPOINTS.indexOf(url);
       return { json, host };
     } catch (e) {
@@ -480,16 +507,25 @@ async function overpass(query) {
 
 async function main() {
   // --if-older-than N: the daily schedule only does a real run once the list is N days old.
+  // Until then, it only fills in chains the last run couldn't get (from data/locations-status.json).
+  // --fill does that on demand.
   const minAge = Number(argValue('--if-older-than') ?? 0);
+  let fill = args.includes('--fill') && existsSync(OUT);
   if (minAge > 0 && fileAgeDays() < minAge) {
-    console.log(`The store list is under ${minAge} days old. Nothing to do today.`);
-    return;
+    if (!missingChains().length || !existsSync(OUT)) {
+      console.log(`The store list is under ${minAge} days old and complete. Nothing to do today.`);
+      return;
+    }
+    fill = true;
   }
   const allBrands = loadBrands(JSON.parse(readFileSync(BRANDS_FILE, 'utf8')));
   // --only a,b,c: a quick trial with a few chains (pull requests use this). Never publishes.
   const only = argValue('--only')?.split(',').filter(Boolean);
   if (only && !DRY_RUN) throw new Error('--only is for trial runs; add --dry-run.');
   const brands = only ? allBrands.filter((b) => only.includes(b.key)) : allBrands;
+  // Fill-in run: download only the missing chains and keep everything else as published.
+  const toFetch = fill ? brands.filter((b) => missingChains().includes(b.key)) : brands;
+  if (fill) log(`Filling in ${toFetch.length} chain(s) missing from the last run: ${toFetch.map((b) => b.name).join(', ') || 'none'}.`);
   if (only && brands.length !== only.length) throw new Error(`Unknown chain in --only: ${only.join(', ')}`);
   const input = argValue('--input');
   let raw;
@@ -544,25 +580,34 @@ async function main() {
       }
       await sleep(3000); // one request at a time, with a pause, per Overpass's usage policy
     };
-    for (const [i, b] of brands.entries()) if (!outOfTime(b, `${i + 1}/${brands.length}`)) await fetchChain(b, `${i + 1}/${brands.length}`);
+    for (const [i, b] of toFetch.entries()) if (!outOfTime(b, `${i + 1}/${toFetch.length}`)) await fetchChain(b, `${i + 1}/${toFetch.length}`);
     // One more try for chains that failed (servers are often only briefly busy).
     if (failed.size && Date.now() + 60_000 < deadline) {
       streak = 0;
       await sleep(60_000);
-      for (const b of brands.filter((x) => failed.has(x.key))) if (!outOfTime(b, 'retry')) await fetchChain(b, 'retry');
+      for (const b of toFetch.filter((x) => failed.has(x.key))) if (!outOfTime(b, 'retry')) await fetchChain(b, 'retry');
     }
-    if (failed.size > brands.length * MAX_FAILED_SHARE) {
+    if (!fill && failed.size > brands.length * MAX_FAILED_SHARE) {
       throw new RetryLater(`${failed.size} of ${brands.length} chains failed to download. Not publishing; the next run will try again.`);
     }
     const saveRaw = argValue('--save-raw');
     if (saveRaw) writeFileSync(saveRaw, JSON.stringify(raw));
   }
-  const osmDate = typeof raw.osm3s?.timestamp_osm_base === 'string' ? raw.osm3s.timestamp_osm_base.slice(0, 10) : null;
+  const base = oldestOsmBase ?? raw.osm3s?.timestamp_osm_base;
+  let osmDate = typeof base === 'string' ? base.slice(0, 10) : null;
 
   const previous = !only && existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : null;
   const built = toStores(raw.elements, brands);
   const notListed = built.notListedNames ?? [];
-  const result = guardAgainstDrops(built, brands, previous, failed);
+  // In a fill-in run, chains not downloaded this time keep their published stores, quietly.
+  const notFetched = new Set(fill ? brands.filter((b) => !toFetch.includes(b)).map((b) => b.key) : []);
+  const result = guardAgainstDrops(built, brands, previous, new Set([...failed, ...notFetched]), notFetched);
+  // (A previous date far older than that list itself came from a stale server copy, whose chains
+  // are being filled in now, so it's not carried over.)
+  const prevDateOk =
+    previous?.osmDate && previous?.generated && Date.parse(previous.generated) - Date.parse(previous.osmDate) <= MAX_DATA_AGE_DAYS * 86_400_000;
+  if (fill && prevDateOk && (!osmDate || previous.osmDate < osmDate)) osmDate = previous.osmDate;
+  if (fill && !osmDate) osmDate = previous?.generated ?? null;
 
   // Deal IDs follow the deal sheet and can be renumbered, so look each chain's deal up by name
   // in the site's current deal list (data/deals.json) instead of trusting brands.json.
@@ -570,7 +615,8 @@ async function main() {
 
   const file = {
     schema: 1,
-    generated: new Date().toISOString().slice(0, 10),
+    // A fill-in run doesn't make the whole list new, so it keeps the date of the last full run.
+    generated: fill && previous?.generated ? previous.generated : new Date().toISOString().slice(0, 10),
     osmDate,
     license: 'ODbL-1.0',
     attribution: '© OpenStreetMap contributors',
@@ -583,7 +629,7 @@ async function main() {
   const lines = [
     `## Store locations`,
     ``,
-    `OSM data as of ${osmDate ?? 'unknown'}. ${result.stores.length} stores from ${brands.length} chains.`,
+    `${fill ? 'Fill-in run. ' : ''}OSM data as of ${osmDate ?? 'unknown'}. ${result.stores.length} stores from ${brands.length} chains.${failed.size ? ` Still missing (tried again daily): ${brands.filter((b) => failed.has(b.key)).map((b) => b.name).join(', ')}.` : ''}`,
     `Skipped: ${result.skipped.closed} closed, ${result.skipped.duplicate} duplicates, ${result.skipped.noCoords} without a usable position, ${result.skipped.noBrand} other matches, ${result.skipped.notListed ?? 0} not on a participating-locations list.`,
     ``,
     `| Chain | Stores |`,
@@ -602,12 +648,14 @@ async function main() {
   if (reportFile) writeFileSync(reportFile, summary + '\n');
 
   if (DRY_RUN) return;
+  // Chains still missing get another try on the next daily run.
+  writeFileSync(STATUS, JSON.stringify({ missing: [...failed].sort() }, null, 2) + '\n');
   // Only rewrite the file when the stores actually changed, so unchanged months don't make commits.
   const same =
     previous &&
     JSON.stringify({ ...previous, generated: '', osmDate: '' }) === JSON.stringify({ ...file, generated: '', osmDate: '' });
   // (Still rewritten once it's 20 days old, so its date shows the list was checked recently.)
-  if (same && fileAgeDays() < 20) {
+  if (same && (fill || fileAgeDays() < 20)) {
     console.log('No store changes. File left as is.');
     return;
   }

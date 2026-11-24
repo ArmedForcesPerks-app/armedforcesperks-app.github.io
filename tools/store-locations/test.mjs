@@ -31,6 +31,19 @@ test('a chain that failed to download keeps last month\'s stores', () => {
   assert.ok(g.warnings.some((w) => w.includes('download failed')));
 });
 
+test('a fill-in run keeps the chains it did not download, without warnings', () => {
+  const prevStores = [
+    ...Array.from({ length: 5 }, (_, i) => [idx('yeti'), 30 + i / 100, -90, `yeti ${i}`]),
+    ...Array.from({ length: 3 }, (_, i) => [idx('nike'), 31 + i / 100, -91, `nike ${i}`]),
+  ];
+  const previous = { brands: brands.map((b) => ({ key: b.key })), stores: prevStores };
+  const notFetched = new Set(brands.filter((b) => b.key !== 'nike').map((b) => b.key));
+  const g = guardAgainstDrops(toStores([], brands), brands, previous, new Set([...notFetched, 'nike']), notFetched);
+  assert.equal(g.counts.yeti, 5);
+  assert.equal(g.counts.nike, 3);
+  assert.deepEqual(g.warnings, ['Nike: download failed, kept last month\'s stores.']);
+});
+
 test('closed, vacant and planned places are dropped', () => {
   assert.equal(isClosed({ shop: 'car_parts' }), false);
   assert.equal(isClosed({ 'disused:shop': 'car_parts' }), true);
