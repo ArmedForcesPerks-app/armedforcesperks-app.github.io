@@ -44,7 +44,7 @@ jobs:
         continue-on-error: true
         timeout-minutes: 80
         env:
-          ONLY: ${{ contains(github.event.pull_request.labels.*.name, 'full store trial') && '' || '--only homedepot,outback,amc' }}
+          ONLY: ${{ !contains(github.event.pull_request.labels.*.name, 'full store trial') && '--only homedepot,outback,amc' || '' }}
         run: node tools/store-locations/build.mjs --dry-run $ONLY --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
