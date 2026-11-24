@@ -12,10 +12,22 @@ test('brands.json is valid and every brand points at deals', () => {
   for (const b of brands) assert.ok(b.deals.length > 0);
 });
 
-test('query covers every brand and only U.S. areas', () => {
-  const q = buildQuery(brands);
-  for (const b of brands) assert.ok(q.includes(b.wikidata ?? b.brand), b.key);
-  assert.match(q, /ISO3166-1"~"\^\(US\|PR\|GU\|VI\|AS\|MP\)\$"/);
+test('each chain gets its own small query, limited to U.S. areas', () => {
+  for (const b of brands) {
+    const q = buildQuery(b);
+    assert.ok(q.includes(b.wikidata ?? b.brand), b.key);
+    for (const c of ['US', 'PR', 'GU', 'VI', 'AS', 'MP']) assert.ok(q.includes(`"ISO3166-1"="${c}"`), c);
+  }
+  const named = buildQuery(brands.find((b) => b.key === 'texasdebrazil'));
+  assert.match(named, /nwr\["name"="Texas de Brazil"\]/);
+});
+
+test('a chain that failed to download keeps last month\'s stores', () => {
+  const prevStores = Array.from({ length: 5 }, (_, i) => [idx('yeti'), 30 + i / 100, -90, `old ${i}`]);
+  const previous = { brands: brands.map((b) => ({ key: b.key })), stores: prevStores };
+  const g = guardAgainstDrops(toStores([], brands), brands, previous, new Set(['yeti']));
+  assert.equal(g.counts.yeti, 5);
+  assert.ok(g.warnings.some((w) => w.includes('download failed')));
 });
 
 test('closed, vacant and planned places are dropped', () => {
