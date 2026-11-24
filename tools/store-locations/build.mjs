@@ -277,6 +277,7 @@ function meters(a, b) {
 export function toStores(elements, brands) {
   const byBrand = new Map(brands.map((b) => [b.key, []]));
   const skipped = { closed: 0, noBrand: 0, noCoords: 0, duplicate: 0, notListed: 0 };
+  const notListedNames = [];
   for (const el of elements) {
     const tags = el.tags ?? {};
     const brand = brandFor(tags, brands);
@@ -286,6 +287,7 @@ export function toStores(elements, brands) {
     }
     if (brand.notListed) {
       skipped.notListed++;
+      if (notListedNames.length < 200) notListedNames.push([tags.name, tags['addr:city'], tags['addr:state']].filter(Boolean).join(', ') || '(no name)');
       continue;
     }
     if (isClosed(tags)) {
@@ -315,7 +317,7 @@ export function toStores(elements, brands) {
     counts[b.key] = list.length;
     for (const s of list) stores.push([i, s.at[0], s.at[1], s.label]);
   });
-  return { stores, counts, skipped };
+  return { stores, counts, skipped, notListedNames };
 }
 
 // ---------------------------------------------------------------------------
@@ -498,7 +500,9 @@ async function main() {
   const osmDate = typeof raw.osm3s?.timestamp_osm_base === 'string' ? raw.osm3s.timestamp_osm_base.slice(0, 10) : null;
 
   const previous = !only && existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : null;
-  const result = guardAgainstDrops(toStores(raw.elements, brands), brands, previous, failed);
+  const built = toStores(raw.elements, brands);
+  const notListed = built.notListedNames ?? [];
+  const result = guardAgainstDrops(built, brands, previous, failed);
 
   // Deal IDs follow the deal sheet and can be renumbered, so look each chain's deal up by name
   // in the site's current deal list (data/deals.json) instead of trusting brands.json.
@@ -527,6 +531,9 @@ async function main() {
     ...brands.map((b) => `| ${b.name} | ${result.counts[b.key] ?? 0} |`),
   ];
   if (result.warnings.length) lines.push('', '### Check these', '', ...result.warnings.map((w) => `- ${w}`));
+  if (raw.elements.length && notListed.length) {
+    lines.push('', '### Left off: not on a participating-locations list', '', ...notListed.sort().map((n) => `- ${n}`));
+  }
   if (progress.length) lines.push('', '### Download log', '', '```', ...progress, '```');
   const summary = lines.join('\n');
   console.log(summary);
