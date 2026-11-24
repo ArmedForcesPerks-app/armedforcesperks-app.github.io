@@ -195,39 +195,44 @@ function baseTheatreKey(name, dropNumbers) {
 
 function loadListed(raw, where) {
   if (!raw || !Array.isArray(raw.theatres) || raw.theatres.length === 0) throw new Error(`${where}: participating list is empty`);
-  return raw.theatres.map(([state, city, name], i) => {
-    const key = theatreKey(name);
+  return raw.theatres.map(([state, city, name, aliases], i) => {
+    // Other names OSM uses for the same theatre, e.g. "Galleria at Tyler" for "Tyler Galleria".
+    const keys = [name, ...(Array.isArray(aliases) ? aliases : [])].map(theatreKey).filter(Boolean);
     // City may be blank when the business lists theatres by state only (AMC).
-    if (!/^[A-Z]{2}$/.test(state) || typeof city !== 'string' || !key) throw new Error(`${where}: participating entry ${i} is incomplete`);
-    return { state, city: placeKey(city), key, name };
+    if (!/^[A-Z]{2}$/.test(state) || typeof city !== 'string' || !keys.length) throw new Error(`${where}: participating entry ${i} is incomplete`);
+    return { state, city: placeKey(city), keys, name };
   });
 }
 
 /**
- * True if an OSM place is one of the listed locations: its name must match a listed theatre
- * name, and where OSM has a state or city, those must match that entry too.
+ * True if an OSM place is one of the listed locations.
+ *  1. By name: the OSM name matches a listed theatre name (or alias). Where OSM gives a state,
+ *     it must match. Short names ("orange") must match exactly unless the state is known, and
+ *     must also be in the listed city when OSM gives one.
+ *  2. By place, for OSM theatres with only a generic name ("AMC", "Regal Cinemas"): OSM must
+ *     give the state and city, and a listed theatre in that state must be in that city or be
+ *     named after it ("AMC Porter Ranch 9" in Porter Ranch).
  */
 export function onList(tags, list) {
   const names = [tags.name, tags.official_name, tags.alt_name, tags.old_name, tags.branch].filter(Boolean).map(theatreKey).filter((k) => k.length >= 2);
-  if (!names.length) return false;
   const state = stateCode(tags['addr:state']);
   const city = placeKey(tags['addr:city']);
-  return list.some((e) => {
+  const byName = list.some((e) => {
     if (state && state !== e.state) return false;
-    // A partial name match ("dimondcenter" in "dimondcenterimax") needs a long name or a known state,
-    // so short names like "orange" don't match "Orange Park" in another state.
-    const partialOk = Boolean(state) || e.key.length >= 8;
-    if (!names.some((n) => n === e.key || (partialOk && (n.includes(e.key) || (e.key.includes(n) && n.length >= 5))))) return false;
-    // Same name in another city (e.g. "Regal Augusta" in Maine vs Georgia): only trust it if the city matches,
-    // or OSM doesn't say the city.
-    if (!e.city || !city) return true;
-    return city === e.city || city.includes(e.city) || e.city.includes(city) || n2(e, names);
+    return e.keys.some((key) => {
+      const partialOk = Boolean(state) || key.length >= 8;
+      const hit = names.some((n) => n === key || (partialOk && (n.includes(key) || (key.includes(n) && n.length >= 5))));
+      if (!hit) return false;
+      // A short name in another city (e.g. "Regal Augusta" in Maine vs Georgia) needs the city to match.
+      if (key.length >= 8 || !e.city || !city) return true;
+      return city === e.city || city.includes(e.city) || e.city.includes(city);
+    });
   });
-}
-
-/** A name that matches exactly is enough even if OSM's city is a suburb name. */
-function n2(e, names) {
-  return names.includes(e.key) && e.key.length >= 6;
+  if (byName) return true;
+  if (!state || city.length < 4) return false;
+  // Only for generic names: a theatre with its own name that didn't match is not on the list.
+  if (names.some((n) => n.length >= 4)) return false;
+  return list.some((e) => e.state === state && (e.city === city || e.keys.some((k) => k === city || (city.length >= 5 && k.startsWith(city)))));
 }
 
 export function brandFor(tags, brands) {

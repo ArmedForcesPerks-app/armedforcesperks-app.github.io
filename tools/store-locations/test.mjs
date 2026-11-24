@@ -161,3 +161,19 @@ test('AMC: only theatres on the participating list', async () => {
   assert.ok(!onList({ name: 'AMC Lincoln Square 13', 'addr:state': 'CA' }, amc.listed));
   assert.ok(!onList({ name: 'AMC Some Unlisted 12', 'addr:state': 'TX' }, amc.listed));
 });
+
+test('generic-named theatres match by state and city; aliases cover OSM spellings', async () => {
+  const { onList } = await import('./build.mjs');
+  const amc = brands.find((b) => b.key === 'amc').listed;
+  const regal = brands.find((b) => b.key === 'regal').listed;
+  assert.ok(onList({ name: 'AMC', 'addr:city': 'Porter Ranch', 'addr:state': 'CA' }, amc));
+  assert.ok(onList({ name: 'AMC Dine-In', 'addr:city': 'Midlothian', 'addr:state': 'VA' }, amc));
+  assert.ok(onList({ name: 'AMC 16 Galleria at Tyler' }, amc));
+  assert.ok(onList({ name: 'Regal Cinemas', 'addr:city': 'Augusta', 'addr:state': 'ME' }, regal));
+  assert.ok(onList({ name: 'Regal Cinemas Guam Megaplex 14' }, regal));
+  // Generic name without a city or state: can't tell, so left off.
+  assert.ok(!onList({ name: 'Regal Cinemas' }, regal));
+  // A named theatre that isn't listed doesn't sneak in through its city.
+  assert.ok(!onList({ name: 'Regal Crossgates', 'addr:city': 'Albany', 'addr:state': 'NY' }, regal));
+  assert.ok(!onList({ name: 'AMC', 'addr:city': 'Kokomo', 'addr:state': 'IN' }, amc));
+});
