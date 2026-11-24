@@ -7,9 +7,10 @@ import { buildQuery, guardAgainstDrops, isClosed, labelFor, loadBrands, toStores
 const brands = loadBrands(JSON.parse(readFileSync(new URL('./brands.json', import.meta.url), 'utf8')));
 const idx = (key) => brands.findIndex((b) => b.key === key);
 
-test('brands.json is valid and every brand points at deals', () => {
+test('brands.json is valid; only chains waiting for their deal have no deal IDs', () => {
   assert.ok(brands.length >= 30);
-  for (const b of brands) assert.ok(b.deals.length > 0);
+  const waiting = brands.filter((b) => !b.deals.length).map((b) => b.key);
+  assert.deepEqual(waiting.sort(), ['amc', 'regal']);
 });
 
 test('each chain gets its own small query, limited to U.S. areas', () => {
@@ -101,6 +102,8 @@ test('chains find their current deal IDs by business name', async () => {
   assert.deepEqual(m.get('homedepot'), ['AFP-0056']);
   assert.deepEqual(m.get('davebusters'), ['AFP-0031']);
   assert.deepEqual(m.get('gone'), []);
+  const r = matchDeals([{ key: 'regal', name: 'Regal', dealNames: ['Regal Cinemas'] }], [{ id: 'AFP-0500', name: 'Regal Cinemas' }]);
+  assert.deepEqual(r.get('regal'), ['AFP-0500']);
 });
 
 test('every chain in brands.json has a deal in the site deal list', async () => {
@@ -108,5 +111,36 @@ test('every chain in brands.json has a deal in the site deal list', async () => 
   const brands = JSON.parse(readFileSync(new URL('./brands.json', import.meta.url), 'utf8')).brands;
   const raw = JSON.parse(readFileSync(new URL('../../data/deals.json', import.meta.url), 'utf8'));
   const m = matchDeals(brands, raw.deals ?? raw);
-  for (const b of brands) assert.ok(m.get(b.key).length, b.name);
+  // Chains waiting for their deal to come back to the sheet have no deal IDs yet.
+  for (const b of brands) if (b.deals.length) assert.ok(m.get(b.key).length, b.name);
+});
+
+test('Regal: only theatres on the participating list', async () => {
+  const { onList, theatreKey } = await import('./build.mjs');
+  const regal = brands.find((b) => b.key === 'regal');
+  assert.ok(regal.listed.length > 250);
+  assert.equal(theatreKey('Regal Edwards Aliso Viejo & RPX'), 'alisoviejo');
+  // Listed
+  assert.ok(onList({ name: 'Regal Dimond Center 4DX', 'addr:state': 'AK' }, regal.listed));
+  assert.ok(onList({ name: 'Edwards Aliso Viejo Stadium 6', 'addr:city': 'Aliso Viejo', 'addr:state': 'CA' }, regal.listed));
+  assert.ok(onList({ name: 'Regal Killeen' }, regal.listed));
+  assert.ok(onList({ name: 'Regal Augusta', 'addr:state': 'ME', 'addr:city': 'Augusta' }, regal.listed));
+  // Not listed
+  assert.ok(!onList({ name: 'Regal Union Square', 'addr:state': 'NY' }, regal.listed));
+  assert.ok(!onList({ name: 'Regal Killeen', 'addr:state': 'GA' }, regal.listed), 'wrong state');
+  assert.ok(!onList({ name: 'Regal' }, regal.listed), 'no branch name');
+  assert.ok(!onList({}, regal.listed));
+});
+
+test('Regal places are dropped from the map unless listed', () => {
+  const regal = { type: 'node', lat: 31.1, lon: -97.7, tags: { 'brand:wikidata': 'Q835638', amenity: 'cinema' } };
+  const r = toStores(
+    [
+      { ...regal, id: 1, tags: { ...regal.tags, name: 'Regal Killeen', 'addr:state': 'TX' } },
+      { ...regal, id: 2, lat: 40.7, lon: -74, tags: { ...regal.tags, name: 'Regal Union Square', 'addr:state': 'NY' } },
+    ],
+    brands,
+  );
+  assert.equal(r.counts.regal, 1);
+  assert.equal(r.skipped.notListed, 1);
 });

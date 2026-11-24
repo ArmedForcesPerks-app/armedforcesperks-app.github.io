@@ -10,6 +10,7 @@
   ],
   "brands": [
     { "key": "adidas", "name": "Adidas", "deals": ["AFP-0001"], "match": { "wikidata": "Q3895" } },
+    { "key": "amc", "name": "AMC Theatres", "deals": [], "dealNames": ["AMC", "AMC Theaters", "AMC Movie Theatres"], "match": { "wikidata": "Q294721" }, "participating": true },
     { "key": "ariat", "name": "Ariat", "deals": ["AFP-0005"], "match": { "brand": "Ariat" } },
     { "key": "autozone", "name": "AutoZone", "deals": ["AFP-0009"], "match": { "wikidata": "Q4826087" } },
     { "key": "basspro", "name": "Bass Pro Shops", "deals": ["AFP-0011"], "match": { "wikidata": "Q4867953" } },
@@ -39,6 +40,7 @@
     { "key": "penske", "name": "Penske Truck Rental", "deals": ["AFP-0087"], "match": { "wikidata": "Q81234570" } },
     { "key": "pepboys", "name": "Pep Boys", "deals": ["AFP-0088"], "match": { "wikidata": "Q3375007" } },
     { "key": "purple", "name": "Purple", "deals": ["AFP-0091"], "match": { "wikidata": "Q28228105" } },
+    { "key": "regal", "name": "Regal", "deals": [], "match": { "wikidata": "Q835638" }, "participating": true, "onlyListed": "participating/regal.json", "dealNames": ["Regal Cinemas", "Regal Theatres", "Regal Movies"] },
     { "key": "rogershollands", "name": "Rogers & Hollands", "deals": ["AFP-0093"], "match": { "brand": "Rogers & Hollands" } },
     { "key": "sherwinwilliams", "name": "Sherwin-Williams", "deals": ["AFP-0098"], "match": { "wikidata": "Q48881" } },
     { "key": "take5", "name": "Take 5 Oil Change", "deals": ["AFP-0104"], "match": { "wikidata": "Q112359190" }, "requireTag": { "shop": "car_repair" } },
