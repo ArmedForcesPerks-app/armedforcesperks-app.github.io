@@ -1,0 +1,115 @@
+# Refreshes data/locations.json (stores for the app's "Near me" map) from OpenStreetMap.
+# Free: runs on GitHub Actions (free for public repositories) and the public Overpass API.
+#
+# - Monthly on the 3rd at 09:17 UTC, or any time from Actions > Store locations > Run workflow.
+# - Pull requests that change tools/store-locations/ run the tests and a trial download
+#   without publishing anything.
+# - If a chain suddenly loses more than half its stores, last month's stores are kept for it
+#   and the run summary says so. If the whole list collapses, nothing is published and the
+#   run fails (GitHub emails the repository owner).
+name: Store locations
+
+on:
+  schedule:
+    - cron: '17 9 3 * *'
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - 'tools/store-locations/**'
+      - '.github/workflows/store-locations.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tools/store-locations/test.mjs
+      # A quick check with three chains that the download still works (all chains if the pull
+      # request has the "full store trial" label). It's a heads-up only: the free map servers
+      # are sometimes busy, so a failed trial doesn't fail the check (and doesn't email anyone).
+      # The "Store locations report" check shows what happened.
+      - name: Trial download (nothing is published)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        timeout-minutes: 80
+        env:
+          ONLY: ${{ !contains(github.event.pull_request.labels.*.name, 'full store trial') && '--only homedepot,outback,amc' || '' }}
+        run: node tools/store-locations/build.mjs --dry-run $ONLY --report report.md
+      - name: Post the run report as a check
+        if: always() && hashFiles('report.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 - <<'PY' || true
+          import json, os, urllib.request
+          text = open('report.md', encoding='utf-8').read()[:60000]
+          body = {'name': 'Store locations report', 'head_sha': os.environ['SHA'], 'status': 'completed',
+                  'conclusion': 'neutral', 'output': {'title': 'Store download', 'summary': text.splitlines()[2] if len(text.splitlines()) > 2 else text[:200], 'text': text}}
+          req = urllib.request.Request(f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/check-runs",
+                                       data=json.dumps(body).encode(), method='POST',
+                                       headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+          print(urllib.request.urlopen(req).status)
+          PY
+
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pages: write
+      checks: write
+    # Only one publish at a time; a second one waits instead of cancelling the first.
+    concurrency:
+      group: store-locations-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build store list
+        run: node tools/store-locations/build.mjs --report report.md
+      - name: Post the run report as a check
+        if: always() && hashFiles('report.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 - <<'PY' || true
+          import json, os, urllib.request
+          text = open('report.md', encoding='utf-8').read()[:60000]
+          body = {'name': 'Store locations report', 'head_sha': os.environ['SHA'], 'status': 'completed',
+                  'conclusion': 'neutral', 'output': {'title': 'Store download', 'summary': text.splitlines()[2] if len(text.splitlines()) > 2 else text[:200], 'text': text}}
+          req = urllib.request.Request(f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/check-runs",
+                                       data=json.dumps(body).encode(), method='POST',
+                                       headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+          print(urllib.request.urlopen(req).status)
+          PY
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- data/locations.json && git ls-files --error-unmatch data/locations.json >/dev/null 2>&1; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/locations.json
+          git commit -m "Update store locations from OpenStreetMap"
+          git push
+          # Ask GitHub Pages to rebuild the site (a push from this job may not start it on its own).
+          curl -sS -X POST -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
