@@ -1,0 +1,12 @@
+# This repository is PUBLIC. These rules stop private files from ever being committed.
+# Spreadsheets (the master deal sheet, tester list, research files)
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+*.tsv
+~$*
+# Computer junk files
+.DS_Store
+Thumbs.db
+desktop.ini
