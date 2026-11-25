@@ -1,8 +1,9 @@
 # Refreshes data/locations.json (stores for the app's "Near me" map) from OpenStreetMap.
 # Free: runs on GitHub Actions (free for public repositories) and the public Overpass API.
 #
-# - Checked daily at 04:17 UTC (a quiet time for the public servers); a real download happens
-#   once the list is 27 days old. Or any time from Actions > Store locations > Run workflow.
+# - Checked daily at 04:17 UTC (a quiet time for the public servers); a full download happens
+#   once the list is 27 days old. On other days it only fills in chains the last run couldn't
+#   get (listed in data/locations-status.json), if any. Or any time from Actions > Store locations > Run workflow.
 # - If the public servers are too busy, the run ends quietly (no failure email) and the next
 #   day's run tries again. It only fails (and emails) if the list gets over 40 days old.
 # - Pull requests that change tools/store-locations/ run the tests and a trial download
@@ -16,6 +17,11 @@ on:
   schedule:
     - cron: '17 4 * * *'
   workflow_dispatch:
+    inputs:
+      fill:
+        description: 'Only download the chains the last run missed'
+        type: boolean
+        default: false
   pull_request:
     types: [opened, synchronize, reopened, labeled]
     paths:
@@ -85,7 +91,7 @@ jobs:
         with:
           node-version: 22
       - name: Build store list
-        run: node tools/store-locations/build.mjs --budget-min 120 --soft-fail-days 40 ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }} --report report.md
+        run: node tools/store-locations/build.mjs --budget-min 120 --soft-fail-days 40 ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }} ${{ inputs.fill && '--fill' || '' }} --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:
@@ -108,13 +114,13 @@ jobs:
             echo "No store list yet (the servers were busy). The next run will try again."
             exit 0
           fi
-          if git diff --quiet -- data/locations.json && git ls-files --error-unmatch data/locations.json >/dev/null 2>&1; then
+          git add data/locations.json data/locations-status.json 2>/dev/null || git add data/locations.json
+          if git diff --cached --quiet; then
             echo "No changes."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/locations.json
           git commit -m "Update store locations from OpenStreetMap"
           # The download takes about 45 minutes, and main may have moved on meanwhile
           # (for example the nightly deal sync), so catch up before pushing.
