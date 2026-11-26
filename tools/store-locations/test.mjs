@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildQuery, guardAgainstDrops, isClosed, labelFor, loadBrands, toStores, brandFor } from './build.mjs';
+import { addFromLocators, addressKey, buildQuery, guardAgainstDrops, isClosed, labelFor, loadBrands, locatorLabel, toStores, brandFor } from './build.mjs';
 
 const brands = loadBrands(JSON.parse(readFileSync(new URL('./brands.json', import.meta.url), 'utf8')));
 const idx = (key) => brands.findIndex((b) => b.key === key);
@@ -189,4 +189,65 @@ test('generic-named theatres match by state and city; aliases cover OSM spelling
   // A named theatre that isn't listed doesn't sneak in through its city.
   assert.ok(!onList({ name: 'Regal Crossgates', 'addr:city': 'Albany', 'addr:state': 'NY' }, regal));
   assert.ok(!onList({ name: 'AMC', 'addr:city': 'Kokomo', 'addr:state': 'IN' }, amc));
+});
+
+test('street addresses compare loosely: directions, abbreviations, Hawaii numbers', () => {
+  assert.equal(addressKey('2801 SW 27th Avenue, Ocala'), addressKey('2801 Southwest 27th Ave'));
+  assert.equal(addressKey('255 E.Basse, San Antonio'), addressKey('255 East Basse Road'));
+  assert.equal(addressKey('8401C Gateway Blvd W'), addressKey('8401 Gateway Boulevard West'));
+  assert.equal(addressKey('98-1005 Moanalua Rd, Space 229'), '98-1005 moa');
+  assert.notEqual(addressKey('98-1005 Moanalua Rd'), addressKey('98-1061 Moanalua Rd'));
+  assert.equal(addressKey('Walden Galleria'), '');
+  assert.equal(locatorLabel({ 'addr:street_address': '4465 N Grape Dr', 'addr:city': 'MOSES LAKE', 'addr:state': 'WA' }), '4465 N Grape Dr, Moses Lake, WA');
+});
+
+test('stores missing from OpenStreetMap are added from the chain locator, without duplicates', () => {
+  const az = idx('autozone');
+  const osm = { stores: [[az, 40.4555, -109.5287, '1 Main St, Vernal, UT'], [az, 40.0, -100.0, '']], counts: {}, skipped: {} };
+  const f = (lat, lon, props) => ({ geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { key: 'autozone', name: 'AutoZone', ...props } });
+  const out = addFromLocators(osm, brands, [
+    f(40.4556, -109.5288, { 'addr:street_address': '1 Main St' }), // same store, 15 m away
+    f(40.47, -109.5287, { 'addr:street_address': '1 Main Street', 'addr:city': 'Vernal' }), // same address, 1.6 km off
+    f(40.005, -100.0, { 'addr:street_address': '9 Elm St' }), // near an OSM store with no address
+    f(40.2, -109.3, { 'addr:street_address': '50 W Hwy 40', 'addr:city': 'ROOSEVELT', 'addr:state': 'UT' }), // missing: added
+    f(40.2, -109.3, { 'addr:street_address': '50 W Hwy 40', 'addr:city': 'ROOSEVELT', 'addr:state': 'UT' }), // the locator's own duplicate
+  ]);
+  assert.equal(out.counts.autozone, 3);
+  assert.deepEqual(out.added, { autozone: 1 });
+  assert.ok(out.stores.some((r) => r[3] === '50 W Hwy 40, Roosevelt, UT'));
+});
+
+test('a pin far from its street address is moved; locator pins far from their address use the address', () => {
+  const az = idx('autozone');
+  const osm = { stores: [[az, 33.0, -97.0, '125 E State Hwy 114, Roanoke, TX']], counts: {}, skipped: {} };
+  const out = addFromLocators(osm, brands, [
+    // Same address 5 km away; the Census geocoder agrees with the locator, so the map pin moves.
+    { geometry: { type: 'Point', coordinates: [-97.0, 33.045] }, properties: { key: 'autozone', name: 'AutoZone', 'addr:street_address': '125 East State Highway 114', census: [33.0452, -97.0001] } },
+    // A new store whose locator pin is 20 km from its address: placed at the address.
+    { geometry: { type: 'Point', coordinates: [-96.0, 32.0] }, properties: { key: 'autozone', name: 'AutoZone', 'addr:street_address': '7 Oak St', census: [32.2, -96.0] } },
+  ]);
+  const rows = out.stores.filter((r) => r[0] === az).sort((a, b) => a[1] - b[1]);
+  assert.deepEqual([rows[0][1], rows[0][2]], [32.2, -96]);
+  assert.deepEqual([rows[1][1], rows[1][2]], [33.045, -97]);
+  assert.equal(out.moved.length, 1);
+});
+
+test('a locator store with only an address (placed by the geocoder) is added but never moves a map pin', () => {
+  const az = idx('autozone');
+  const osm = { stores: [[az, 33.0, -97.0, '125 E State Hwy 114, Roanoke, TX']], counts: {}, skipped: {} };
+  const out = addFromLocators(osm, brands, [
+    { geometry: { type: 'Point', coordinates: [-97.0001, 33.0452] }, properties: { key: 'autozone', name: 'AutoZone', 'addr:street_address': '125 East State Highway 114', census: [33.0452, -97.0001], from_address: true } },
+    { geometry: { type: 'Point', coordinates: [-96.0, 32.2] }, properties: { key: 'autozone', name: 'AutoZone', 'addr:street_address': '7 Oak St', census: [32.2, -96.0], from_address: true } },
+  ]);
+  const rows = out.stores.filter((r) => r[0] === az).sort((a, b) => a[1] - b[1]);
+  assert.equal(rows.length, 2);
+  assert.deepEqual([rows[1][1], rows[1][2]], [33.0, -97.0]);
+  assert.equal(out.moved.length, 0);
+});
+
+test('locator stores respect participating lists and excluded names', () => {
+  const take5 = { geometry: { type: 'Point', coordinates: [-90, 35] }, properties: { key: 'take5', name: 'Take 5 Car Wash', 'addr:street_address': '1 A St' } };
+  const regal = { geometry: { type: 'Point', coordinates: [-91, 36] }, properties: { key: 'regal', name: 'Regal Nowhere Special 99', 'addr:city': 'Nowhere', 'addr:state': 'ZZ' } };
+  const out = addFromLocators({ stores: [], counts: {}, skipped: {} }, brands, [take5, regal]);
+  assert.equal(out.stores.length, 0);
 });

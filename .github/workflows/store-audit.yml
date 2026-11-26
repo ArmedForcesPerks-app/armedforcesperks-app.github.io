@@ -1,0 +1,39 @@
+# Checks the published store list against All the Places (each chain's own store locator data,
+# collected by an open-source project) to find missed stores and misplaced pins.
+# Run by hand (Actions > Store audit > Run workflow). It publishes nothing on the website: it
+# saves the comparison data to the "store-audit-data" branch for review.
+name: Store audit
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tools/store-locations/atp-extract.py'
+      - '.github/workflows/store-audit.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      # Report-only, so a hiccup never fails the run (or emails anyone).
+      - name: Pull our chains out of the latest All the Places run
+        continue-on-error: true
+        run: python3 tools/store-locations/atp-extract.py atp-stores.geojson 2>&1 | tee atp-extract.log; test -s atp-stores.geojson
+      - name: Save to the store-audit-data branch
+        if: hashFiles('atp-stores.geojson') != ''
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/out && mv atp-stores.geojson atp-extract.log /tmp/out/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan store-audit-data
+          git rm -rq --cached . && rm -rf -- * .github
+          cp /tmp/out/* .
+          git add atp-stores.geojson atp-extract.log
+          git commit -qm "Store audit data $(date -u +%F)"
+          git push -f origin store-audit-data

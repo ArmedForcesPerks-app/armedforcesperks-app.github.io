@@ -111,6 +111,8 @@ export function loadBrands(raw) {
     if (hasWd && !/^Q\d+$/.test(m.wikidata)) throw new Error(`${where}: bad Wikidata ID`);
     if (hasBrand && /["\\]/.test(m.brand)) throw new Error(`${where}: brand text can't contain quotes`);
     const exclude = b.excludeName ? new RegExp(b.excludeName, 'i') : null;
+    // Extra names to leave out of the chain's own store-locator data (e.g. Take 5 Car Wash).
+    const locatorExclude = b.locatorExcludeName ? new RegExp(b.locatorExcludeName, 'i') : null;
     const req = b.requireTag && typeof b.requireTag === 'object' ? Object.entries(b.requireTag) : [];
     let listed = null;
     if (b.onlyListed !== undefined) {
@@ -125,6 +127,7 @@ export function loadBrands(raw) {
       wikidata: hasWd ? m.wikidata : null,
       brand: hasBrand ? m.brand : null,
       exclude,
+      locatorExclude,
       requireTag: req,
       listed,
       /** Other names the deal sheet may use for this business, e.g. "Regal Cinemas". */
@@ -371,6 +374,133 @@ export function toStores(elements, brands) {
  * If a brand shrank by more than half (usually someone's OSM mistake, or Overpass returning
  * partial data), keep last month's stores for that brand instead. Returns the merged rows.
  */
+// ---------------------------------------------------------------------------
+// Filling gaps from each chain's own store locator (All the Places)
+// ---------------------------------------------------------------------------
+
+/** Same store if the locator's pin is this close to an OpenStreetMap one. */
+const SAME_STORE_METERS = 300;
+/** ...or within this distance AND the same street number and street (one pin is off). */
+const SAME_ADDRESS_METERS = 10000;
+/** A pin this far from where its street address geocodes is treated as misplaced. */
+const PIN_CHECK_METERS = 1000;
+/** ...or within this distance when the OSM store has no street address to compare. */
+const NO_ADDRESS_METERS = 1500;
+
+const DIRECTIONS = new Set(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw', 'north', 'south', 'east', 'west', 'northeast', 'northwest', 'southeast', 'southwest']);
+
+/**
+ * "1601 Walden Avenue, ..." -> "1601 wal": house number + the first 3 letters of the street
+ * name, so "SW 27th Ave" = "Southwest 27th Avenue" and "E.Basse" = "East Basse Road".
+ * Hawaii-style numbers ("98-1005") are kept whole. '' when there's no street number.
+ */
+export function addressKey(label) {
+  const words = String(label ?? '').split(',')[0].toLowerCase().replace(/[.#]/g, ' ').split(/\s+/).filter(Boolean);
+  const num = /^(\d+(?:-\d+)?)[a-z]?$/.exec(words[0] ?? '');
+  if (!num) return '';
+  let i = 1;
+  while (i < words.length - 1 && (DIRECTIONS.has(words[i]) || (words[i] === 'north' && words[i + 1] === 'west'))) i++;
+  const street = (words[i] ?? '').replace(/[^a-z0-9]/g, '');
+  return street ? `${num[1]} ${street.slice(0, 3)}` : '';
+}
+
+/** "MOSES LAKE" -> "Moses Lake", "3930 N STOCKTON HILL RD, Suite 5" -> "3930 N Stockton Hill Rd, Suite 5". */
+function tidyCase(s) {
+  if (!s) return s;
+  return s
+    .replace(/\b[A-Z][A-Z']{2,}\b|\b(?:RD|ST|DR|LN|CT|AV|PL|SQ)\b/g, (w) => w[0] + w.slice(1).toLowerCase())
+    .replace(/\bO'([a-z])/g, (_, c) => `O'${c.toUpperCase()}`);
+}
+
+/** Store label from a locator entry: "4180 Union Rd, Cheektowaga, NY". */
+export function locatorLabel(p) {
+  const street = clean(p['addr:street_address']) || clean(String(p['addr:full'] ?? '').split(',')[0]);
+  const parts = [tidyCase(street), tidyCase(clean(p['addr:city'])), clean(p['addr:state']).toUpperCase().slice(0, 2)].filter(Boolean);
+  const label = parts.join(', ');
+  return label.length > MAX_LABEL ? label.slice(0, MAX_LABEL - 1).trimEnd() + '…' : label;
+}
+
+/**
+ * Adds stores that OpenStreetMap is missing, from each chain's own store locator as collected
+ * by All the Places (alltheplaces.xyz, CC0). A locator store counts as already on the map if an
+ * OSM store of the same chain is within 300 m, or within 3 km at the same street address; then
+ * the OSM pin is kept (it's usually drawn on the building itself). Chains with no locator data
+ * this month are left as they are.
+ */
+export function addFromLocators(built, brands, features) {
+  const byKey = new Map();
+  for (const f of features ?? []) {
+    const p = f?.properties ?? {};
+    const c = f?.geometry?.coordinates;
+    if (!Array.isArray(c) || typeof c[0] !== 'number' || typeof c[1] !== 'number') continue;
+    const at = coordsOf({ type: 'node', lat: c[1], lon: c[0] });
+    if (!at) continue;
+    // Where the U.S. Census Bureau geocoder puts the street address (see atp-extract.py).
+    const cz = Array.isArray(p.census) ? coordsOf({ type: 'node', lat: p.census[0], lon: p.census[1] }) : null;
+    if (!byKey.has(p.key)) byKey.set(p.key, []);
+    byKey.get(p.key).push({ at, p, census: cz });
+  }
+  const rows = new Map(brands.map((b) => [b.key, []]));
+  for (const r of built.stores) rows.get(brands[r[0]].key).push(r);
+  const added = {};
+  const moved = [];
+  const skippedNotListed = [];
+  brands.forEach((b, i) => {
+    const list = rows.get(b.key);
+    const osm = list.map((r) => ({ at: [r[1], r[2]], addr: addressKey(r[3]), row: r }));
+    let n = 0;
+    for (const { at: locatorAt, p, census } of byKey.get(b.key) ?? []) {
+      // A locator pin far from where its own street address is: trust the address.
+      const at = census && meters(locatorAt, census) > PIN_CHECK_METERS ? census : locatorAt;
+      const name = clean(p.name);
+      if (b.exclude && (b.exclude.test(name) || b.exclude.test(clean(p.branch)))) continue;
+      if (b.locatorExclude && b.locatorExclude.test(name)) continue;
+      if (b.listed && !onList({ name, branch: p.branch, 'addr:city': p['addr:city'], 'addr:state': p['addr:state'] }, b.listed)) {
+        if (skippedNotListed.length < 200) skippedNotListed.push(`${name}, ${p['addr:city'] ?? ''}`);
+        continue;
+      }
+      const label = locatorLabel(p);
+      const addr = addressKey(label);
+      const known = osm.find((o) => {
+        const d = meters(o.at, at);
+        if (d <= SAME_STORE_METERS) return true;
+        // Same street address: the same store, with one of the two pins a bit off.
+        if (d <= SAME_ADDRESS_METERS && addr && o.addr === addr) return true;
+        // An OSM store with no address can't be compared that way; nearby counts as the same.
+        return d <= NO_ADDRESS_METERS && !o.addr;
+      });
+      if (known) {
+        // The OSM store has no address: show the locator's.
+        if (known.row && !known.row[3] && label) {
+          known.row[3] = label;
+          known.addr = addr;
+        }
+        // Same store, pins far apart: if the address agrees with the locator, the OSM pin is the
+        // one that's off, so move it.
+        if (known.row && census && !p.from_address && meters(known.at, census) > PIN_CHECK_METERS && meters(at, census) <= SAME_STORE_METERS) {
+          moved.push(`${b.name}, ${known.row[3] || label}: moved ${(meters(known.at, at) / 1609.34).toFixed(1)} mi`);
+          known.row[1] = at[0];
+          known.row[2] = at[1];
+          known.at = at;
+        }
+        continue;
+      }
+      osm.push({ at, addr }); // also stops the locator's own duplicates
+      list.push([i, at[0], at[1], label]);
+      n++;
+    }
+    if (n) added[b.key] = n;
+  });
+  const stores = [];
+  const counts = {};
+  brands.forEach((b) => {
+    const list = rows.get(b.key).sort((x, y) => x[1] - y[1] || x[2] - y[2]);
+    counts[b.key] = list.length;
+    stores.push(...list);
+  });
+  return { ...built, stores, counts, added, moved, locatorNotListed: skippedNotListed };
+}
+
 export function guardAgainstDrops(result, brands, previous, failed = new Set(), quiet = new Set()) {
   const warnings = [...[...failed].filter((k) => !quiet.has(k)).map((k) => `${brands.find((b) => b.key === k)?.name ?? k}: download failed, kept last month's stores.`)];
   if (!previous || !Array.isArray(previous.brands) || !Array.isArray(previous.stores)) return { ...result, warnings };
@@ -518,6 +648,13 @@ async function main() {
     }
     fill = true;
   }
+  // --should-run: only say whether today's run has anything to do (for the workflow).
+  if (args.includes('--should-run')) {
+    const run = !(minAge > 0 && fileAgeDays() < minAge && (!missingChains().length || !existsSync(OUT)));
+    console.log(`run=${run}`);
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `run=${run}\n`);
+    return;
+  }
   const allBrands = loadBrands(JSON.parse(readFileSync(BRANDS_FILE, 'utf8')));
   // --only a,b,c: a quick trial with a few chains (pull requests use this). Never publishes.
   const only = argValue('--only')?.split(',').filter(Boolean);
@@ -597,11 +734,32 @@ async function main() {
   let osmDate = typeof base === 'string' ? base.slice(0, 10) : null;
 
   const previous = !only && existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : null;
-  const built = toStores(raw.elements, brands);
+  // --atp file: stores from each chain's own locator (All the Places), to fill OSM's gaps.
+  const atpFile = argValue('--atp');
+  let atp = null;
+  if (atpFile && existsSync(atpFile)) {
+    try {
+      atp = JSON.parse(readFileSync(atpFile, 'utf8'));
+    } catch (e) {
+      log(`Couldn't read the store-locator data (${e.message}); using OpenStreetMap only.`);
+    }
+  } else if (atpFile) {
+    log('No store-locator data this time; using OpenStreetMap only.');
+  }
+  const osmOnly = toStores(raw.elements, brands);
+  const built = atp ? addFromLocators(osmOnly, brands, atp.features) : osmOnly;
   const notListed = built.notListedNames ?? [];
   // In a fill-in run, chains not downloaded this time keep their published stores, quietly.
   const notFetched = new Set(fill ? brands.filter((b) => !toFetch.includes(b)).map((b) => b.key) : []);
-  const result = guardAgainstDrops(built, brands, previous, new Set([...failed, ...notFetched]), notFetched);
+  let result = guardAgainstDrops(built, brands, previous, new Set([...failed, ...notFetched]), notFetched);
+  // A chain whose OSM download failed keeps last month's stores; still add any store its
+  // locator has that last month's list didn't (stores already there are matched, not doubled).
+  if (atp && failed.size) {
+    for (const k of failed) delete built.added[k]; // those were replaced by last month's list
+    const again = addFromLocators(result, brands, atp.features);
+    for (const [k, n] of Object.entries(again.added)) built.added[k] = (built.added[k] ?? 0) + n;
+    result = { ...result, stores: again.stores, counts: again.counts };
+  }
   // (A previous date far older than that list itself came from a stale server copy, whose chains
   // are being filled in now, so it's not carried over.)
   const prevDateOk =
@@ -621,7 +779,7 @@ async function main() {
     license: 'ODbL-1.0',
     attribution: '© OpenStreetMap contributors',
     notice:
-      'Store locations from OpenStreetMap (openstreetmap.org/copyright), available under the Open Database License (opendatacommons.org/licenses/odbl/1-0/). Locations can be missing, closed or out of date.',
+      'Store locations from OpenStreetMap (openstreetmap.org/copyright), available under the Open Database License (opendatacommons.org/licenses/odbl/1-0/), with stores missing from OpenStreetMap added from the chains\' own store locators as collected by All the Places (alltheplaces.xyz, CC0). Locations can be missing, closed or out of date.',
     brands: brands.map((b) => ({ key: b.key, name: b.name, deals: dealIds.get(b.key) ?? b.deals, participating: b.participating })),
     stores: result.stores,
   };
@@ -632,11 +790,12 @@ async function main() {
     `${fill ? 'Fill-in run. ' : ''}OSM data as of ${osmDate ?? 'unknown'}. ${result.stores.length} stores from ${brands.length} chains.${failed.size ? ` Still missing (tried again daily): ${brands.filter((b) => failed.has(b.key)).map((b) => b.name).join(', ')}.` : ''}`,
     `Skipped: ${result.skipped.closed} closed, ${result.skipped.duplicate} duplicates, ${result.skipped.noCoords} without a usable position, ${result.skipped.noBrand} other matches, ${result.skipped.notListed ?? 0} not on a participating-locations list.`,
     ``,
-    `| Chain | Stores |`,
-    `| --- | ---: |`,
-    ...brands.map((b) => `| ${b.name} | ${result.counts[b.key] ?? 0} |`),
+    `| Chain | Stores | Added from the chain's store locator |`,
+    `| --- | ---: | ---: |`,
+    ...brands.map((b) => `| ${b.name} | ${result.counts[b.key] ?? 0} | ${built.added?.[b.key] ?? (atp ? 0 : '–')} |`),
   ];
   if (result.warnings.length) lines.push('', '### Check these', '', ...result.warnings.map((w) => `- ${w}`));
+  if (built.moved?.length) lines.push('', `### Pins moved to the store's street address (${built.moved.length})`, '', ...built.moved.map((m) => `- ${m}`));
   if (raw.elements.length && notListed.length) {
     lines.push('', '### Left off: not on a participating-locations list', '', ...notListed.sort().map((n) => `- ${n}`));
   }

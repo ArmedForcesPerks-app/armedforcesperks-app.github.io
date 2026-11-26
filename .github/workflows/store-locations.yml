@@ -34,7 +34,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 200
     permissions:
       contents: read
       checks: write
@@ -48,13 +48,18 @@ jobs:
       # request has the "full store trial" label). It's a heads-up only: the free map servers
       # are sometimes busy, so a failed trial doesn't fail the check (and doesn't email anyone).
       # The "Store locations report" check shows what happened.
+      - name: Get store-locator data for the full trial
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'full store trial')
+        continue-on-error: true
+        timeout-minutes: 100
+        run: python3 tools/store-locations/atp-extract.py atp-stores.geojson
       - name: Trial download (nothing is published)
         if: github.event_name == 'pull_request'
         continue-on-error: true
         timeout-minutes: 80
         env:
           ONLY: ${{ !contains(github.event.pull_request.labels.*.name, 'full store trial') && '--only homedepot,regal,amc' || '' }}
-        run: node tools/store-locations/build.mjs --dry-run $ONLY --budget-min 70 --report report.md
+        run: node tools/store-locations/build.mjs --dry-run $ONLY --atp atp-stores.geojson --budget-min 70 --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:
@@ -76,7 +81,7 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 260
     permissions:
       contents: write
       pages: write
@@ -90,8 +95,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Anything to do today?
+        id: due
+        run: node tools/store-locations/build.mjs --should-run ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }}
+      # Each chain's own store-locator data (All the Places), used to add stores OpenStreetMap is
+      # missing and to check pins. If it's unavailable, the list is built from OpenStreetMap alone.
+      - name: Get store-locator data
+        if: steps.due.outputs.run == 'true'
+        continue-on-error: true
+        timeout-minutes: 100
+        run: python3 tools/store-locations/atp-extract.py atp-stores.geojson
       - name: Build store list
-        run: node tools/store-locations/build.mjs --budget-min 120 --soft-fail-days 40 ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }} ${{ inputs.fill && '--fill' || '' }} --report report.md
+        if: steps.due.outputs.run == 'true'
+        run: node tools/store-locations/build.mjs --atp atp-stores.geojson --budget-min 120 --soft-fail-days 40 ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }} ${{ inputs.fill && '--fill' || '' }} --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:
