@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Military Discounts and Benefits | Armed Forces Perks</title>
+  <meta name="description" content="Browse military discounts and benefits for active duty, Guard and Reserve, veterans, retirees, spouses and families. Each deal links to the business's own page and shows when it was last checked. Free, no account, no ads.">
+  <link rel="canonical" href="https://armedforcesperks.com/deals.html">
+  <meta property="og:title" content="Military Discounts and Benefits | Armed Forces Perks">
+  <meta property="og:description" content="Browse military discounts and benefits for active duty, Guard and Reserve, veterans, retirees, spouses and families. Free, no account, no ads.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://armedforcesperks.com/deals.html">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#14213d">
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="preload" href="/data/deals.json" as="fetch" crossorigin="anonymous">
+  <script src="/assets/deals-check.js" defer></script>
+  <script type="module" src="/assets/deals.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="Armed Forces Perks home">
+        <img src="/assets/logo.svg" alt="" width="34" height="34">
+        <span>Armed Forces Perks</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="/">Home</a>
+        <a href="/deals.html" aria-current="page">Deals</a>
+        <a href="/disclosures.html">Disclosures</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+        <a href="/delete-account.html">Your data</a>
+        <a href="/contact.html">Contact</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="page-head">
+      <div class="wrap">
+        <h1>Military discounts and benefits</h1>
+        <p class="lead">Every deal in the free Armed Forces Perks app, for active duty, Guard and Reserve, veterans, retirees, and military families. Each one links to the business's own page and shows when we last checked it. No account, no ads, no sign-up.</p>
+      </div>
+    </div>
+
+    <section class="deals-section">
+      <div class="wrap">
+        <div class="note disclose" id="disclosure">
+          <p><strong>Independent, not official.</strong> Armed Forces Perks is not affiliated with or endorsed by the Department of Defense, the VA, any branch of service, or any government agency.</p>
+          <p><strong>How we keep it free.</strong> Some deals may use affiliate links, marked <strong>"Paid link"</strong>. If you buy after clicking one, we earn a commission and your price stays the same. Commissions never decide which deals we list. <a href="/disclosures.html">Affiliate disclosure</a>.</p>
+        </div>
+
+        <div class="filters" id="filters" hidden>
+          <div class="field field-search">
+            <label for="q">Search</label>
+            <input id="q" type="search" placeholder="Stores or things, like boots" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="80">
+          </div>
+          <div class="field">
+            <label for="status">Show deals for</label>
+            <select id="status">
+              <option value="">Everyone</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="cat">Category</label>
+            <select id="cat">
+              <option value="">All categories</option>
+            </select>
+          </div>
+          <div class="field field-checks">
+            <label class="check"><input type="checkbox" id="confirmed" disabled> <span>Only deals that name my status</span></label>
+            <label class="check"><input type="checkbox" id="hide-review"> <span>Hide deals that need review</span></label>
+          </div>
+          <div class="field field-reset">
+            <button type="button" class="btn-plain" id="reset">Clear all</button>
+          </div>
+        </div>
+
+        <div class="results-bar">
+          <p id="count" class="count" role="status" aria-live="polite">Loading deals&hellip;</p>
+          <p id="updated" class="updated"></p>
+        </div>
+        <p id="search-note" class="search-note" hidden></p>
+
+        <noscript>
+          <div class="box"><p>The deal list needs JavaScript, which looks turned off in your browser. Turn it on and reload this page, or <a href="/contact.html">email us</a> if you need help.</p></div>
+        </noscript>
+        <div class="box" id="load-error" hidden>
+          <p><strong>We couldn't load the deal list.</strong> Check your connection and reload the page. If it keeps happening, please <a href="/contact.html">let us know</a>.</p>
+        </div>
+
+        <h2 class="visually-hidden">Deals</h2>
+        <ul class="deal-list" id="deal-list"></ul>
+        <div class="more-row">
+          <button type="button" class="btn btn-navy" id="more" hidden>Show more deals</button>
+        </div>
+
+        <div class="deals-foot">
+          <h2>Before you buy</h2>
+          <p>Businesses can change or end offers at any time, and terms can vary by location. Each business decides who qualifies and how it checks. Always confirm the details with the business before you buy. A deal marked <strong>Needs review</strong> is one we could not fully confirm on the business's page, so check it with the business first.</p>
+          <p>Something wrong, ended, or missing? <a href="/contact.html">Tell us</a> and we will fix it. Business owners can have a military discount listed for free.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="wrap">
+      <ul class="links">
+        <li><a href="/deals.html">Deals</a></li>
+        <li><a href="/privacy.html">Privacy Policy</a></li>
+        <li><a href="/terms.html">Terms of Use</a></li>
+        <li><a href="/disclosures.html">Affiliate disclosure</a></li>
+        <li><a href="/delete-account.html">Your data</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+      </ul>
+      <p><strong>Independent app.</strong> Armed Forces Perks is not affiliated with, endorsed by, or sponsored by the U.S. Department of Defense (also called the Department of War), the Department of Veterans Affairs, the Department of Homeland Security, the U.S. Coast Guard, any branch of the U.S. Armed Forces, or any other government agency. No government endorsement is stated or implied.</p>
+      <p>Some deals use affiliate links: if you buy after tapping one, we earn a commission, and your price stays the same. These links are labeled "Paid link" in the app and on our Deals page. <a href="/disclosures.html">Learn more</a>. Business names and trademarks belong to their owners and do not mean those businesses endorse or partner with us.</p>
+      <p>Armed Forces Perks is operated by Armed Forces Perks LLC, a Kentucky limited liability company.</p>
+      <p>&copy; 2026 Armed Forces Perks LLC. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
