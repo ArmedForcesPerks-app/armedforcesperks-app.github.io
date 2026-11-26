@@ -9,7 +9,7 @@ build can tell which pin is right when the map and the store locator disagree.
 
 Usage: python3 atp-extract.py OUT.geojson   (downloads the latest All the Places run, ~3 GB)
 """
-import csv, io, json, os, sys, urllib.request, uuid, zipfile
+import csv, io, json, os, sys, time, urllib.request, uuid, zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 UA = {'User-Agent': 'ArmedForcesPerks-store-audit/1.0 (+https://armedforcesperks.com)'}
@@ -23,8 +23,9 @@ def get(url):
 KEEP = ('name', 'branch', 'addr:street_address', 'addr:full', 'addr:city', 'addr:state',
         'addr:postcode', 'addr:country', 'ref', 'website', 'opening_hours')
 RUNS = 'https://data.alltheplaces.xyz/runs/'
-OLDER_RUNS = 10       # a chain missing from the latest run is looked for in up to this many older runs
+OLDER_RUNS = 6        # a chain missing from the latest run is looked for in up to this many older runs
 OLDER_MAX_DAYS = 75   # ...as long as that run is no older than this
+OLDER_BUDGET_MIN = 45  # and stops starting older runs after this long, so the whole step stays well under its time limit
 
 
 def download(url):
@@ -149,9 +150,12 @@ def main(out):
         print('only part of the list in the latest run:', {k: count(feats, k) for k in sorted(partial)})
     missing = ({b['key'] for b in brands} - set(spiders)) | partial
     print('not (fully) in the latest run:', sorted(missing))
-    tried = 0
+    tried, began = 0, time.time()
     for old_id, url in older_runs(run_id):
         if not missing or tried >= OLDER_RUNS or run_age_days(run_id, old_id) > OLDER_MAX_DAYS:
+            break
+        if time.time() - began > OLDER_BUDGET_MIN * 60:
+            print('out of time for older runs')
             break
         tried += 1
         print('looking in older run', old_id, 'for', sorted(missing))
