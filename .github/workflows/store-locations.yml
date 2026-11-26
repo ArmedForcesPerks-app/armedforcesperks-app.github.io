@@ -34,7 +34,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 140
+    timeout-minutes: 200
     permissions:
       contents: read
       checks: write
@@ -51,7 +51,7 @@ jobs:
       - name: Get store-locator data for the full trial
         if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'full store trial')
         continue-on-error: true
-        timeout-minutes: 45
+        timeout-minutes: 100
         run: python3 tools/store-locations/atp-extract.py atp-stores.geojson
       - name: Trial download (nothing is published)
         if: github.event_name == 'pull_request'
@@ -81,7 +81,7 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 200
+    timeout-minutes: 260
     permissions:
       contents: write
       pages: write
@@ -103,7 +103,7 @@ jobs:
       - name: Get store-locator data
         if: steps.due.outputs.run == 'true'
         continue-on-error: true
-        timeout-minutes: 45
+        timeout-minutes: 100
         run: python3 tools/store-locations/atp-extract.py atp-stores.geojson
       - name: Build store list
         if: steps.due.outputs.run == 'true'

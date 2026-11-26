@@ -20,33 +20,50 @@ def get(url):
     return urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=600)
 
 
-def main(out):
-    brands = json.load(open(os.path.join(HERE, 'brands.json')))
-    brands = brands['brands'] if isinstance(brands, dict) else brands
-    by_qid = {b['match']['wikidata']: b['key'] for b in brands if 'wikidata' in b['match']}
-    by_name = {b['match']['brand'].lower(): b['key'] for b in brands if 'brand' in b['match']}
-    latest = json.load(get('https://data.alltheplaces.xyz/runs/latest.json'))
-    print('run:', {k: v for k, v in latest.items() if not isinstance(v, (dict, list))})
-    url = latest.get('output_url') or latest.get('output', {}).get('url')
+KEEP = ('name', 'branch', 'addr:street_address', 'addr:full', 'addr:city', 'addr:state',
+        'addr:postcode', 'addr:country', 'ref', 'website', 'opening_hours')
+RUNS = 'https://data.alltheplaces.xyz/runs/'
+OLDER_RUNS = 6        # a chain missing from the latest run is looked for in up to this many older runs
+OLDER_MAX_DAYS = 75   # ...as long as that run is no older than this
+
+
+def download(url):
     tmp = os.path.join(os.environ.get('RUNNER_TEMP', '/tmp'), 'atp.zip')
     with get(url) as r, open(tmp, 'wb') as f:
         while chunk := r.read(1 << 20):
             f.write(chunk)
     print('downloaded', os.path.getsize(tmp) // (1 << 20), 'MB')
+    return tmp
+
+
+def scan(path, by_qid, by_name, named, wanted, run_id, quiet=False):
+    """Our chains' US stores in one All the Places run. wanted=None keeps every chain; otherwise only those keys.
+    Returns (features, {key: set(spiders)})."""
     feats, spiders = [], {}
-    with zipfile.ZipFile(tmp) as z:
+    needles = None
+    if wanted is not None:  # cheap text check so an older run's ~5,000 files needn't all be parsed
+        needles = [q.encode() for q, k in by_qid.items() if k in wanted]
+        needles += [n.encode() for n, k in by_name.items() if k in wanted]
+    with zipfile.ZipFile(path) as z:
         for name in z.namelist():
             if not name.endswith('.geojson'):
                 continue
             try:
-                data = json.load(io.TextIOWrapper(z.open(name), encoding='utf-8'))
+                raw = z.read(name)
+                if needles is not None and not any(n in low for low in (raw, raw.lower()) for n in needles):
+                    continue
+                data = json.loads(raw)
             except Exception as e:  # a broken spider file shouldn't stop the rest
-                print('skip', name, e)
+                if not quiet:
+                    print('skip', name, e)
                 continue
             for ft in data.get('features') or []:
                 p = ft.get('properties') or {}
-                key = by_qid.get(p.get('brand:wikidata')) or by_name.get(str(p.get('brand', '')).lower())
-                if not key:
+                qid = p.get('brand:wikidata')
+                key = by_qid.get(qid) if qid else by_name.get(str(p.get('brand', '')).strip().lower())
+                if qid and not key and str(p.get('brand', '')).strip().lower() in named:
+                    key = by_name[str(p['brand']).strip().lower()]
+                if not key or (wanted is not None and key not in wanted):
                     continue
                 country = str(p.get('addr:country') or '').upper()
                 if country and country not in COUNTRIES:
@@ -54,14 +71,78 @@ def main(out):
                 g = ft.get('geometry') or {}
                 if g.get('type') != 'Point':
                     continue
-                keep = {k: p[k] for k in ('name', 'branch', 'addr:street_address', 'addr:full', 'addr:city', 'addr:state',
-                                          'addr:postcode', 'addr:country', 'ref', 'website', 'opening_hours') if k in p}
+                keep = {k: p[k] for k in KEEP if k in p}
                 keep['key'] = key
                 keep['spider'] = p.get('@spider')
+                if wanted is not None:
+                    keep['atp_run'] = run_id  # from an older run: the chain's spider failed in the latest one
                 feats.append({'type': 'Feature', 'geometry': g, 'properties': keep})
                 spiders.setdefault(key, set()).add(p.get('@spider'))
+    return feats, spiders
+
+
+def older_runs(latest_id):
+    """Earlier All the Places runs, newest first: [(run_id, zip url)]."""
+    try:
+        hist = json.load(get(RUNS + 'history.json'))
+    except Exception as e:
+        print('could not list older runs:', e)
+        return []
+    if isinstance(hist, dict):
+        hist = hist.get('runs') or list(hist.values())
+    out = []
+    for r in hist:
+        if not isinstance(r, dict) or not r.get('run_id') or r['run_id'] >= latest_id:
+            continue
+        url = r.get('output_url') or f"https://alltheplaces-data.openaddresses.io/runs/{r['run_id']}/output.zip"
+        out.append((r['run_id'], url))
+    return sorted(out, reverse=True)
+
+
+def run_age_days(a, b):
+    from datetime import datetime
+    f = lambda s: datetime.strptime(s[:10], '%Y-%m-%d')
+    return (f(a) - f(b)).days
+
+
+def main(out):
+    brands = json.load(open(os.path.join(HERE, 'brands.json')))
+    brands = brands['brands'] if isinstance(brands, dict) else brands
+    by_qid = {b['match']['wikidata']: b['key'] for b in brands if 'wikidata' in b['match']}
+    by_name = {b['match']['brand'].lower(): b['key'] for b in brands if 'brand' in b['match']}
+    named = set(by_name)  # chains matched by brand name in OSM too (no Wikidata ID): match by name whatever the ID
+    # Some spiders leave out the Wikidata ID: then an exact brand-name match counts too.
+    by_name.update({b['name'].lower(): b['key'] for b in brands if b['name'].lower() not in by_name})
+    latest = json.load(get(RUNS + 'latest.json'))
+    print('run:', {k: v for k, v in latest.items() if not isinstance(v, (dict, list))})
+    run_id = latest.get('run_id') or ''
+    tmp = download(latest.get('output_url') or latest.get('output', {}).get('url'))
+    feats, spiders = scan(tmp, by_qid, by_name, named, None, run_id)
+    os.remove(tmp)
+    missing = {b['key'] for b in brands} - set(spiders)
+    print('not in the latest run:', sorted(missing))
+    tried = 0
+    for old_id, url in older_runs(run_id):
+        if not missing or tried >= OLDER_RUNS or run_age_days(run_id, old_id) > OLDER_MAX_DAYS:
+            break
+        tried += 1
+        print('looking in older run', old_id, 'for', sorted(missing))
+        try:
+            tmp = download(url)
+            more, found = scan(tmp, by_qid, by_name, named, missing, old_id, quiet=True)
+            os.remove(tmp)
+        except Exception as e:
+            print('older run failed:', e)
+            continue
+        for k in found:
+            print(f'  {k}: {sum(1 for f in more if f["properties"]["key"] == k)} stores from {old_id}')
+        feats += more
+        for k, v in found.items():
+            spiders[k] = v
+        missing -= set(found)
+    print('no locator data found for:', sorted(missing))
     geocode(feats)
-    json.dump({'type': 'FeatureCollection', 'run': latest.get('run_id'), 'features': feats}, open(out, 'w'))
+    json.dump({'type': 'FeatureCollection', 'run': run_id, 'features': feats}, open(out, 'w'))
     print(len(feats), 'stores kept')
     for k in sorted(spiders):
         print(k, sorted(s for s in spiders[k] if s))
