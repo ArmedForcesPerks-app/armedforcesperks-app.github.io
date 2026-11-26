@@ -404,9 +404,12 @@ export function addressKey(label) {
   return street ? `${num[1]} ${street.slice(0, 3)}` : '';
 }
 
-/** "MOSES LAKE" -> "Moses Lake"; mixed-case text is left alone. */
+/** "MOSES LAKE" -> "Moses Lake", "3930 N STOCKTON HILL RD, Suite 5" -> "3930 N Stockton Hill Rd, Suite 5". */
 function tidyCase(s) {
-  return s && s === s.toUpperCase() && /[A-Z]{2}/.test(s) ? s.toLowerCase().replace(/\b([a-z])/g, (c) => c.toUpperCase()) : s;
+  if (!s) return s;
+  return s
+    .replace(/\b[A-Z][A-Z']{2,}\b|\b(?:RD|ST|DR|LN|CT|AV|PL|SQ)\b/g, (w) => w[0] + w.slice(1).toLowerCase())
+    .replace(/\bO'([a-z])/g, (_, c) => `O'${c.toUpperCase()}`);
 }
 
 /** Store label from a locator entry: "4180 Union Rd, Cheektowaga, NY". */
@@ -467,6 +470,11 @@ export function addFromLocators(built, brands, features) {
         return d <= NO_ADDRESS_METERS && !o.addr;
       });
       if (known) {
+        // The OSM store has no address: show the locator's.
+        if (known.row && !known.row[3] && label) {
+          known.row[3] = label;
+          known.addr = addr;
+        }
         // Same store, pins far apart: if the address agrees with the locator, the OSM pin is the
         // one that's off, so move it.
         if (known.row && census && meters(known.at, census) > PIN_CHECK_METERS && meters(at, census) <= SAME_STORE_METERS) {

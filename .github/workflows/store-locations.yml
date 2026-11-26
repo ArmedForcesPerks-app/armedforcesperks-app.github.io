@@ -34,7 +34,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 140
     permissions:
       contents: read
       checks: write
@@ -48,13 +48,18 @@ jobs:
       # request has the "full store trial" label). It's a heads-up only: the free map servers
       # are sometimes busy, so a failed trial doesn't fail the check (and doesn't email anyone).
       # The "Store locations report" check shows what happened.
+      - name: Get store-locator data for the full trial
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'full store trial')
+        continue-on-error: true
+        timeout-minutes: 45
+        run: python3 tools/store-locations/atp-extract.py atp-stores.geojson
       - name: Trial download (nothing is published)
         if: github.event_name == 'pull_request'
         continue-on-error: true
         timeout-minutes: 80
         env:
           ONLY: ${{ !contains(github.event.pull_request.labels.*.name, 'full store trial') && '--only homedepot,regal,amc' || '' }}
-        run: node tools/store-locations/build.mjs --dry-run $ONLY --budget-min 70 --report report.md
+        run: node tools/store-locations/build.mjs --dry-run $ONLY --atp atp-stores.geojson --budget-min 70 --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:
