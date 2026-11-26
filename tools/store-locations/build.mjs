@@ -751,7 +751,15 @@ async function main() {
   const notListed = built.notListedNames ?? [];
   // In a fill-in run, chains not downloaded this time keep their published stores, quietly.
   const notFetched = new Set(fill ? brands.filter((b) => !toFetch.includes(b)).map((b) => b.key) : []);
-  const result = guardAgainstDrops(built, brands, previous, new Set([...failed, ...notFetched]), notFetched);
+  let result = guardAgainstDrops(built, brands, previous, new Set([...failed, ...notFetched]), notFetched);
+  // A chain whose OSM download failed keeps last month's stores; still add any store its
+  // locator has that last month's list didn't (stores already there are matched, not doubled).
+  if (atp && failed.size) {
+    for (const k of failed) delete built.added[k]; // those were replaced by last month's list
+    const again = addFromLocators(result, brands, atp.features);
+    for (const [k, n] of Object.entries(again.added)) built.added[k] = (built.added[k] ?? 0) + n;
+    result = { ...result, stores: again.stores, counts: again.counts };
+  }
   // (A previous date far older than that list itself came from a stale server copy, whose chains
   // are being filled in now, so it's not carried over.)
   const prevDateOk =
