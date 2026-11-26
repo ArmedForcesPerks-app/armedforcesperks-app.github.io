@@ -29,7 +29,7 @@ window.afpDealsStarted = true;
 const PAGE_SIZE = 40;
 const EMAIL = 'armedforcesperks@gmail.com';
 const PAID_LINK_BADGE = 'Paid link';
-const PAID_LINK_NOTICE = 'Paid link: we earn a commission if you buy. Your price is the same.';
+const PAID_LINK_NOTICE = 'Paid link: we earn a commission if you buy. You pay nothing extra.';
 const GOVERNMENT_NOTICE =
   'Armed Forces Perks is not a government website and does not represent any government agency. This summary is based on the official government source linked below. Check that source for the full, current rules.';
 const FINANCIAL_NOTICE =
