@@ -43,7 +43,7 @@
     { "key": "pepboys", "name": "Pep Boys", "deals": ["AFP-0088"], "match": { "wikidata": "Q3375007" } },
     { "key": "purple", "name": "Purple", "deals": ["AFP-0091"], "match": { "wikidata": "Q28228105" } },
     { "key": "regal", "name": "Regal", "deals": [], "match": { "wikidata": "Q835638" }, "participating": true, "onlyListed": "participating/regal.json", "dealNames": ["Regal Cinemas", "Regal Theatres", "Regal Movies"] },
-    { "key": "rogershollands", "name": "Rogers & Hollands", "deals": ["AFP-0093"], "match": { "brand": "Rogers & Hollands" } },
+    { "key": "rogershollands", "name": "Rogers & Hollands", "deals": ["AFP-0093"], "match": { "brand": "Rogers & Hollands" }, "locatorWikidata": "Q130223859" },
     { "key": "sherwinwilliams", "name": "Sherwin-Williams", "deals": ["AFP-0098"], "match": { "wikidata": "Q48881" }, "locatorExcludeName": "product finishes" },
     { "key": "showcase", "name": "Showcase Cinemas", "deals": [], "dealNames": ["Showcase", "Showcase Cinema de Lux"], "match": { "wikidata": "Q7503170" }, "excludeName": "superlux" },
     { "key": "take5", "name": "Take 5 Oil Change", "deals": ["AFP-0104"], "match": { "wikidata": "Q112359190" }, "requireTag": { "shop": "car_repair" }, "locatorExcludeName": "car wash" },

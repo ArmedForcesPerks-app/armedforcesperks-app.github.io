@@ -232,6 +232,19 @@ test('a pin far from its street address is moved; locator pins far from their ad
   assert.equal(out.moved.length, 1);
 });
 
+test('a locator store with only an address (placed by the geocoder) is added but never moves a map pin', () => {
+  const az = idx('autozone');
+  const osm = { stores: [[az, 33.0, -97.0, '125 E State Hwy 114, Roanoke, TX']], counts: {}, skipped: {} };
+  const out = addFromLocators(osm, brands, [
+    { geometry: { type: 'Point', coordinates: [-97.0001, 33.0452] }, properties: { key: 'autozone', name: 'AutoZone', 'addr:street_address': '125 East State Highway 114', census: [33.0452, -97.0001], from_address: true } },
+    { geometry: { type: 'Point', coordinates: [-96.0, 32.2] }, properties: { key: 'autozone', name: 'AutoZone', 'addr:street_address': '7 Oak St', census: [32.2, -96.0], from_address: true } },
+  ]);
+  const rows = out.stores.filter((r) => r[0] === az).sort((a, b) => a[1] - b[1]);
+  assert.equal(rows.length, 2);
+  assert.deepEqual([rows[1][1], rows[1][2]], [33.0, -97.0]);
+  assert.equal(out.moved.length, 0);
+});
+
 test('locator stores respect participating lists and excluded names', () => {
   const take5 = { geometry: { type: 'Point', coordinates: [-90, 35] }, properties: { key: 'take5', name: 'Take 5 Car Wash', 'addr:street_address': '1 A St' } };
   const regal = { geometry: { type: 'Point', coordinates: [-91, 36] }, properties: { key: 'regal', name: 'Regal Nowhere Special 99', 'addr:city': 'Nowhere', 'addr:state': 'ZZ' } };

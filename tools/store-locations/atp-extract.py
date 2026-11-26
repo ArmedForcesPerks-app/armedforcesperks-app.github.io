@@ -23,7 +23,7 @@ def get(url):
 KEEP = ('name', 'branch', 'addr:street_address', 'addr:full', 'addr:city', 'addr:state',
         'addr:postcode', 'addr:country', 'ref', 'website', 'opening_hours')
 RUNS = 'https://data.alltheplaces.xyz/runs/'
-OLDER_RUNS = 6        # a chain missing from the latest run is looked for in up to this many older runs
+OLDER_RUNS = 10       # a chain missing from the latest run is looked for in up to this many older runs
 OLDER_MAX_DAYS = 75   # ...as long as that run is no older than this
 
 
@@ -70,7 +70,10 @@ def scan(path, by_qid, by_name, named, wanted, run_id, quiet=False):
                     continue
                 g = ft.get('geometry') or {}
                 if g.get('type') != 'Point':
-                    continue
+                    # Some locators give only the address (Lowe's): the Census geocoder places those.
+                    if not (p.get('addr:street_address') or p.get('addr:full')):
+                        continue
+                    g = None
                 keep = {k: p[k] for k in KEEP if k in p}
                 keep['key'] = key
                 keep['spider'] = p.get('@spider')
@@ -105,10 +108,30 @@ def run_age_days(a, b):
     return (f(a) - f(b)).days
 
 
+def expected_counts(brands):
+    """How many stores each chain has on the published map now, to spot a locator run that broke part-way."""
+    try:
+        data = json.load(open(os.path.join(HERE, '..', '..', 'data', 'locations.json')))
+        keys = [b['key'] for b in data['brands']]
+        out = {}
+        for r in data['stores']:
+            out[keys[r[0]]] = out.get(keys[r[0]], 0) + 1
+        return out
+    except Exception as e:
+        print('no published list to compare with:', e)
+        return {}
+
+
+def too_few(n, expected):
+    return expected >= 20 and n < expected // 4
+
+
 def main(out):
     brands = json.load(open(os.path.join(HERE, 'brands.json')))
     brands = brands['brands'] if isinstance(brands, dict) else brands
     by_qid = {b['match']['wikidata']: b['key'] for b in brands if 'wikidata' in b['match']}
+    # Where All the Places uses a different Wikidata item than OpenStreetMap does.
+    by_qid.update({b['locatorWikidata']: b['key'] for b in brands if b.get('locatorWikidata')})
     by_name = {b['match']['brand'].lower(): b['key'] for b in brands if 'brand' in b['match']}
     named = set(by_name)  # chains matched by brand name in OSM too (no Wikidata ID): match by name whatever the ID
     # Some spiders leave out the Wikidata ID: then an exact brand-name match counts too.
@@ -119,8 +142,13 @@ def main(out):
     tmp = download(latest.get('output_url') or latest.get('output', {}).get('url'))
     feats, spiders = scan(tmp, by_qid, by_name, named, None, run_id)
     os.remove(tmp)
-    missing = {b['key'] for b in brands} - set(spiders)
-    print('not in the latest run:', sorted(missing))
+    expected = expected_counts(brands)
+    count = lambda fs, k: sum(1 for f in fs if f['properties']['key'] == k)
+    partial = {k for k in spiders if too_few(count(feats, k), expected.get(k, 0))}
+    if partial:
+        print('only part of the list in the latest run:', {k: count(feats, k) for k in sorted(partial)})
+    missing = ({b['key'] for b in brands} - set(spiders)) | partial
+    print('not (fully) in the latest run:', sorted(missing))
     tried = 0
     for old_id, url in older_runs(run_id):
         if not missing or tried >= OLDER_RUNS or run_age_days(run_id, old_id) > OLDER_MAX_DAYS:
@@ -134,14 +162,28 @@ def main(out):
         except Exception as e:
             print('older run failed:', e)
             continue
-        for k in found:
-            print(f'  {k}: {sum(1 for f in more if f["properties"]["key"] == k)} stores from {old_id}')
-        feats += more
-        for k, v in found.items():
-            spiders[k] = v
-        missing -= set(found)
+        for k in sorted(found):
+            n = count(more, k)
+            if too_few(n, expected.get(k, 0)) or n <= count(feats, k):
+                print(f'  {k}: only {n} stores in {old_id}, still looking')
+                continue
+            print(f'  {k}: {n} stores from {old_id}')
+            feats = [f for f in feats if f['properties']['key'] != k] + [f for f in more if f['properties']['key'] == k]
+            spiders[k] = found[k]
+            missing.discard(k)
     print('no locator data found for:', sorted(missing))
     geocode(feats)
+    placed = []
+    for f in feats:
+        if f['geometry'] is None:
+            if 'census' not in f['properties']:
+                continue
+            lat, lon = f['properties']['census']
+            f['geometry'] = {'type': 'Point', 'coordinates': [lon, lat]}
+            f['properties']['from_address'] = True  # no pin of its own: never used to move an OSM pin
+        placed.append(f)
+    print(len(feats) - len(placed), 'address-only stores the geocoder could not place')
+    feats = placed
     json.dump({'type': 'FeatureCollection', 'run': run_id, 'features': feats}, open(out, 'w'))
     print(len(feats), 'stores kept')
     for k in sorted(spiders):

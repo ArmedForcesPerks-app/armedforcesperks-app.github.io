@@ -477,7 +477,7 @@ export function addFromLocators(built, brands, features) {
         }
         // Same store, pins far apart: if the address agrees with the locator, the OSM pin is the
         // one that's off, so move it.
-        if (known.row && census && meters(known.at, census) > PIN_CHECK_METERS && meters(at, census) <= SAME_STORE_METERS) {
+        if (known.row && census && !p.from_address && meters(known.at, census) > PIN_CHECK_METERS && meters(at, census) <= SAME_STORE_METERS) {
           moved.push(`${b.name}, ${known.row[3] || label}: moved ${(meters(known.at, at) / 1609.34).toFixed(1)} mi`);
           known.row[1] = at[0];
           known.row[2] = at[1];
