@@ -1,0 +1,16 @@
+== osm_areas () started 2026-11-27T02:45:06Z
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: answered 504
+  maps.mail.ru failed: answered 504
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: answered 504
+  maps.mail.ru failed: answered 504
+small_territories: FAILED overpass-api.de: answered 502; overpass.private.coffee: answered 504; maps.mail.ru: answered 504; overpass-api.de: answered 502; overpass.private.coffee: answered 504; maps.mail.ru: answered 504
+hawaii: 12118 elements from overpass-api.de in 56s
+puerto_rico: 20416 elements from overpass-api.de in 78s
+discount_tags: 734 elements from overpass-api.de in 68s
+military: 14544 elements from overpass-api.de in 151s
+taginfo discount: ok
+taginfo military: ok
+taginfo veteran: ok
+== osm_areas finished 2026-11-27T02:58:30Z
