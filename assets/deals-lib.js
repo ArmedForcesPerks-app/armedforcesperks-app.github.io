@@ -1,4 +1,4 @@
-// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit aa8b735)
+// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit 1676ff1)
 // with only the TypeScript types removed, so the website uses exactly the same rules as the app.
 /**
  * Deal data model, validation, compliance text filters and search/filter logic.
@@ -88,12 +88,17 @@ export function checkDealsFile(raw         , notOlderThan        )              
                 
   
 
+/**
+ * "Show deals and perks for" choices. Veterans come first: they are by far the largest group.
+ * Button labels use title case so every option reads the same way ("Guard" and "Reserve" are
+ * proper names, so they are capitalized in sentences too).
+ */
 export const STATUS_OPTIONS                                                     = [
-  { key: 'activeDuty', label: 'Active duty', short: 'Active duty' },
-  { key: 'guardReserve', label: 'Guard & Reserve', short: 'Guard/Reserve' },
-  { key: 'veteran', label: 'Veteran', short: 'Veterans' },
-  { key: 'retiree', label: 'Retiree', short: 'Retirees' },
-  { key: 'family', label: 'Spouse & family', short: 'Spouses/family' },
+  { key: 'veteran', label: 'Veterans', short: 'Veterans' },
+  { key: 'activeDuty', label: 'Active Duty', short: 'Active Duty' },
+  { key: 'guardReserve', label: 'Guard & Reserve', short: 'Guard & Reserve' },
+  { key: 'retiree', label: 'Retirees', short: 'Retirees' },
+  { key: 'family', label: 'Spouses & Families', short: 'Spouses & Families' },
 ];
 
 export const AUDIENCE_TAGS                = ['Deployed', 'Kids', 'Spouse', 'Family'];
@@ -347,8 +352,12 @@ export function parseDeals(list         )         {
                            
                 
                           
+                                                                                                                       
+                        
+                                                                                  
                            
-                               
+                                                          
+                    
                                                                                        
                          
                                            
@@ -358,8 +367,9 @@ export function parseDeals(list         )         {
 export const EMPTY_FILTERS              = {
   query: '',
   category: null,
-  status: null,
-  audience: null,
+  statuses: [],
+  audiences: [],
+  freeOnly: false,
   confirmedOnly: false,
   hideNeedsReview: false,
 };
@@ -376,6 +386,26 @@ export function todayIso(now = new Date())         {
 }
 
 /**
+ * For several picked statuses, the best answer wins: someone who is both a veteran and a
+ * military spouse qualifies if either one does. "yes" beats "unknown" beats "no".
+ */
+export function eligibilityFor(deal      , statuses             )                     {
+  if (!statuses.length) return null;
+  let best              = 'no';
+  for (const k of statuses) {
+    const e = deal.eligibility[k];
+    if (e === 'yes') return 'yes';
+    if (e === 'unknown') best = 'unknown';
+  }
+  return best;
+}
+
+/** True when the deal's headline is FREE (free items, free admission, free services...). */
+export function isFree(deal                       )          {
+  return headlineOf(deal)?.big === 'FREE';
+}
+
+/**
  * Applies the filter choices. Deals whose end date has passed are hidden automatically
  * (they still show in Saved, marked "Ended"). Search words are handled by lib/search.ts.
  */
@@ -384,14 +414,18 @@ export function filterDeals(deals        , filters             , today        ) 
     if (isExpired(d, today)) return false;
     if (filters.hideNeedsReview && d.status !== 'live') return false;
     if (filters.category && d.category !== filters.category) return false;
-    if (filters.audience && !d.audience.includes(filters.audience)) return false;
-    if (filters.status) {
-      const e = d.eligibility[filters.status];
-      if (e === 'no') return false;
-      if (filters.confirmedOnly && e !== 'yes') return false;
-    }
+    if (filters.audiences.length && !filters.audiences.some((a) => d.audience.includes(a))) return false;
+    if (filters.freeOnly && !isFree(d)) return false;
+    const e = eligibilityFor(d, filters.statuses);
+    if (e === 'no') return false;
+    if (filters.confirmedOnly && e === 'unknown') return false;
     return true;
   });
+}
+
+/** Tags that at least one current deal has, in display order. Empty tags are hidden in the app. */
+export function audiencesOf(deals        )                {
+  return AUDIENCE_TAGS.filter((a) => deals.some((d) => d.audience.includes(a)));
 }
 
 /** Alphabetical, with confirmed ("live") deals before "Needs review" when a query isn't typed. */

@@ -96,12 +96,23 @@ ol.steps li{margin:.6rem 0}
 .page-head .lead{color:#dbe3f5;font-size:1.1rem;max-width:65ch;margin:0}
 .deals-section{padding-top:1.75rem}
 .note.disclose{margin-top:0}
-.filters{display:grid;gap:.9rem 1.25rem;grid-template-columns:2fr 1fr 1fr;align-items:end;background:var(--bg-soft);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem;margin:1.25rem 0 1rem}
+.filters{display:grid;gap:.9rem 1.25rem;grid-template-columns:2fr 1fr;align-items:end;background:var(--bg-soft);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.1rem;margin:1.25rem 0 1rem}
 .filters[hidden]{display:none}
 .field{display:flex;flex-direction:column;gap:.3rem;min-width:0}
 .field>label{font-weight:700;font-size:.92rem;color:var(--navy)}
 .field input[type=search],.field select{font:inherit;font-size:1rem;width:100%;min-height:46px;padding:.55rem .75rem;border:1px solid #8a909c;border-radius:10px;background:#fff;color:var(--ink)}
-.field-checks{grid-column:1 / 3;flex-direction:row;flex-wrap:wrap;gap:.4rem 1.5rem}
+.field-for{grid-column:1 / -1;border:0;padding:0;margin:0}
+.field-for legend{font-weight:700;font-size:.92rem;color:var(--navy);padding:0;margin-bottom:.3rem}
+.field-for .hint{font-weight:400;color:var(--muted)}
+.for-checks{display:flex;flex-wrap:wrap;gap:.25rem 1.25rem}
+.vet-free{display:flex;flex-direction:column;gap:.15rem;margin:1.25rem 0 0;padding:1rem 1.2rem;background:#fff8e1;border:2px solid #f0d98a;border-left:6px solid var(--gold);border-radius:var(--radius);text-decoration:none;color:var(--ink)}
+.vet-free[hidden]{display:none}
+.vet-free:hover,.vet-free.on{border-color:var(--gold-dark)}
+.vet-free-title{font-weight:800;font-size:1.15rem;color:var(--navy)}
+.vet-free-body{color:var(--muted)}
+.page-head .no-catch{margin-top:.6rem;color:#fff}
+.hero p.lead.no-catch{margin:-1rem 0 1.75rem;color:#fff}
+.field-checks{grid-column:1 / 2;flex-direction:row;flex-wrap:wrap;gap:.4rem 1.5rem}
 .field-reset{align-items:flex-end}
 .check{display:flex;align-items:center;gap:.5rem;min-height:44px;cursor:pointer}
 .check input{width:1.2rem;height:1.2rem;margin:0;accent-color:var(--navy)}

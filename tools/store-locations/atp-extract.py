@@ -5,11 +5,15 @@ collects store lists from each chain's own store locator. Used only to CHECK our
 list (missed stores, misplaced pins); nothing from it is published by this script.
 
 Each store's street address is also looked up with the free U.S. Census Bureau geocoder, so the
-build can tell which pin is right when the map and the store locator disagree.
+build can tell which pin is right when the map and the store locator disagree. Where a chain's pin
+and its geocoded address are far apart, both are also looked up in the Census ZIP code areas
+(zip_areas.py): a pin outside the store's own ZIP code is usually the one that's off.
 
 Usage: python3 atp-extract.py OUT.geojson   (downloads the latest All the Places run, ~3 GB)
 """
-import csv, io, json, os, sys, time, urllib.request, uuid, zipfile
+import csv, io, json, math, os, re, sys, time, urllib.request, uuid, zipfile
+
+import zip_areas
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 UA = {'User-Agent': 'ArmedForcesPerks-store-audit/1.0 (+https://armedforcesperks.com)'}
@@ -188,6 +192,7 @@ def main(out):
         placed.append(f)
     print(len(feats) - len(placed), 'address-only stores the geocoder could not place')
     feats = placed
+    check_zip_areas(feats)
     json.dump({'type': 'FeatureCollection', 'run': run_id, 'features': feats}, open(out, 'w'))
     print(len(feats), 'stores kept')
     for k in sorted(spiders):
@@ -215,12 +220,18 @@ def geocode(feats):
         body = (f'--{boundary}\r\nContent-Disposition: form-data; name="benchmark"\r\n\r\nPublic_AR_Current\r\n'
                 f'--{boundary}\r\nContent-Disposition: form-data; name="addressFile"; filename="a.csv"\r\n'
                 f'Content-Type: text/csv\r\n\r\n{buf.getvalue()}\r\n--{boundary}--\r\n').encode()
-        req = urllib.request.Request(CENSUS, data=body, method='POST',
-                                     headers={**UA, 'Content-Type': f'multipart/form-data; boundary={boundary}'})
-        try:
-            text = urllib.request.urlopen(req, timeout=1200).read().decode('utf-8', 'replace')
-        except Exception as e:  # the check still works without it
-            print('census geocoder failed for a batch:', e)
+        text = None
+        for attempt in range(3):  # the service sometimes answers "502 Bad Gateway"; it's fine a minute later
+            req = urllib.request.Request(CENSUS, data=body, method='POST',
+                                         headers={**UA, 'Content-Type': f'multipart/form-data; boundary={boundary}'})
+            try:
+                text = urllib.request.urlopen(req, timeout=1200).read().decode('utf-8', 'replace')
+                break
+            except Exception as e:  # the check still works without it
+                print('census geocoder failed for a batch:', e)
+                if attempt < 2:
+                    time.sleep(60)
+        if text is None:
             continue
         for r in csv.reader(io.StringIO(text)):
             if len(r) >= 6 and r[2] == 'Match' and ',' in r[5]:
@@ -228,9 +239,61 @@ def geocode(feats):
                     lon, lat = (float(x) for x in r[5].split(','))
                 except ValueError:
                     continue
-                feats[int(r[0])]['properties']['census'] = [round(lat, 6), round(lon, 6)]
+                p = feats[int(r[0])]['properties']
+                p['census'] = [round(lat, 6), round(lon, 6)]
+                # How sure the geocoder is: an exact match of the address, and the ZIP code of the
+                # address it matched ("123 MAIN ST, TOWN, ST, 12345"), so the store-list build can
+                # tell a good match from a guess on a similar street.
+                p['census_exact'] = r[3] == 'Exact'
+                z = re.search(r'(\d{5})\s*$', r[4] or '')
+                if z:
+                    p['census_zip'] = z.group(1)
                 found += 1
         print(f'census geocoder: {found} of {start + len(part)} addresses matched so far')
+
+
+FAR_METERS = 1000  # PIN_CHECK_METERS in build.mjs
+
+
+def meters(a, b):
+    la1, lo1, la2, lo2 = map(math.radians, (a[0], a[1], b[0], b[1]))
+    h = math.sin((la2 - la1) / 2) ** 2 + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2
+    return 2 * 6371008.8 * math.asin(min(1, math.sqrt(h)))
+
+
+def check_zip_areas(feats):
+    """Adds properties.pin_zip_area and census_zip_area, the ZIP code area ('' for none) that the
+    store's pin and its geocoded address are in, for stores whose pin is far from the address and for
+    stores that only have an address. Left out if the Census file can't be had."""
+    todo = []
+    for f in feats:
+        p = f['properties']
+        if 'census' in p and f.get('geometry'):
+            lon, lat = f['geometry']['coordinates']
+            if p.get('from_address') or meters((lat, lon), p['census']) > FAR_METERS:
+                todo.append(f)
+    if not todo:
+        return
+    tmp = os.path.join(os.environ.get('RUNNER_TEMP', '/tmp'), 'zcta.zip')
+    if not zip_areas.download(tmp):
+        return
+    points = []
+    for f in todo:
+        lon, lat = f['geometry']['coordinates']
+        points += [(lat, lon), tuple(f['properties']['census'])]
+    try:
+        found = zip_areas.lookup_file(points, tmp)
+    except Exception as e:
+        print('ZIP code areas: could not read the file:', e)
+        return
+    finally:
+        os.remove(tmp)
+    outside = 0
+    for k, f in enumerate(todo):
+        p = f['properties']
+        p['pin_zip_area'], p['census_zip_area'] = found[2 * k], found[2 * k + 1]
+        outside += p['pin_zip_area'] != str(p.get('addr:postcode') or '')[:5]
+    print(f'ZIP code areas: {len(todo)} stores checked, {outside} pins outside their own ZIP code')
 
 
 if __name__ == '__main__':
