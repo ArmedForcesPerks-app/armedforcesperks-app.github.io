@@ -775,6 +775,9 @@ export function unlistedStores(rows, located) {
  */
 export function applyCorrections(result, brands, corrections, features = null) {
   const index = new Map(brands.map((b, i) => [b.key, i]));
+  // A trial run with only a few chains (--only) leaves out the other chains' fixes.
+  // (test.mjs checks that every fix names a chain in brands.json.)
+  const ours = (list) => (list ?? []).filter((c) => index.has(c.brand));
   const done = [];
   let stores = result.stores;
   const listedAgain = (c) =>
@@ -788,14 +791,14 @@ export function applyCorrections(result, brands, corrections, features = null) {
       const o = { at: [c.lat, c.lon], ...addressInfo(c.label) };
       return sameStore(o, locatorPoint(raw, census), info) || sameStore(o, raw, info);
     });
-  for (const c of corrections?.closedIn ?? []) {
+  for (const c of ours(corrections?.closedIn)) {
     const i = index.get(c.brand);
     const [s, w, n, e] = c.box;
     const before = stores.length;
     stores = stores.filter((r) => !(r[0] === i && r[1] >= s && r[1] <= n && r[2] >= w && r[2] <= e));
     if (before !== stores.length) done.push(`${brands[i].name}: ${before - stores.length} removed, ${c.reason}`);
   }
-  for (const c of corrections?.remove ?? []) {
+  for (const c of ours(corrections?.remove)) {
     const i = index.get(c.brand);
     if (c.unlessListed && listedAgain(c)) {
       done.push(`${brands[i].name}, ${c.label}: NOT removed, the chain's own store list has it again (check corrections.json)`);
@@ -805,13 +808,13 @@ export function applyCorrections(result, brands, corrections, features = null) {
     stores = stores.filter((r) => !(r[0] === i && meters([r[1], r[2]], [c.lat, c.lon]) <= (c.within ?? 500)));
     if (before !== stores.length) done.push(`${brands[i].name}, ${c.label}: removed, ${c.reason}`);
   }
-  for (const c of corrections?.add ?? []) {
+  for (const c of ours(corrections?.add)) {
     const i = index.get(c.brand);
     if (stores.some((r) => r[0] === i && meters([r[1], r[2]], [c.lat, c.lon]) <= SAME_STORE_METERS)) continue;
     stores = [...stores, [i, c.lat, c.lon, c.label]];
     done.push(`${brands[i].name}, ${c.label}: added`);
   }
-  for (const c of corrections?.move ?? []) {
+  for (const c of ours(corrections?.move)) {
     const i = index.get(c.brand);
     const wrong = (r) => r[0] === i && meters([r[1], r[2]], [c.lat, c.lon]) <= (c.within ?? 300);
     if (!stores.some(wrong)) continue;
