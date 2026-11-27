@@ -1,4 +1,4 @@
-// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit 773a2e8)
+// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit 23d1a1b)
 // with only the TypeScript types removed, so the website uses exactly the same rules as the app.
 /**
  * Deal data model, validation, compliance text filters and search/filter logic.
@@ -126,7 +126,7 @@ const STATE_LABELS = new RegExp(
 export function isStateOrLocalHost(host        )          {
   const h = host.toLowerCase().replace(/^www\./, '');
   if (/(^|\.)(state\.)?[a-z]{2}\.us$/.test(h)) return true;
-  const m = /([a-z0-9-]+)\.gov$/.exec(h);
+  const m = /(?:^|\.)([a-z0-9-]+)\.gov$/.exec(h);
   if (!m || m[1] === 'va') return false;
   return STATE_LABELS.test(m[1]) || /(county|city|parish|borough|township)/.test(m[1]);
 }
@@ -206,10 +206,20 @@ function str(value         , max = 2000)         {
 /**
  * Only allow plain https links to a real host. Blocks javascript:, intent:, file:,
  * http:, data:, credentials in the URL and anything malformed.
+ *
+ * The host name may only use letters, digits, hyphens and dots (punycode "xn--" names are
+ * fine), and a backslash isn't allowed anywhere, so the website the app shows for a link
+ * (hostOf) is always the one the browser opens. Browsers read "\" as "/", so
+ * "https://evil.example\.va.gov" would look like an official .gov source but open
+ * evil.example, and letters from other alphabets ("exаmple.com" with a Cyrillic "а") can
+ * pass for a real site.
  */
+const SAFE_HTTPS_URL =
+  /^https:\/\/(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})(?::\d{1,5})?(?:[/?#][^\s\\]*)?$/i;
+
 export function safeHttpsUrl(value         )                {
   const s = str(value, 2048);
-  if (!/^https:\/\/[^\s/?#@]+\.[^\s/?#@]+([/?#][^\s]*)?$/i.test(s)) return null;
+  if (!SAFE_HTTPS_URL.test(s)) return null;
   return s;
 }
 
@@ -257,8 +267,10 @@ function splitSentences(text        )           {
 export function stripRestricted(text        )         {
   if (!containsRestricted(text)) return text;
   // "10% off most items, 5% off firearms and ammo" -> "10% off most items"
+  // The spaces and digits are counted ({1,3}) so a long run of spaces in downloaded text
+  // can't make this slow (an unlimited \s* here took time that grew with the square of it).
   let out = text.replace(
-    /[,;]?\s*(and\s+)?(up to\s+)?\d+%\s+off\s+(on\s+)?(fire ?arms?|guns?|ammo|ammunition)(\s+(and|&)\s+(ammo|ammunition|fire ?arms?))?/gi,
+    /[,;]?\s{0,3}(and\s{1,3})?(up to\s{1,3})?\d{1,3}%\s{1,3}off\s{1,3}(on\s{1,3})?(fire ?arms?|guns?|ammo|ammunition)(\s{1,3}(and|&)\s{1,3}(ammo|ammunition|fire ?arms?))?/gi,
     '',
   );
   // Drop any remaining sentence that still mentions restricted items.

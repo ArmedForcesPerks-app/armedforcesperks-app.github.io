@@ -1,0 +1,65 @@
+# Site security check. Free (GitHub Actions minutes are free for public repositories).
+#
+# On every pull request, on every change to main, and every Monday this checks that:
+#   1. every page keeps its security tags (Content Security Policy and referrer), loads only the
+#      site's own files, and has no inline code or plain HTTP links (tools/site-security/check.mjs).
+#      It also fails 30 days before /.well-known/security.txt expires, so the Monday run emails in
+#      time to move its Expires: date forward.
+#   2. the workflows in .github have no unsafe settings, like an action that isn't pinned to an
+#      exact version or a token that could leak (zizmor).
+# GitHub's CodeQL scan also runs on this repo (Security tab). What to do when this fails:
+# .github/SECURITY.md.
+name: Site security check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Mondays at 10:47 UTC (5:47 AM Eastern in winter, 6:47 AM in summer).
+    - cron: '47 10 * * 1'
+  workflow_dispatch:
+
+# Nothing by default; the job below can only read this repo.
+permissions: {}
+
+# A newer push to the same pull request replaces a check that's still running.
+concurrency:
+  group: site-check-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Page security tags and workflow safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Check every page's security tags
+        run: |
+          node --test tools/site-security/test.mjs
+          node tools/site-security/check.mjs
+
+      # Still runs when the page check finds something, so every problem shows at once.
+      - name: Install zizmor 1.32.0 (exact file, checked by its hash)
+        if: ${{ !cancelled() }}
+        run: |
+          python3 -m venv "$RUNNER_TEMP/zizmor"
+          echo 'zizmor==1.32.0 --hash=sha256:84a6acb975accc13408786a2bd274b572537ca19c933ebbc13e78f3988562071 --hash=sha256:dd818f99d833b86cd432d5412d620d936b5df074b33404fff8b67acff55d3259' > "$RUNNER_TEMP/zizmor.txt"
+          "$RUNNER_TEMP/zizmor/bin/pip" install --quiet --disable-pip-version-check --require-hashes --only-binary=:all: -r "$RUNNER_TEMP/zizmor.txt"
+
+      - name: Check the workflows for unsafe settings (zizmor)
+        if: ${{ !cancelled() }}
+        env:
+          # Read-only. Lets zizmor look up known problems in the actions the workflows use.
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          "$RUNNER_TEMP/zizmor/bin/zizmor" --format=github .

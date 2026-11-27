@@ -1,0 +1,6 @@
+# How to report a security problem with armedforcesperks.com or the Armed Forces Perks app (RFC 9116).
+Contact: mailto:armedforcesperks@gmail.com
+Expires: 2027-11-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://armedforcesperks.com/.well-known/security.txt
+Policy: https://github.com/ArmedForcesPerks-app/armedforcesperks-app.github.io/security/policy

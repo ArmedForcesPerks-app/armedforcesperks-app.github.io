@@ -1,0 +1,19 @@
+# Dependabot (free): keeps the GitHub Actions this repo uses up to date. The site itself has no
+# packages to update: it uses only its own files.
+version: 2
+updates:
+  # The actions in .github/workflows are pinned to exact commits. Once a month, one grouped pull
+  # request moves them to the newest release (and updates the "# v4"-style comments).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    # Wait a week after a release before suggesting it, so a bad or hijacked release is usually
+    # caught and pulled by then.
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ['*']
+    commit-message:
+      prefix: Actions
