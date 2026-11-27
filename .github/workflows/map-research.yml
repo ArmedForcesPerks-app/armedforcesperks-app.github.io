@@ -56,32 +56,18 @@ jobs:
           bash research/jobs/run-one.sh "$JOB" "$OUT" 2>&1 | tee "$OUT/log.txt" || echo "job failed: $?" >> "$OUT/log.txt"
           du -sh "$OUT"
           echo "SLUG=$slug" >> "$GITHUB_ENV"
-      - uses: actions/upload-artifact@v4
+      - name: Commit this job's results to the branch
         if: always()
-        with:
-          name: out-${{ env.SLUG }}
-          path: out/
-          retention-days: 7
-
-  collect:
-    needs: [plan, run]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-          pattern: out-*
-          merge-multiple: true
-      - name: Commit results to this branch
+        env:
+          BATCH: ${{ needs.plan.outputs.batch }}
         run: |
           mkdir -p research/out
-          cp -r artifacts/. research/out/
+          cp -r out/. research/out/
           # Big files are split so git accepts them (rejoin with cat).
           find research/out -type f -size +45M -print0 | while IFS= read -r -d '' f; do split -b 40M -d "$f" "$f.part"; rm "$f"; done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add research/out
-          git commit -qm "Research results ${{ needs.plan.outputs.batch }}" || exit 0
-          for i in 1 2 3 4 5; do git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q && break; sleep 15; done
+          git commit -qm "Research results $BATCH/$SLUG" || exit 0
+          for i in 1 2 3 4 5 6 7 8; do git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q && exit 0; sleep $((RANDOM % 20 + 5)); done
+          exit 1
