@@ -32,8 +32,8 @@ on:
       - 'tools/local-shops/**'
       - '.github/workflows/store-locations.yml'
 
-permissions:
-  contents: read
+# Nothing by default; each job below gets only what it needs.
+permissions: {}
 
 jobs:
   test:
@@ -41,10 +41,13 @@ jobs:
     timeout-minutes: 200
     permissions:
       contents: read
-      checks: write
+      checks: write # post the "Store locations report" check
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Nothing here pushes, so the job's GitHub token isn't left on disk.
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
       - run: node --test tools/store-locations/test.mjs
@@ -87,21 +90,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 260
     permissions:
-      contents: write
-      pages: write
-      checks: write
+      contents: write # commit the new store list
+      pages: write # ask GitHub Pages to rebuild the site
+      checks: write # post the "Store locations report" check
     # Only one publish at a time; a second one waits instead of cancelling the first.
     concurrency:
       group: store-locations-publish
       cancel-in-progress: false
+    env:
+      # Scheduled runs download everything only once the list is 27 days old.
+      IF_OLDER: ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }}
+      FILL: ${{ inputs.fill && '--fill' || '' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # "Commit if changed" pushes with the checkout's sign-in, so it stays set up. Nothing is
+      # uploaded as an artifact and no packages are installed.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 # zizmor: ignore[artipacked]
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
       - name: Anything to do today?
         id: due
-        run: node tools/store-locations/build.mjs --should-run ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }}
+        run: node tools/store-locations/build.mjs --should-run $IF_OLDER
       # Each chain's own store-locator data (All the Places), used to add stores OpenStreetMap is
       # missing and to check pins. If it's unavailable, the list is built from OpenStreetMap alone.
       - name: Get store-locator data
@@ -117,7 +126,7 @@ jobs:
         run: python3 tools/local-shops/recheck.py
       - name: Build store list
         if: steps.due.outputs.run == 'true'
-        run: node tools/store-locations/build.mjs --atp atp-stores.geojson --budget-min 120 --soft-fail-days 40 ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }} ${{ inputs.fill && '--fill' || '' }} --report report.md
+        run: node tools/store-locations/build.mjs --atp atp-stores.geojson --budget-min 120 --soft-fail-days 40 $IF_OLDER $FILL --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:
@@ -135,6 +144,8 @@ jobs:
           print(urllib.request.urlopen(req).status)
           PY
       - name: Commit if changed
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ ! -f data/locations.json ]; then
             echo "No store list yet (the servers were busy). The next run will try again."
@@ -160,5 +171,5 @@ jobs:
           done
           [ -n "$pushed" ] || { echo "Couldn't push the store list."; exit 1; }
           # Ask GitHub Pages to rebuild the site (a push from this job may not start it on its own).
-          curl -sS -X POST -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
+          curl -sS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/pages/builds" || true

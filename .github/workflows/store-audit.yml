@@ -11,15 +11,19 @@ on:
       - 'tools/store-locations/atp-extract.py'
       - '.github/workflows/store-audit.yml'
 
-permissions:
-  contents: write
+# Nothing by default; the job below gets only what it needs.
+permissions: {}
 
 jobs:
   extract:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    permissions:
+      contents: write # push the comparison data to the store-audit-data branch
     steps:
-      - uses: actions/checkout@v4
+      # The last step pushes with the checkout's sign-in, so it stays set up. Nothing is uploaded
+      # as an artifact and no packages are installed.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 # zizmor: ignore[artipacked]
       # Report-only, so a hiccup never fails the run (or emails anyone).
       - name: Pull our chains out of the latest All the Places run
         continue-on-error: true
