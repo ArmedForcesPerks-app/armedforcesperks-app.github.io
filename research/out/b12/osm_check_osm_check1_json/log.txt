@@ -1,0 +1,7 @@
+== osm_check (osm_check1.json) started 2026-11-27T07:25:52Z
+w1085921022 {"version": 4, "timestamp": "2026-10-07T21:13:41Z", "user": "OptoEdits", "changeset": 190169476, "visible": null, "tags": {"addr:city": "Cheyenne", "addr:housenumber": "1400", "addr:postcode": "82009", "addr:state": "WY", "addr:street": "Dell Range Boulevard", "addr:unit": "Space 10", "branch": "Frontier Mall", "disused:shop": "no", "leisure": "fitness_centre", "name": "Lady Kels Yoga", "phone": "+1 307-256-9825", "sport": "yoga", "website": "https://ladykelsyoga.com/"}}
+near Lady Kels Yoga 1 found
+https://ladykelsyoga.com/ 4048 chars 4 snippets
+https://ladykelsyoga.com/contact 646 chars 0 snippets
+https://ladykelsyoga.com/about 1210 chars 1 snippets
+== osm_check finished 2026-11-27T07:28:02Z

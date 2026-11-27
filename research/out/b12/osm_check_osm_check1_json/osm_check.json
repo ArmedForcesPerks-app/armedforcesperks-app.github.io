@@ -1,0 +1,172 @@
+{
+ "ids": {
+  "w1085921022": {
+   "current": {
+    "version": 4,
+    "timestamp": "2026-10-07T21:13:41Z",
+    "user": "OptoEdits",
+    "changeset": 190169476,
+    "visible": null,
+    "tags": {
+     "addr:city": "Cheyenne",
+     "addr:housenumber": "1400",
+     "addr:postcode": "82009",
+     "addr:state": "WY",
+     "addr:street": "Dell Range Boulevard",
+     "addr:unit": "Space 10",
+     "branch": "Frontier Mall",
+     "disused:shop": "no",
+     "leisure": "fitness_centre",
+     "name": "Lady Kels Yoga",
+     "phone": "+1 307-256-9825",
+     "sport": "yoga",
+     "website": "https://ladykelsyoga.com/"
+    }
+   },
+   "history": [
+    {
+     "version": 1,
+     "timestamp": "2022-08-12T23:35:14Z",
+     "user": "mlysle",
+     "changeset": 124836895,
+     "visible": null,
+     "tags": {
+      "disused:shop": "yes",
+      "indoor": "room"
+     }
+    },
+    {
+     "version": 2,
+     "timestamp": "2025-10-25T23:48:54Z",
+     "user": "OptoEdits",
+     "changeset": 173776030,
+     "visible": null,
+     "tags": {
+      "addr:city": "Cheyenne",
+      "addr:housenumber": "1400",
+      "addr:postcode": "82009",
+      "addr:state": "WY",
+      "addr:street": "Dell Range Boulevard",
+      "addr:unit": "Space 10",
+      "branch": "Frontier Mall",
+      "brand": "Hickory Farms",
+      "brand:wikidata": "Q16995331",
+      "disused:shop": "no",
+      "name": "Hickory Farms",
+      "note": "Coming soon for Christmas 2025",
+      "shop": "gift",
+      "website": "https://www.hickoryfarms.com/"
+     }
+    },
+    {
+     "version": 3,
+     "timestamp": "2026-04-08T19:06:25Z",
+     "user": "OptoEdits",
+     "changeset": 181065880,
+     "visible": null,
+     "tags": {
+      "addr:city": "Cheyenne",
+      "addr:housenumber": "1400",
+      "addr:postcode": "82009",
+      "addr:state": "WY",
+      "addr:street": "Dell Range Boulevard",
+      "addr:unit": "Space 10",
+      "branch": "Frontier Mall",
+      "brand": "Hickory Farms",
+      "building": "yes",
+      "disused:shop": "no",
+      "leisure": "fitness_centre",
+      "name": "Lady Kels Yoga",
+      "note": "Coming soon for Christmas 2025",
+      "sport": "yoga",
+      "website": "https://www.hickoryfarms.com/"
+     }
+    },
+    {
+     "version": 4,
+     "timestamp": "2026-10-07T21:13:41Z",
+     "user": "OptoEdits",
+     "changeset": 190169476,
+     "visible": null,
+     "tags": {
+      "addr:city": "Cheyenne",
+      "addr:housenumber": "1400",
+      "addr:postcode": "82009",
+      "addr:state": "WY",
+      "addr:street": "Dell Range Boulevard",
+      "addr:unit": "Space 10",
+      "branch": "Frontier Mall",
+      "disused:shop": "no",
+      "leisure": "fitness_centre",
+      "name": "Lady Kels Yoga",
+      "phone": "+1 307-256-9825",
+      "sport": "yoga",
+      "website": "https://ladykelsyoga.com/"
+     }
+    }
+   ]
+  }
+ },
+ "near": [
+  {
+   "query": {
+    "name": "Lady Kels Yoga",
+    "lat": 41.16226,
+    "lon": -104.80605,
+    "km": 40
+   },
+   "host": "https://overpass-api.de/api/interpreter",
+   "found": [
+    {
+     "id": "w1085921022",
+     "version": 4,
+     "timestamp": "2026-10-07T21:13:41Z",
+     "lat": 41.1623029,
+     "lon": -104.8060564,
+     "tags": {
+      "addr:city": "Cheyenne",
+      "addr:housenumber": "1400",
+      "addr:postcode": "82009",
+      "addr:state": "WY",
+      "addr:street": "Dell Range Boulevard",
+      "addr:unit": "Space 10",
+      "branch": "Frontier Mall",
+      "disused:shop": "no",
+      "leisure": "fitness_centre",
+      "name": "Lady Kels Yoga",
+      "phone": "+1 307-256-9825",
+      "sport": "yoga",
+      "website": "https://ladykelsyoga.com/"
+     }
+    }
+   ]
+  }
+ ],
+ "pages": {
+  "https://ladykelsyoga.com/": {
+   "title": "-",
+   "chars": 4048,
+   "around": [
+    " Contact Us Today Call or Text: 307-256-9825 info@ladykelsyoga.com Our Location Frontier Mall1400 Dell Range Blvd, STE 10 Cheyenne, WY 82009 Find Peace and Balance Through Yoga At Lady Kels Yoga, we invite you to explore a sanctuary of wel",
+    "rious […] - Skip to content Contact Ask us about new sign-up discounts Embrace Your Journey to Wellness At Lady Kels Yoga, we invite you to explore a nurturing space where yoga, mindfulness, and community converge. Join us in cultivating balance and clarity in your life through our diverse classes and supportive environment",
+    "gh our diverse classes and supportive environment. Contact Us Today Call or Text: 307-256-9825 info@ladykelsyoga.com Our Location Frontier Mall 1400 Dell Range Blvd, STE 10 Cheyenne, WY 82009 Find Peace and Balance Through Yoga At Lady Kels Yoga, we invite you to explore a sanctuary of wellness where each class is a step t",
+    "ts and member benefits from Lady Kels Yoga. Our serene retreat experiences combine yoga, mindfulness, and team-building to reduce stress, improve focus, and boost morale. Partner with us to offer your employees exclusive yoga memberships, on-site classes, or full-day retreats designed to recharge and inspire. Invest in y"
+   ]
+  },
+  "https://ladykelsyoga.com/contact": {
+   "title": "Contact -",
+   "chars": 646,
+   "around": []
+  },
+  "https://ladykelsyoga.com/contact-us": {
+   "error": "HTTPError: HTTP Error 404: Not Found"
+  },
+  "https://ladykelsyoga.com/about": {
+   "title": "About -",
+   "chars": 1210,
+   "around": [
+    "s Yoga Studio 123 Wellness Ave, Mindful City, USA JAN 15 Lady Kels Yoga Studio 123 Wellness Ave, Mindful City, USA FEB 26 Lady Kels Wellness Center 456 Harmony St, Peaceful Town, USA Discover balance and mindfulness at Lady Kels Yoga, where our supportive community and guided practices empower your journey to holistic we"
+   ]
+  }
+ }
+}
