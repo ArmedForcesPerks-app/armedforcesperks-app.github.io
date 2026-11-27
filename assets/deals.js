@@ -12,6 +12,8 @@
 import {
   categoriesOf,
   checkDealsFile,
+  eligibilityFor,
+  EMPTY_FILTERS,
   filterDeals,
   formatDate,
   formatMonth,
@@ -48,7 +50,10 @@ const $ = (id) => document.getElementById(id);
 const els = {
   filters: $('filters'),
   q: $('q'),
-  status: $('status'),
+  forBox: $('for'),
+  free: $('free'),
+  vetFree: $('vet-free'),
+  vetFreeBody: $('vet-free-body'),
   cat: $('cat'),
   confirmed: $('confirmed'),
   hideReview: $('hide-review'),
@@ -67,7 +72,13 @@ let index = null;
 let results = [];
 let shown = 0;
 let today = todayIso();
-const filters = { query: '', status: null, category: null, audience: null, confirmedOnly: false, hideNeedsReview: false };
+const filters = { ...EMPTY_FILTERS };
+/** Everything except the search words, back to "show everything". */
+const NO_FILTERS = { statuses: [], category: null, audiences: [], freeOnly: false, confirmedOnly: false, hideNeedsReview: false };
+/** The "Free for veterans" shortcut: free things that clearly include veterans. */
+const VET_FREE = { ...EMPTY_FILTERS, statuses: ['veteran'], freeOnly: true, confirmedOnly: true };
+const vetFreeOn = () =>
+  filters.freeOnly && filters.confirmedOnly && filters.statuses.length === 1 && filters.statuses[0] === 'veteran';
 
 // ---------------------------------------------------------------------------
 // Small DOM helpers
@@ -170,15 +181,20 @@ function badge(tone, text) {
 }
 
 function dealCard(deal) {
-  const status = filters.status ? STATUS_OPTIONS.find((o) => o.key === filters.status) : null;
-  const elig = status ? deal.eligibility[status.key] : null;
+  const elig = eligibilityFor(deal, filters.statuses);
+  const notStated =
+    elig === 'unknown'
+      ? filters.statuses.length === 1
+        ? `${STATUS_OPTIONS.find((o) => o.key === filters.statuses[0]).short}: not stated`
+        : 'Your picks: not stated'
+      : null;
   const h = headlineOf(deal);
   const headingId = `${deal.id}-name`;
 
   const badges = el('ul', { class: 'badges', 'aria-label': 'Deal labels' });
   if (deal.status === 'live') badges.append(badge('ok', `✓ Verified ${formatMonth(deal.lastConfirmed)}`));
   else badges.append(badge('warn', '⚠ Needs review'));
-  if (status && elig === 'unknown') badges.append(badge('neutral', `${status.short}: not stated`));
+  if (notStated) badges.append(badge('neutral', notStated));
   if (deal.expires && isExpired(deal, today)) badges.append(badge('warn', `Ended ${formatDate(deal.expires)}`));
   else if (deal.expires) badges.append(badge('neutral', `Ends ${formatDate(deal.expires)}`));
   if (deal.seasonal) badges.append(badge('neutral', 'Seasonal'));
@@ -355,7 +371,11 @@ function updateMore() {
 function updateCount() {
   const total = results.length;
   const parts = [];
-  if (filters.status) parts.push(`for ${STATUS_WORDS[filters.status]}`);
+  if (filters.freeOnly) parts.push('that are free');
+  if (filters.statuses.length) {
+    const words = filters.statuses.map((k) => STATUS_WORDS[k]);
+    parts.push(`for ${words.length > 1 ? words.slice(0, -1).join(', ') + ' or ' + words[words.length - 1] : words[0]}`);
+  }
   if (filters.category) parts.push(`in ${filters.category}`);
   if (filters.query.trim()) parts.push(`matching "${filters.query.trim()}"`);
   els.count.textContent = `${plural(total, 'deal', 'deals')}${parts.length ? ' ' + parts.join(' ') : ''}`;
@@ -392,18 +412,21 @@ function updateSearchNote(search) {
 function readUrl() {
   const p = new URLSearchParams(location.search);
   filters.query = (p.get('q') || '').slice(0, 80);
-  const s = p.get('for');
-  filters.status = STATUS_OPTIONS.some((o) => o.key === s) ? s : null;
+  // ?for=veteran,family (several allowed; the old single value still works).
+  const wanted = (p.get('for') || '').split(',');
+  filters.statuses = STATUS_OPTIONS.map((o) => o.key).filter((k) => wanted.includes(k));
+  filters.freeOnly = p.get('free') === '1';
   const c = p.get('category');
   filters.category = c && deals.some((d) => d.category === c) ? c : null;
-  filters.confirmedOnly = !!filters.status && p.get('confirmed') === '1';
+  filters.confirmedOnly = filters.statuses.length > 0 && p.get('confirmed') === '1';
   filters.hideNeedsReview = p.get('hidereview') === '1';
 }
 
 function writeUrl() {
   const p = new URLSearchParams();
   if (filters.query.trim()) p.set('q', filters.query.trim());
-  if (filters.status) p.set('for', filters.status);
+  if (filters.statuses.length) p.set('for', filters.statuses.join(','));
+  if (filters.freeOnly) p.set('free', '1');
   if (filters.category) p.set('category', filters.category);
   if (filters.confirmedOnly) p.set('confirmed', '1');
   if (filters.hideNeedsReview) p.set('hidereview', '1');
@@ -413,15 +436,19 @@ function writeUrl() {
 
 function syncControls() {
   els.q.value = filters.query;
-  els.status.value = filters.status || '';
+  for (const box of els.forBox.querySelectorAll('input')) {
+    box.checked = box.value ? filters.statuses.includes(box.value) : filters.statuses.length === 0;
+  }
+  els.free.checked = filters.freeOnly;
+  els.vetFree.classList.toggle('on', vetFreeOn());
   els.cat.value = filters.category || '';
-  els.confirmed.disabled = !filters.status;
+  els.confirmed.disabled = !filters.statuses.length;
   els.confirmed.checked = filters.confirmedOnly;
   els.hideReview.checked = filters.hideNeedsReview;
 }
 
 function changed() {
-  filters.confirmedOnly = !!filters.status && filters.confirmedOnly;
+  filters.confirmedOnly = filters.statuses.length > 0 && filters.confirmedOnly;
   syncControls();
   writeUrl();
   render();
@@ -433,7 +460,7 @@ function openFromHash() {
   if (!m || !byId.has(m[1])) return;
   const id = m[1];
   if (!results.some((d) => d.id === id)) {
-    Object.assign(filters, { query: '', status: null, category: null, confirmedOnly: false, hideNeedsReview: false });
+    Object.assign(filters, { query: '', ...NO_FILTERS });
     syncControls();
     writeUrl();
     render();
@@ -462,7 +489,17 @@ function openFromHash() {
 // ---------------------------------------------------------------------------
 
 function fillSelects() {
-  for (const o of STATUS_OPTIONS) els.status.append(el('option', { value: o.key }, o.label));
+  // "Everyone" first, then each status (veterans first). Pick all that apply.
+  for (const o of [{ key: '', label: 'Everyone' }, ...STATUS_OPTIONS]) {
+    els.forBox.append(
+      el('label', { class: 'check' }, el('input', { type: 'checkbox', value: o.key }), ' ', el('span', { text: o.label })),
+    );
+  }
+  const vetFree = filterDeals(deals, VET_FREE, today).length;
+  if (vetFree) {
+    els.vetFreeBody.textContent = `${plural(vetFree, 'free item, service or benefit', 'free items, services and benefits')} from the VA and from businesses`;
+    els.vetFree.hidden = false;
+  }
   for (const c of categoriesOf(deals)) els.cat.append(el('option', { value: c }, c));
 }
 
@@ -486,9 +523,25 @@ function wire() {
       changed();
     }
   });
-  els.status.addEventListener('change', () => {
+  els.forBox.addEventListener('change', (e) => {
     takeQuery();
-    filters.status = els.status.value || null;
+    const key = e.target.value;
+    if (!key) filters.statuses = [];
+    else {
+      const next = e.target.checked ? [...filters.statuses, key] : filters.statuses.filter((k) => k !== key);
+      filters.statuses = STATUS_OPTIONS.map((o) => o.key).filter((k) => next.includes(k));
+    }
+    changed();
+  });
+  els.free.addEventListener('change', () => {
+    takeQuery();
+    filters.freeOnly = els.free.checked;
+    changed();
+  });
+  els.vetFree.addEventListener('click', (e) => {
+    e.preventDefault();
+    clearTimeout(timer);
+    Object.assign(filters, vetFreeOn() ? { query: '', ...NO_FILTERS } : { ...VET_FREE });
     changed();
   });
   els.cat.addEventListener('change', () => {
@@ -508,7 +561,7 @@ function wire() {
   });
   els.reset.addEventListener('click', () => {
     clearTimeout(timer);
-    Object.assign(filters, { query: '', status: null, category: null, confirmedOnly: false, hideNeedsReview: false });
+    Object.assign(filters, { query: '', ...NO_FILTERS });
     changed();
     els.q.focus();
   });
@@ -520,7 +573,7 @@ function wire() {
       filters.query = '';
       filters.category = btn.dataset.cat;
     } else if (btn.dataset.action === 'clear-filters') {
-      Object.assign(filters, { status: null, category: null, confirmedOnly: false, hideNeedsReview: false });
+      Object.assign(filters, NO_FILTERS);
     }
     changed();
   });

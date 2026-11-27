@@ -1,4 +1,4 @@
-// GENERATED, do not edit by hand. Copied from the app repo's src/lib/search.ts (commit aa8b735)
+// GENERATED, do not edit by hand. Copied from the app repo's src/lib/search.ts (commit 1676ff1)
 // with only the TypeScript types removed, so the website uses exactly the same rules as the app.
 /**
  * On-device deal search. Runs entirely on the phone with no network and nothing logged.
@@ -46,7 +46,9 @@
                         
   
 
-const W = { name: 10, keyword: 7, category: 5, summary: 3, body: 1 }         ;
+// categoryPart: one half of a two-part category like "Clothing and Shoes". Weaker, so a
+// search for "shoes" lists shoe brands, not every clothing store in the same category.
+const W = { name: 10, keyword: 7, category: 5, summary: 3, categoryPart: 2, body: 1 }         ;
 
 const STOP_WORDS = new Set([
   'a', 'an', 'and', 'the', 'for', 'of', 'at', 'on', 'in', 'to', 'my', 'me', 'i', 'with', 'or', 'is',
@@ -71,7 +73,7 @@ const SYNONYM_GROUPS             = [
   ['laptop', 'computer', 'pc', 'notebook'],
   ['mattress', 'bed'],
   ['gym', 'fitness', 'workout', 'exercise'],
-  ['school', 'college', 'education', 'tuition'],
+  ['school', 'college', 'education', 'tuition', 'university', 'degree'],
   ['job', 'jobs', 'career', 'careers', 'employment', 'hiring'],
   ['pet', 'pets', 'dog', 'dogs', 'cat', 'cats'],
   ['daycare', 'childcare'],
@@ -80,21 +82,45 @@ const SYNONYM_GROUPS             = [
   ['counseling', 'therapy', 'counselor', 'therapist'],
   ['jewelry', 'jewellery'],
   ['moving', 'move', 'pcs', 'relocation'],
+  ['headphones', 'headphone', 'earbuds', 'earphones', 'headset'],
+  ['holiday', 'holidays', 'christmas', 'xmas'],
+  ['widow', 'widows', 'widower', 'survivor', 'survivors', 'surviving'],
+  ['hunt', 'hunting', 'hunter'],
+  ['kayak', 'kayaks', 'canoe', 'paddleboard'],
+  ['dumbbells', 'dumbbell', 'barbell', 'barbells', 'kettlebell', 'kettlebells'],
+  ['wedding', 'engagement', 'bridal'],
+  ['stroller', 'strollers', 'pram'],
+  ['sunglasses', 'shades'],
+  ['groceries', 'grocery'],
+  ['jersey', 'jerseys'],
 ];
 
 /** Only used to suggest categories when nothing matches. Never used to pick results. */
 const CATEGORY_HINTS                           = {
-  Home: ['furniture', 'couch', 'sofa', 'decor', 'kitchen', 'appliance', 'appliances', 'tools', 'garden', 'bedding', 'storage', 'grill', 'lamp', 'rug'],
-  Retail: ['clothes', 'clothing', 'shirt', 'dress', 'jacket', 'hat', 'jewelry', 'watch', 'gift', 'toys', 'shoes', 'boots', 'groceries', 'makeup'],
-  Electronics: ['tv', 'laptop', 'tablet', 'camera', 'headphones', 'speaker', 'console', 'gaming', 'printer', 'phone', 'computer', 'drone'],
-  'Outdoors and Fitness': ['camping', 'fishing', 'hiking', 'bike', 'bicycle', 'golf', 'gym', 'yoga', 'running', 'kayak', 'tent', 'ski', 'surf'],
-  Travel: ['flight', 'hotel', 'cruise', 'vacation', 'rental', 'trip', 'luggage', 'airport', 'resort', 'train'],
-  Entertainment: ['movie', 'concert', 'tickets', 'theme', 'park', 'museum', 'zoo', 'streaming', 'music', 'games', 'bowling'],
-  Restaurants: ['food', 'pizza', 'burger', 'coffee', 'lunch', 'dinner', 'breakfast', 'restaurant', 'tacos', 'wings'],
+  Home: ['furniture', 'couch', 'sofa', 'decor', 'kitchen', 'appliance', 'appliances', 'tools', 'garden', 'bedding', 'grill', 'lamp', 'rug', 'vacuum', 'lawn'],
+  'Clothing and Shoes': ['clothes', 'clothing', 'shirt', 'dress', 'jacket', 'hat', 'pants', 'shoes', 'boots', 'sneakers', 'pajamas', 'swimsuit', 'uniform'],
+  'Jewelry and Watches': ['jewelry', 'ring', 'necklace', 'earrings', 'bracelet', 'watch', 'diamond', 'wedding', 'engagement'],
+  Retail: ['gift', 'groceries', 'makeup', 'crafts', 'office', 'school supplies', 'luggage', 'shopping', 'store'],
+  'Baby and Kids': ['baby', 'toys', 'toy', 'stroller', 'crib', 'diapers', 'formula', 'kids', 'newborn', 'nursery'],
+  'Child Care and Family': ['childcare', 'daycare', 'babysitter', 'nanny', 'tutor', 'camp', 'family', 'kids'],
+  Electronics: ['tv', 'laptop', 'tablet', 'camera', 'headphones', 'speaker', 'console', 'gaming', 'printer', 'computer', 'drone', 'video games'],
+  'Outdoors and Fitness': ['camping', 'fishing', 'hiking', 'bike', 'bicycle', 'golf', 'gym', 'yoga', 'running', 'kayak', 'tent', 'ski', 'surf', 'hunting', 'weights'],
+  Travel: ['flight', 'hotel', 'cruise', 'vacation', 'rental', 'trip', 'luggage', 'airport', 'resort', 'train', 'bus'],
+  'Theme Parks and Attractions': ['theme', 'park', 'amusement', 'rides', 'museum', 'zoo', 'aquarium', 'waterpark'],
+  'Sports and Event Tickets': ['tickets', 'football', 'baseball', 'basketball', 'hockey', 'soccer', 'concert', 'game', 'nfl', 'nba', 'mlb', 'nhl'],
+  Entertainment: ['movie', 'streaming', 'music', 'games', 'bowling', 'arcade', 'theater', 'netflix', 'show'],
+  'Food and Restaurants': ['food', 'pizza', 'burger', 'coffee', 'lunch', 'dinner', 'breakfast', 'restaurant', 'tacos', 'wings', 'snacks'],
   Auto: ['car', 'truck', 'tires', 'oil', 'repair', 'motorcycle', 'parts', 'battery', 'wash', 'brakes'],
-  Health: ['glasses', 'contacts', 'dental', 'dentist', 'vitamins', 'skincare', 'doctor', 'pharmacy', 'therapy', 'vision'],
+  Health: ['glasses', 'contacts', 'dental', 'dentist', 'vitamins', 'skincare', 'doctor', 'pharmacy', 'therapy', 'vision', 'hearing', 'ptsd', 'medical'],
   'Phone and Internet': ['phone', 'cell', 'internet', 'wifi', 'cable', 'plan', 'carrier'],
-  Services: ['insurance', 'bank', 'loan', 'tax', 'legal', 'childcare', 'daycare', 'scholarship', 'job', 'moving', 'storage'],
+  'Money and Insurance': ['insurance', 'bank', 'tax', 'taxes', 'credit', 'budget', 'finance', 'investing'],
+  'Aid and Grants': ['emergency', 'loan', 'grant', 'help', 'rent', 'bills', 'disaster'],
+  'Education and Scholarships': ['scholarship', 'college', 'school', 'tuition', 'degree', 'class', 'gi', 'course'],
+  'Career and Jobs': ['job', 'jobs', 'career', 'resume', 'hiring', 'license', 'certification'],
+  'Deployment Support': ['deployment', 'deployed', 'care', 'package', 'letters', 'support'],
+  'Moving and Storage': ['moving', 'storage', 'pcs', 'movers', 'boxes'],
+  'Government Benefits': ['legal', 'lawyer', 'lease', 'scra', 'benefits', 'commissary'],
+  Pets: ['pet', 'dog', 'cat', 'puppy', 'kitten', 'veterinarian'],
 };
 
 export function normalize(s        )         {
@@ -158,7 +184,7 @@ export function buildIndex(deals                  )              {
     // Also "bj" for "BJ's", in case someone types the name without the s.
     if (/[’']/.test(d.name)) addText(d.name.replace(/[’']/g, ' '), d.id, W.name);
     for (const k of d.keywords) addText(k, d.id, W.keyword);
-    addText(d.category, d.id, W.category);
+    addText(d.category, d.id, / and /i.test(d.category) ? W.categoryPart : W.category);
     addText(d.summary, d.id, W.summary);
     addText([d.details, d.howToClaim, d.notes ?? '', d.audience.join(' ')].join(' '), d.id, W.body);
   }
@@ -191,7 +217,8 @@ export function editDistance(a        , b        , max        )         {
 /** How many typos we forgive for a word of this length. */
 function typoBudget(len        )         {
   if (len < 4) return 0;
-  if (len < 7) return 1;
+  // Two letters off only for long words: at 7 letters, "hearing" is two off from "hiring".
+  if (len < 8) return 1;
   return 2;
 }
 
