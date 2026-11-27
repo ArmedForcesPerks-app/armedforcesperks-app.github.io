@@ -1,4 +1,4 @@
-// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit dfca560)
+// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit 41a89b2)
 // with only the TypeScript types removed, so the website uses exactly the same rules as the app.
 /**
  * Deal data model, validation, compliance text filters and search/filter logic.
@@ -99,8 +99,13 @@ const STATE_NAMES = [
   'District of Columbia', 'DC', 'Puerto Rico', 'Guam', 'U.S. Virgin Islands', 'US Virgin Islands', 'Virgin Islands',
   'American Samoa', 'Northern Mariana Islands',
 ];
+/** Escapes every character that has a special meaning in a regular expression, backslash included. */
+function escapeRegExp(text        )         {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /** State benefit rows are named like "Texas: free hunting and fishing license". */
-const STATE_NAME_PREFIX = new RegExp(`^(${STATE_NAMES.map((s) => s.replace(/[.]/g, '\\.')).join('|')})\\s*:`, 'i');
+const STATE_NAME_PREFIX = new RegExp(`^(${STATE_NAMES.map(escapeRegExp).join('|')})\\s*:`, 'i');
 
 const STATE_LABELS = new RegExp(
   '^(al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|' +
