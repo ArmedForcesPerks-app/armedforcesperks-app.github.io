@@ -1,1 +1,1 @@
-{ "batch": "b6", "run": 1, "jobs": ["zip_check"] }
+{ "batch": "b7", "run": 1, "jobs": ["site_build2"] }

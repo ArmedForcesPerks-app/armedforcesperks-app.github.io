@@ -19,6 +19,393 @@
       "reason": "not on Foot Locker's own store list for Hawaii, and not among the center's current shops",
       "source": "https://www.mauihawaii.org/lahaina-gateway/",
       "checked": "2026-11-27"
+    },
+    {
+      "brand": "cinemark",
+      "lat": 33.54064,
+      "lon": -101.93733,
+      "within": 300,
+      "label": "5721 58th Street, Lubbock, TX",
+      "reason": "Cinemark Southwest Lubbock Movies 16 closed on February 9, 2025",
+      "source": "https://cinematreasures.org/theaters/46492",
+      "checked": "2026-11-27"
+    },
+    {
+      "brand": "cinemark",
+      "lat": 37.94728,
+      "lon": -122.5121,
+      "within": 300,
+      "label": "500 Larkspur Landing Circle, Larkspur, CA",
+      "reason": "closed by Cinemark on September 30, 2022; reopened in 2023 as Cinema West's Larkspur Landing Cinemas (not Cinemark)",
+      "source": "https://cinematreasures.org/theaters/17945",
+      "checked": "2026-11-27"
+    },
+    {
+      "brand": "cinemark",
+      "lat": 40.88716,
+      "lon": -111.89524,
+      "within": 300,
+      "label": "206 South 625 West, West Bountiful, UT",
+      "reason": "Cinemark Bountiful 8 showed its last movies on January 17, 2023",
+      "source": "https://www.bigscreen.com/j/West-Bountiful-UT-Cinemark-Bountiful-8-Closed/7125",
+      "checked": "2026-11-27"
+    },
+    {
+      "brand": "cinemark",
+      "lat": 41.11209,
+      "lon": -83.21243,
+      "within": 300,
+      "label": "870 W Market St, Tiffin, OH",
+      "reason": "Cinemark Tiffin Mall 8 closed on August 26, 2024 (Cinemark did not renew the lease; new owners took over)",
+      "source": "https://www.bigscreen.com/j/Tiffin-OH-Tiffin-Mall-Movie-Theater-Closed-But-Not-for-Long/7814",
+      "checked": "2026-11-27"
+    },
+    {
+      "brand": "cinemark",
+      "lat": 41.80504,
+      "lon": -88.1714,
+      "within": 300,
+      "label": "28250 Diehl Road, Warrenville, IL",
+      "reason": "Cinemark left on August 1, 2025; Phoenix Theatres runs it now (not Cinemark)",
+      "source": "https://cinematreasures.org/theaters/18979",
+      "checked": "2026-11-27"
+    },
+    {
+      "brand": "cinemark",
+      "lat": 34.19306,
+      "lon": -101.75099,
+      "within": 300,
+      "label": "1001 North Interstate 27, Plainview, TX",
+      "reason": "Cinemark Town Centre Cinema 6 closed for good in December 2023 (Cinemark confirmed it)",
+      "source": "https://www.aol.com/plainview-mourns-unexpected-loss-towns-183547025.html",
+      "checked": "2026-11-27"
+    },
+    {
+      "brand": "big5",
+      "lat": 31.91314,
+      "lon": -110.97913,
+      "within": 300,
+      "label": "714 W Calle Arroyo Sur, Sahuarita, AZ",
+      "reason": "closed (Big 5 closed eight stores in Arizona, Idaho and Colorado in early 2026)",
+      "source": "https://sgbonline.com/big-5-closing-eight-stores-in-colorado-idaho-and-arizona/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 33.03807,
+      "lon": -112.01627,
+      "within": 300,
+      "label": "41800 West Maricopa-Casa Grande Highway, Maricopa, AZ",
+      "reason": "closed (Big 5 closed eight stores in Arizona, Idaho and Colorado in early 2026)",
+      "source": "https://sgbonline.com/big-5-closing-eight-stores-in-colorado-idaho-and-arizona/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 43.66589,
+      "lon": -116.27773,
+      "within": 300,
+      "label": "6762 North Glenwood Street, Garden City, ID",
+      "reason": "closed (Big 5 closed eight stores in Arizona, Idaho and Colorado in early 2026)",
+      "source": "https://sgbonline.com/big-5-closing-eight-stores-in-colorado-idaho-and-arizona/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 42.90635,
+      "lon": -112.46171,
+      "within": 300,
+      "label": "700 West Quinn Road, Pocatello, ID",
+      "reason": "closed for good in spring 2026",
+      "source": "https://www.eastidahonews.com/2025/12/big-5-sporting-goods-in-pocatello-to-close-for-good/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 39.67555,
+      "lon": -104.86955,
+      "within": 300,
+      "label": "10051 East Iliff Avenue, Aurora, CO",
+      "reason": "closed in early 2026",
+      "source": "https://gazette.com/2026/01/08/several-big-5-sporting-goods-stores-to-close-in-colorado/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 39.69061,
+      "lon": -104.93993,
+      "within": 300,
+      "label": "1430 South Colorado Boulevard, Denver, CO",
+      "reason": "closed in early 2026",
+      "source": "https://gazette.com/2026/01/08/several-big-5-sporting-goods-stores-to-close-in-colorado/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 38.44759,
+      "lon": -105.18812,
+      "within": 300,
+      "label": "3215 E US Hwy 50, Canon City, CO",
+      "reason": "closed in January 2026",
+      "source": "https://gazette.com/2026/01/08/several-big-5-sporting-goods-stores-to-close-in-colorado/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 33.63968,
+      "lon": -112.10073,
+      "within": 300,
+      "label": "1919 West Bell Road, Phoenix, AZ",
+      "reason": "dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 33.84392,
+      "lon": -118.26198,
+      "within": 300,
+      "label": "20700 Avalon Boulevard, Carson, CA",
+      "reason": "dropped from Big 5's own store list after 2025-05 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 34.07231,
+      "lon": -118.02413,
+      "within": 300,
+      "label": "3600 Peck Road, El Monte, CA",
+      "reason": "dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 35.32516,
+      "lon": -106.57446,
+      "within": 300,
+      "label": "7800 Carr Way, Rio Rancho, NM",
+      "reason": "dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 37.93874,
+      "lon": -122.51724,
+      "within": 300,
+      "label": "110 Nellen Avenue, Corte Madera, CA",
+      "reason": "dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 39.712,
+      "lon": -105.07591,
+      "within": 300,
+      "label": "7111 West Alameda Avenue, Lakewood, CO",
+      "reason": "dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 40.64205,
+      "lon": -111.89051,
+      "within": 300,
+      "label": "5950 South State Street, Murray, UT",
+      "reason": "dropped from Big 5's own store list after 2025-05 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 45.68296,
+      "lon": -122.66061,
+      "within": 300,
+      "label": "8313 Northeast Highway 99, Vancouver, WA",
+      "reason": "dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 47.31892,
+      "lon": -122.22231,
+      "within": 300,
+      "label": "1215 Auburn Way North, Auburn, WA",
+      "reason": "dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "big5",
+      "lat": 48.2949,
+      "lon": -122.65548,
+      "within": 300,
+      "label": "31956 N State Hwy 20, Oak Harbor, WA",
+      "reason": "dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "regal",
+      "lat": 25.79012,
+      "lon": -80.14063,
+      "within": 300,
+      "label": "1120 Lincoln Road, Miami Beach, FL",
+      "reason": "Regal South Beach closed at the end of September 2025",
+      "source": "https://www.local10.com/news/local/2025/09/19/landmark-regal-cinema-on-south-beach-to-close-at-the-end-of-september/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "northface",
+      "lat": 37.44304,
+      "lon": -122.17022,
+      "within": 300,
+      "label": "180 El Camino Real, Stanford Shopping Center, Palo Alto, CA",
+      "reason": "not on The North Face's own Palo Alto store page (only department stores that sell it)",
+      "source": "https://locations.thenorthface.com/en-us/ca/palo-alto",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "northface",
+      "lat": 37.02423,
+      "lon": -121.56645,
+      "within": 150,
+      "label": "8555 San Ysidro Avenue, Gilroy, CA",
+      "reason": "moved: The North Face's own list now has the Gilroy outlet at 681 Leavesley Road",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "northface",
+      "lat": 41.89899,
+      "lon": -87.62357,
+      "within": 150,
+      "label": "875 North Michigan Avenue, Chicago, IL",
+      "reason": "moved: The North Face's own list now has its Michigan Avenue store at 605 N. Michigan Avenue",
+      "source": "https://www.alltheplaces.xyz/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "valvoline",
+      "lat": 18.46918,
+      "lon": -67.02634,
+      "within": 150,
+      "label": "Isabela, PR",
+      "reason": "not a Valvoline Instant Oil Change: Valvoline's own store directory lists stores in U.S. states only, none in Puerto Rico",
+      "source": "https://store.vioc.com/index.html",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "footlocker",
+      "lat": 18.46858,
+      "lon": -67.02225,
+      "within": 150,
+      "label": "3535 Military Ave, Isabela, PR",
+      "reason": "closed: Foot Locker's Puerto Rico store directory (17 stores) has no Isabela store",
+      "source": "https://stores.footlocker.com/pr/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "footlocker",
+      "lat": 18.34386,
+      "lon": -65.67463,
+      "within": 150,
+      "label": "Fajardo, PR",
+      "reason": "closed: Foot Locker's Puerto Rico store directory (17 stores) has no Fajardo store",
+      "source": "https://stores.footlocker.com/pr/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "footlocker",
+      "lat": 18.39408,
+      "lon": -66.14586,
+      "within": 150,
+      "label": "Bayamón, PR",
+      "reason": "closed: Foot Locker lists two Bayamón stores (Plaza del Sol and Plaza Río Hondo), and this is neither",
+      "source": "https://stores.footlocker.com/pr/bayamon/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "footlocker",
+      "lat": 18.38117,
+      "lon": -65.95736,
+      "within": 150,
+      "label": "200 Ave Fragoso, Space 224A, Carolina, PR",
+      "reason": "pin about 2 km off: this is the Plaza Carolina store, which is already on the map at the mall",
+      "source": "https://stores.footlocker.com/pr/carolina/",
+      "checked": "2026-11-27"
+    },
+    {
+      "brand": "footlocker",
+      "lat": 18.4505,
+      "lon": -66.53851,
+      "within": 300,
+      "label": "1 Premium Outlets Blvd, Barceloneta, PR",
+      "reason": "closed: Foot Locker's Puerto Rico store directory (17 stores) has no store at Puerto Rico Premium Outlets",
+      "source": "https://stores.footlocker.com/pr/",
+      "checked": "2026-11-27"
+    },
+    {
+      "brand": "adidas",
+      "lat": 18.15566,
+      "lon": -67.1415,
+      "within": 150,
+      "label": "Mayagüez Mall, Mayagüez, PR",
+      "reason": "closed: adidas's own store list has no Mayagüez store, and El Nuevo Día reported that adidas was closing its last Puerto Rico stores",
+      "source": "https://www.elnuevodia.com/negocios/turismo/notas/adidas-tambien-cerrara-su-tienda-en-los-outlets-en-barceloneta/",
+      "checked": "2026-11-27",
+      "unlessListed": true
+    },
+    {
+      "brand": "adidas",
+      "lat": 18.43998,
+      "lon": -66.54096,
+      "within": 300,
+      "label": "1 Premium Outlets Boulevard, Barceloneta, PR",
+      "reason": "closed: El Nuevo Día reported in December 2025 that adidas would close this store too, leaving it no stores in Puerto Rico",
+      "source": "https://www.elnuevodia.com/negocios/turismo/notas/adidas-tambien-cerrara-su-tienda-en-los-outlets-en-barceloneta/",
+      "checked": "2026-11-27"
+    },
+    {
+      "brand": "nike",
+      "lat": 13.49014,
+      "lon": 144.78223,
+      "within": 150,
+      "label": "Tumon, Guam",
+      "reason": "not a Nike-run store: Nike's own U.S. store directory has no Guam store, and Nike's military discount is for Nike stores in the U.S.",
+      "source": "https://www.nike.com/help/a/military-discount",
+      "checked": "2026-11-27",
+      "unlessListed": true
     }
   ],
   "add": [
@@ -28,6 +415,19 @@
       "lon": -157.8437,
       "label": "Ala Moana Center, 1450 Ala Moana Blvd, Honolulu, HI",
       "source": "https://www.gohawaii.com/listing/texas-de-brazil/118413",
+      "checked": "2026-11-27"
+    }
+  ],
+  "move": [
+    {
+      "brand": "davebusters",
+      "lat": 39.94378,
+      "lon": -75.14191,
+      "within": 200,
+      "to": [39.95618, -75.13838],
+      "label": "325 N Christopher Columbus Blvd, Philadelphia, PA",
+      "reason": "the OpenStreetMap pin (tagged NJ) is at 325 S Columbus Blvd, about 1.4 km south; Dave & Buster's own page gives 325 N Christopher Columbus Blvd, where the chain's store locator puts it",
+      "source": "https://www.daveandbusters.com/us/en/about/locations/philadelphia",
       "checked": "2026-11-27"
     }
   ]

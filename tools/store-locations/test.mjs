@@ -2,7 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { addFromLocators, applyCorrections, addressKey, buildQuery, guardAgainstDrops, isClosed, labelFor, loadBrands, locatorLabel, toStores, brandFor } from './build.mjs';
+import { spawnSync } from 'node:child_process';
+import { addFromLocators, addressGuessed, applyCorrections, addressKey, buildQuery, choosePoint, guardAgainstDrops, isClosed, labelFor, loadBrands, loadLocalShops, localQuery, localRows, locatorLabel, toStores, brandFor } from './build.mjs';
 
 const brands = loadBrands(JSON.parse(readFileSync(new URL('./brands.json', import.meta.url), 'utf8')));
 const idx = (key) => brands.findIndex((b) => b.key === key);
@@ -83,6 +84,13 @@ test('duplicates merge, positions are rounded, places outside the U.S. are dropp
   assert.equal(az.length, 3);
   assert.deepEqual(az.find((s) => s[1] === 31.11712), [idx('autozone'), 31.11712, -97.72779, '1 Fort Hood St']);
   assert.equal(toStores([{ type: 'node', lat: 51.5, lon: -0.1, tags: { 'brand:wikidata': 'Q4826087', shop: 'car_parts' } }], brands).stores.length, 0);
+  // The same store drawn twice a few hundred meters apart, its address written two ways: one pin.
+  const az2 = (lat, lon, street) => ({ type: 'node', lat, lon, tags: { 'brand:wikidata': 'Q4826087', shop: 'car_parts', 'addr:housenumber': '16798', 'addr:street': street } });
+  const twice = toStores([az2(33.3438, -86.6033, 'Highway 280'), az2(33.3465, -86.6050, 'US 280')], brands);
+  assert.equal(twice.stores.length, 1);
+  // Two real stores on the same road with different numbers both stay.
+  const two = toStores([az2(33.3438, -86.6033, 'Highway 280'), { ...az2(33.3465, -86.6050, 'Highway 280'), tags: { ...az2(0, 0, 'Highway 280').tags, 'addr:housenumber': '17020' } }], brands);
+  assert.equal(two.stores.length, 2);
 });
 
 test('a brand that suddenly shrinks keeps last month\'s stores', () => {
@@ -199,6 +207,26 @@ test('street addresses compare loosely: directions, abbreviations, Hawaii number
   assert.equal(addressKey('98-1005 Moanalua Rd, Space 229'), '98-1005 moa');
   assert.notEqual(addressKey('98-1005 Moanalua Rd'), addressKey('98-1061 Moanalua Rd'));
   assert.equal(addressKey('Walden Galleria'), '');
+  // Numbered roads match by number however they're written.
+  assert.equal(addressKey('320 State Route 211 East, Middletown, NY'), addressKey('320 Route 211 E'));
+  assert.equal(addressKey('1404 NY-300'), addressKey('1404 Route 300'));
+  assert.equal(addressKey('148 East Interstate 20 Frontage Road'), addressKey('148 I-20'));
+  assert.equal(addressKey('8313 Northeast Highway 99'), addressKey('8313 N. E. Hwy. 99'));
+  assert.equal(addressKey('100 U.S. Highway 1'), addressKey('100 US-1'));
+  assert.equal(addressKey('100 Farm to Market 1960'), addressKey('100 FM-1960 Rd'));
+  assert.notEqual(addressKey('620 Route 9W'), addressKey('620 Route 9'));
+  // ...but a street that only starts like one is still a street.
+  assert.equal(addressKey('5950 South State Street'), addressKey('5950 S. State St.'));
+  assert.equal(addressKey('100 County Line Road'), '100 cou');
+  assert.equal(addressKey('4485 La Jolla Village Dr'), '4485 la');
+  // Number words, and a unit written before the street.
+  assert.equal(addressKey('21 Ten Mile Drive'), addressKey('21 10 Mile Dr'));
+  assert.equal(addressKey('93 First Street'), addressKey('93 1st St'));
+  assert.equal(addressKey('3321 #200-300 North Interstate 35'), addressKey('3321 N Interstate 35 Ste 200-300'));
+  assert.equal(addressKey('26125 United States Route 11'), addressKey('26125 US Route 11'));
+  assert.equal(addressKey('4230 St Michael Dr'), addressKey('4230 Saint Michael Drive'));
+  assert.equal(addressKey('10401-015 Us Highway 441 South'), addressKey('10401 US-441'));
+  assert.equal(addressKey('107-24 71st Avenue'), '107-24 71s');
   assert.equal(locatorLabel({ 'addr:street_address': '4465 N Grape Dr', 'addr:city': 'MOSES LAKE', 'addr:state': 'WA' }), '4465 N Grape Dr, Moses Lake, WA');
 });
 
@@ -218,19 +246,114 @@ test('stores missing from OpenStreetMap are added from the chain locator, withou
   assert.ok(out.stores.some((r) => r[3] === '50 W Hwy 40, Roosevelt, UT'));
 });
 
-test('a pin far from its street address is moved; locator pins far from their address use the address', () => {
+test('a map pin far from its street address is moved when the chain\'s pin and the address agree', () => {
   const az = idx('autozone');
   const osm = { stores: [[az, 33.0, -97.0, '125 E State Hwy 114, Roanoke, TX']], counts: {}, skipped: {} };
   const out = addFromLocators(osm, brands, [
     // Same address 5 km away; the Census geocoder agrees with the locator, so the map pin moves.
     { geometry: { type: 'Point', coordinates: [-97.0, 33.045] }, properties: { key: 'autozone', name: 'AutoZone', 'addr:street_address': '125 East State Highway 114', census: [33.0452, -97.0001] } },
-    // A new store whose locator pin is 20 km from its address: placed at the address.
-    { geometry: { type: 'Point', coordinates: [-96.0, 32.0] }, properties: { key: 'autozone', name: 'AutoZone', 'addr:street_address': '7 Oak St', census: [32.2, -96.0] } },
   ]);
-  const rows = out.stores.filter((r) => r[0] === az).sort((a, b) => a[1] - b[1]);
-  assert.deepEqual([rows[0][1], rows[0][2]], [32.2, -96]);
-  assert.deepEqual([rows[1][1], rows[1][2]], [33.045, -97]);
+  assert.deepEqual(out.stores.filter((r) => r[0] === az).map((r) => [r[1], r[2]]), [[33.045, -97]]);
   assert.equal(out.moved.length, 1);
+});
+
+test('a new store whose pin and geocoded address disagree goes where the evidence points', () => {
+  const p = { 'addr:postcode': '76401' };
+  const pin = [32.0, -96.0];
+  const address = [32.2, -96.0];
+  // They agree (under 1 km), or there is no geocode: the chain's pin.
+  assert.deepEqual(choosePoint(pin, [32.005, -96.0], p), pin);
+  assert.deepEqual(choosePoint(pin, null, p), pin);
+  // They disagree: the chain's pin by default (it was right about three times in four).
+  assert.deepEqual(choosePoint(pin, address, p), pin);
+  // ...the address when another store of the chain has the same pin (a copied pin)...
+  assert.deepEqual(choosePoint(pin, address, p, { shared: true }), address);
+  // ...or when, for this chain, the address has been right far more often than the pin.
+  assert.deepEqual(choosePoint(pin, address, p, { trust: { pin: 1, address: 11 } }), address);
+  assert.deepEqual(choosePoint(pin, address, p, { trust: { pin: 2, address: 3 } }), pin);
+  // Never a geocoder guess: not an exact match, or found in another ZIP code.
+  assert.deepEqual(choosePoint(pin, address, { ...p, census_exact: false }, { shared: true }), pin);
+  assert.deepEqual(choosePoint(pin, address, { ...p, census_exact: true, census_zip: '76402' }, { shared: true }), pin);
+  assert.deepEqual(choosePoint(pin, address, { ...p, census_exact: true, census_zip: '76401' }, { shared: true }), address);
+  // The pin is outside the store's own ZIP code area and the address inside it: the address.
+  assert.deepEqual(choosePoint(pin, address, { ...p, pin_zip_area: '76433', census_zip_area: '76401' }), address);
+  assert.deepEqual(choosePoint(pin, address, { ...p, pin_zip_area: '', census_zip_area: '76401' }), address);
+  // ...but not when the address is outside it too, or the pin is inside it.
+  assert.deepEqual(choosePoint(pin, address, { ...p, pin_zip_area: '76433', census_zip_area: '76433' }), pin);
+  assert.deepEqual(choosePoint(pin, address, { ...p, pin_zip_area: '76401', census_zip_area: '76401' }), pin);
+  assert.deepEqual(choosePoint(pin, address, { ...p, pin_zip_area: '76433' }), pin);
+  // A geocoder guess and a pin outside the ZIP code: neither can be trusted, so no spot at all.
+  assert.equal(choosePoint(pin, address, { ...p, census_exact: false, pin_zip_area: '76433', census_zip_area: '76401' }), null);
+  assert.deepEqual(choosePoint(pin, address, { ...p, census_exact: false, pin_zip_area: '76401', census_zip_area: '76401' }), pin);
+  // Puerto Rico and the territories: always the chain's pin.
+  assert.deepEqual(choosePoint([18.4882, -66.8007], [18.46047, -66.77791], p, { shared: true }), [18.4882, -66.8007]);
+  assert.deepEqual(choosePoint([18.4882, -66.8007], [18.46047, -66.77791], { ...p, pin_zip_area: '', census_zip_area: '76401' }), [18.4882, -66.8007]);
+});
+
+test('a geocoder guess is told apart from a match of the street address', () => {
+  assert.equal(addressGuessed({ 'addr:postcode': '76401', census_exact: true, census_zip: '76401' }), false);
+  assert.equal(addressGuessed({ 'addr:postcode': '76401-2219', census_exact: true, census_zip: '76401' }), false);
+  assert.equal(addressGuessed({ 'addr:postcode': '76401', census_exact: false, census_zip: '76401' }), true);
+  assert.equal(addressGuessed({ 'addr:postcode': '76401', census_exact: true, census_zip: '76402' }), true);
+  // Older store-locator files without the flags: not a guess.
+  assert.equal(addressGuessed({ 'addr:postcode': '76401' }), false);
+  assert.equal(addressGuessed({ census_exact: true, census_zip: '76402' }), false);
+});
+
+test('which of pin and address to trust is learned from the stores OpenStreetMap has too', () => {
+  const rg = idx('regal');
+  const theatre = (lat, lon, street, census) => ({ geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { key: 'regal', name: 'Regal Test', 'addr:street_address': street, 'addr:city': 'Town', 'addr:state': 'TX', census } });
+  // Three theatres on the map where the chain's pin is about 2 km off and the address is right.
+  const mapped = [[30.0, -97.0, '1 Alpha Rd'], [31.0, -97.0, '2 Beta Rd'], [32.0, -97.0, '3 Gamma Rd']];
+  const osm = { stores: mapped.map(([la, lo, st]) => [rg, la, lo, `${st}, Town, TX`]), counts: {}, skipped: {} };
+  const feats = mapped.map(([la, lo, st]) => theatre(la + 0.018, lo, st, [la, lo]));
+  // A theatre the map doesn't have, pin 2 km from its address: placed at the address.
+  feats.push(theatre(33.018, -97.0, '4 Delta Rd', [33.0, -97.0]));
+  const brandsRegal = brands.map((b) => (b.key === 'regal' ? { ...b, listed: null } : b));
+  const out = addFromLocators(osm, brandsRegal, feats);
+  assert.deepEqual(out.pinChecks.regal, { pin: 0, address: 3 });
+  assert.ok(out.stores.some((r) => r[0] === rg && r[1] === 33.0 && r[2] === -97.0));
+  assert.equal(out.stores.filter((r) => r[0] === rg).length, 4);
+});
+
+test('two stores the chain gives the same pin: the one whose address is elsewhere goes to its address', () => {
+  const az = idx('autozone');
+  const loc = (lat, lon, street, census) => ({ geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { key: 'autozone', name: 'AutoZone', 'addr:street_address': street, 'addr:city': 'Chicago', 'addr:state': 'IL', census } });
+  const out = addFromLocators({ stores: [], counts: {}, skipped: {} }, brands, [
+    loc(41.7971, -87.6643, '6120 S Ashland Ave', [41.7972, -87.6640]),
+    loc(41.7971, -87.6643, '7347 S Ashland Ave', [41.7600, -87.6630]), // copied pin; its address is 4 km south
+  ]);
+  const rows = out.stores.filter((r) => r[0] === az).map((r) => [r[1], r[2], r[3]]).sort((a, b) => a[0] - b[0]);
+  assert.deepEqual(rows.map((r) => r[0]), [41.76, 41.7971]);
+});
+
+test('the same store with its street named two ways is one store', () => {
+  const hd = idx('homedepot');
+  const osm = { stores: [
+    [hd, 60.56167, -151.23896, '10480 Kenai Spur Highway, Kenai, AK'],
+    [hd, 40.0231, -74.9577, '4004 Burlington Pike, Delran, NJ'],
+  ], counts: {}, skipped: {} };
+  const loc = (lon, lat, street, city, state) => ({ geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { key: 'homedepot', name: 'The Home Depot', 'addr:street_address': street, 'addr:city': city, 'addr:state': state } });
+  const out = addFromLocators(osm, brands, [
+    loc(-151.3078, 60.5804, '10480 Spur Hwy', 'Kenai', 'AK'), // 4.3 km off, a street word in common
+    loc(-74.9545, 40.0251, '4004 Route 130, Suite 14', 'Delran', 'NJ'), // 350 m off, same number
+    loc(-74.9300, 40.0400, '4004 Oak Avenue', 'Delran', 'NJ'), // same number, another street, 3 km off: another store
+  ]);
+  assert.equal(out.stores.filter((r) => r[0] === hd).length, 3);
+  assert.deepEqual(out.added, { homedepot: 1 });
+  assert.ok(out.stores.some((r) => r[0] === hd && r[1] === 60.56167), 'the OSM pin on the building stays');
+});
+
+test('a highway address the geocoder puts miles off neither adds a second pin nor moves the map pin', () => {
+  // Kohl's Weatherford, TX: the map pin and the locator's own pin are 1 km apart; the Census
+  // geocoder puts "148 I-20" 11 km away.
+  const k = idx('kohls');
+  const osm = { stores: [[k, 32.72893, -97.78243, '148 East Interstate 20 Frontage Road, Weatherford, TX']], counts: {}, skipped: {} };
+  const feature = { geometry: { type: 'Point', coordinates: [-97.7931663, 32.729356] }, properties: { key: 'kohls', name: "Kohl's", 'addr:street_address': '148 I-20', 'addr:city': 'Weatherford', 'addr:state': 'TX', census: [32.743368, -97.664188] } };
+  const out = addFromLocators(osm, brands, [feature]);
+  assert.deepEqual(out.stores.filter((r) => r[0] === k).map((r) => [r[1], r[2]]), [[32.72893, -97.78243]]);
+  assert.equal(out.moved.length, 0);
+  assert.deepEqual(out.added, {});
 });
 
 test('a locator store with only an address (placed by the geocoder) is added but never moves a map pin', () => {
@@ -244,6 +367,40 @@ test('a locator store with only an address (placed by the geocoder) is added but
   assert.equal(rows.length, 2);
   assert.deepEqual([rows[1][1], rows[1][2]], [33.0, -97.0]);
   assert.equal(out.moved.length, 0);
+});
+
+test('an address-only store is left off when the geocoder only guessed where it is', () => {
+  const lw = idx('lowes');
+  const store = (lat, street, extra) => ({ geometry: { type: 'Point', coordinates: [-96.0, lat] }, properties: { key: 'lowes', name: "Lowe's", 'addr:street_address': street, 'addr:city': 'Town', 'addr:state': 'TX', 'addr:postcode': '75001', census: [lat, -96.0], from_address: true, census_exact: true, census_zip: '75001', ...extra } });
+  const out = addFromLocators({ stores: [], counts: {}, skipped: {} }, brands, [
+    store(32.0, '1 Alpha Rd', { census_zip_area: '75001' }), // a sure match inside its ZIP code: added
+    store(32.2, '2 Beta Rd', { census_exact: false }), // not an exact match
+    store(32.4, '3 Gamma Rd', { census_zip: '75002' }), // found in another ZIP code
+    store(32.6, '4 Delta Rd', { census_zip_area: '75009' }), // put outside its own ZIP code
+    store(32.8, '5 Echo Rd', {}), // ZIP code areas not checked this run: added
+  ]);
+  assert.deepEqual(out.stores.filter((r) => r[0] === lw).map((r) => r[1]), [32.0, 32.8]);
+  assert.deepEqual(out.placed.lowes, { pin: 0, address: 0, skipped: 3 });
+  assert.equal(out.unplaced.length, 3);
+  assert.match(out.unplaced[0], /^Lowe's, 2 Beta Rd.*: the chain gives only an address/);
+});
+
+test('a new store is left off when its pin is outside its ZIP code and the address is only a guess', () => {
+  const hd = idx('homedepot');
+  const store = (lat, street, extra) => ({ geometry: { type: 'Point', coordinates: [-96.0, lat] }, properties: { key: 'homedepot', name: 'The Home Depot', 'addr:street_address': street, 'addr:city': 'Town', 'addr:state': 'TX', 'addr:postcode': '75001', census: [lat + 0.05, -96.0], census_zip: '75001', ...extra } });
+  const out = addFromLocators({ stores: [], counts: {}, skipped: {} }, brands, [
+    store(32.0, '1 Alpha Rd', { census_exact: false, pin_zip_area: '75009', census_zip_area: '75001' }), // left off
+    store(32.4, '2 Beta Rd', { census_exact: true, pin_zip_area: '75009', census_zip_area: '75001' }), // at the address
+    store(32.8, '3 Gamma Rd', { census_exact: false, pin_zip_area: '75001', census_zip_area: '75001' }), // at the pin
+  ]);
+  assert.deepEqual(out.stores.filter((r) => r[0] === hd).map((r) => r[1]), [32.45, 32.8]);
+  assert.deepEqual(out.placed.homedepot, { pin: 1, address: 1, skipped: 1 });
+  assert.match(out.unplaced[0], /^The Home Depot, 1 Alpha Rd.*: the chain's pin is outside/);
+});
+
+test('ZIP code areas: the Census file reader finds the right area (holes and multi-part areas too)', () => {
+  const r = spawnSync('python3', [new URL('./zip_areas.py', import.meta.url).pathname, '--self-test'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr || r.stdout);
 });
 
 test('hand-checked corrections remove closed stores and add confirmed ones', () => {
@@ -261,9 +418,147 @@ test('hand-checked corrections remove closed stores and add confirmed ones', () 
   assert.ok(out.stores.every((r, i, a) => i === 0 || a[i - 1][0] <= r[0]));
 });
 
+test('a hand-checked move puts a misplaced store where it is', () => {
+  const db = idx('davebusters');
+  const res = { stores: [[db, 39.94378, -75.14191, '325 Christopher Columbus Boulevard, Philadelphia, NJ'], [db, 40.09179, -74.961, 'Franklin Mills']], counts: {} };
+  const move = [{ brand: 'davebusters', lat: 39.94378, lon: -75.14191, within: 200, to: [39.95618, -75.13838], label: '325 N Christopher Columbus Blvd, Philadelphia, PA', reason: 'pin was at 325 S' }];
+  const out = applyCorrections(res, brands, { move });
+  assert.deepEqual(out.stores.map((r) => [r[1], r[2], r[3]]), [[39.95618, -75.13838, '325 N Christopher Columbus Blvd, Philadelphia, PA'], [40.09179, -74.961, 'Franklin Mills']]);
+  assert.match(out.corrected[0], /: moved, pin was at 325 S/);
+  // Already on the map at the right spot (say, from the chain's locator): the misplaced pin just goes.
+  const twice = applyCorrections({ stores: [...res.stores, [db, 39.9562, -75.1384, '325 N Christopher Columbus Blvd']], counts: {} }, brands, { move });
+  assert.equal(twice.stores.filter((r) => r[0] === db).length, 2);
+  assert.match(twice.corrected[0], /misplaced duplicate removed/);
+  // Nothing at the wrong spot (fixed at the source): nothing happens.
+  assert.equal(applyCorrections({ stores: [res.stores[1]], counts: {} }, brands, { move }).corrected.length, 0);
+});
+
+test('a store taken off because its chain dropped it comes back once the chain lists it again', () => {
+  const b5 = idx('big5');
+  const res = { stores: [[b5, 39.712, -105.07591, '7111 West Alameda Avenue, Lakewood, CO'], [b5, 39.69061, -104.93993, '1430 South Colorado Boulevard, Denver, CO']], counts: {} };
+  const corrections = { remove: [
+    { brand: 'big5', lat: 39.712, lon: -105.07591, within: 300, label: '7111 West Alameda Avenue, Lakewood, CO', reason: 'dropped', unlessListed: true },
+    { brand: 'big5', lat: 39.69061, lon: -104.93993, within: 300, label: '1430 South Colorado Boulevard, Denver, CO', reason: 'closed', unlessListed: true },
+  ] };
+  // The chain's list has the Lakewood store again (its pin 400 m off, same address).
+  const features = [{ geometry: { type: 'Point', coordinates: [-105.0712, 39.7139] }, properties: { key: 'big5', name: 'Big 5 Sporting Goods', 'addr:street_address': '7111 W. Alameda Ave.', 'addr:city': 'Lakewood', 'addr:state': 'CO' } }];
+  const out = applyCorrections(res, brands, corrections, features);
+  assert.deepEqual(out.stores.map((r) => r[3]), ['7111 West Alameda Avenue, Lakewood, CO']);
+  assert.match(out.corrected.find((m) => m.includes('Lakewood')), /NOT removed/);
+  // Without this run's locator data, both come off.
+  assert.equal(applyCorrections(res, brands, corrections).stores.length, 0);
+});
+
 test('locator stores respect participating lists and excluded names', () => {
   const take5 = { geometry: { type: 'Point', coordinates: [-90, 35] }, properties: { key: 'take5', name: 'Take 5 Car Wash', 'addr:street_address': '1 A St' } };
   const regal = { geometry: { type: 'Point', coordinates: [-91, 36] }, properties: { key: 'regal', name: 'Regal Nowhere Special 99', 'addr:city': 'Nowhere', 'addr:state': 'ZZ' } };
   const out = addFromLocators({ stores: [], counts: {}, skipped: {} }, brands, [take5, regal]);
   assert.equal(out.stores.length, 0);
+});
+
+test('a chain whose own store list is complete loses mapped stores the list no longer has', () => {
+  const bs = loadBrands({
+    brands: [
+      { key: 'gamestop', name: 'GameStop', deals: ['AFP-0001'], match: { wikidata: 'Q202210' }, locatorComplete: { minStores: 2, evidence: 'test', source: 'https://example.com/' } },
+      { key: 'nike', name: 'Nike', deals: ['AFP-0002'], match: { wikidata: 'Q483915' } },
+    ],
+  });
+  const osm = () => ({
+    stores: [
+      [0, 30.0, -90.0, '100 Main Street, Town, LA'], // on the list
+      [0, 30.2, -90.2, '200 Oak Street, Town, LA'], // not on the list, which has stores nearby: closed
+      [0, 30.3, -90.0, '5 Bay Road, Town, LA'], // same address as a listed store 2 km away: the same store
+      [0, 18.4, -66.1, '1 Calle Sol, San Juan, PR'], // the list has nothing within 150 km: can't tell, kept
+      [1, 30.2, -90.2, '200 Oak Street, Town, LA'], // a chain without a complete list: kept
+    ],
+    counts: {},
+    skipped: {},
+  });
+  const f = (lat, lon, street) => ({ geometry: { type: 'Point', coordinates: [lon, lat] }, properties: { key: 'gamestop', name: 'GameStop', 'addr:street_address': street, 'addr:city': 'Town', 'addr:state': 'LA' } });
+  const list = [f(30.0, -90.0, '100 Main Street'), f(30.5, -90.5, '300 Pine Street'), f(30.318, -90.0, '5 Bay Rd')];
+  const out = addFromLocators(osm(), bs, list);
+  assert.equal(out.counts.gamestop, 4); // 3 kept + 1 added
+  assert.deepEqual(out.removed, { gamestop: 1 });
+  assert.deepEqual(out.unlisted, ['GameStop, 200 Oak Street, Town, LA']);
+  assert.equal(out.counts.nike, 1);
+  // A list far shorter than expected is taken to be broken: nothing is taken off.
+  const short = addFromLocators(osm(), bs, list.slice(0, 1));
+  assert.equal(short.counts.gamestop, 4);
+  assert.deepEqual(short.removed, {});
+  assert.match(short.locatorNotes[0], /only 1 stores/);
+  // No list at all this time: nothing is taken off either, quietly.
+  const none = addFromLocators(osm(), bs, []);
+  assert.equal(none.counts.gamestop, 4);
+  assert.deepEqual(none.locatorNotes, []);
+  assert.throws(() => loadBrands({ brands: [{ key: 'x', name: 'X', deals: [], match: { wikidata: 'Q1' }, locatorComplete: { minStores: 5 } }] }), /locatorComplete/);
+});
+
+test('in Puerto Rico a locator pin is trusted over a far-off geocoded address', () => {
+  const hd = idx('homedepot');
+  // Home Depot Hatillo: the store is mapped (no address); the locator pin is 1 km away, but its
+  // "Km 84.3 - Rd. Pr 2" address geocodes 4 km off. Same store: nothing added.
+  const osm = { stores: [[hd, 18.48939, -66.79108, '']], counts: {}, skipped: {} };
+  const out = addFromLocators(osm, brands, [
+    { geometry: { type: 'Point', coordinates: [-66.8007, 18.4882] }, properties: { key: 'homedepot', name: 'The Home Depot', 'addr:street_address': 'Km 84.3 - Rd. Pr 2', 'addr:city': 'Hatillo', 'addr:state': 'PR', census: [18.46047, -66.77791] } },
+  ]);
+  assert.equal(out.counts.homedepot, 1);
+  assert.deepEqual(out.added, {});
+  assert.deepEqual([out.stores[0][1], out.stores[0][2]], [18.48939, -66.79108]);
+});
+
+test('local shops: the hand-checked list is valid and each entry is checked', () => {
+  const shops = loadLocalShops(JSON.parse(readFileSync(new URL('../local-shops/shops.json', import.meta.url), 'utf8')));
+  assert.ok(shops.length >= 20);
+  for (const s of shops) assert.ok(s.source.startsWith('https://') && s.checked.length === 10, s.name);
+  const good = { osm: 'n1', name: 'Joe\'s Diner', category: 'Food and Restaurants', offer: '10% off with military ID', source: 'https://joesdiner.example.com/military', quote: '10% off for military', checked: '2026-11-27', lat: 32.7, lon: -117.1, label: '1 Main Street, San Diego, CA' };
+  assert.equal(loadLocalShops({ shops: [good] }).length, 1);
+  assert.throws(() => loadLocalShops({ shops: [good, good] }), /listed twice/);
+  assert.throws(() => loadLocalShops({ shops: [{ ...good, osm: '123' }] }), /bad osm id/);
+  assert.throws(() => loadLocalShops({ shops: [{ ...good, category: 'Food' }] }), /unknown category/);
+  assert.throws(() => loadLocalShops({ shops: [{ ...good, category: 'Restaurants' }] }), /unknown category/);
+  assert.throws(() => loadLocalShops({ shops: [{ ...good, name: "Joe's Guns" }] }), /firearms/);
+  assert.throws(() => loadLocalShops({ shops: [{ ...good, quote: '10% off ammo for military' }] }), /firearms/);
+  assert.equal(loadLocalShops({ shops: [{ ...good, offer: '10% off Black Rifle Coffee drinks' }] }).length, 1);
+  assert.throws(() => loadLocalShops({ shops: [{ ...good, source: 'http://joesdiner.example.com' }] }), /https/);
+  assert.throws(() => loadLocalShops({ shops: [{ ...good, quote: '' }] }), /required/);
+  assert.throws(() => loadLocalShops({ shops: [{ ...good, lat: 51.5, lon: -0.1 }] }), /outside/);
+  const q = localQuery([good, { ...good, osm: 'w22' }, { ...good, osm: 'n3' }]);
+  assert.match(q, /node\(id:1,3\);/);
+  assert.match(q, /way\(id:22\);/);
+  assert.doesNotMatch(q, /relation/);
+});
+
+test('local shops leave the map when closed, renamed, gone from OpenStreetMap or the offer page stops showing it', () => {
+  const shop = (osm, name) => ({ osm, name, category: 'Food and Restaurants', offer: '10% off', source: 'https://x.example.com', quote: 'q', checked: '2026-11-27', lat: 21.3, lon: -157.8, label: 'Honolulu, HI' });
+  const shops = [shop('n1', 'Big City Diner'), shop('w2', 'Kualoa Ranch'), shop('n3', 'Ocean Grill'), shop('n4', 'Surf Shack'), shop('n5', 'Lava Tattoo'), shop('n6', 'Moved Away'), shop('n7', 'Island Outfitters')];
+  const elements = [
+    { type: 'node', id: 1, lat: 21.4, lon: -157.74, tags: { amenity: 'restaurant', name: 'Big City Diner' } },
+    { type: 'way', id: 2, center: { lat: 21.52, lon: -157.84 }, tags: { tourism: 'attraction', name: 'Kualoa Ranch Hawaii' } },
+    { type: 'node', id: 3, lat: 21.3, lon: -157.8, tags: { 'disused:amenity': 'restaurant', name: 'Ocean Grill' } },
+    { type: 'node', id: 4, lat: 21.3, lon: -157.8, tags: { amenity: 'restaurant', name: 'Poke Bar' } },
+    { type: 'node', id: 5, lat: 21.3, lon: -157.8, tags: { shop: 'tattoo', name: 'Lava Tattoo' } },
+    { type: 'node', id: 7, lat: 21.3, lon: -157.8, tags: { shop: 'weapons', name: 'Island Outfitters' } },
+  ];
+  const status = { checked: '2026-12-27', shops: { n5: { seen: '2026-10-27', misses: 2 }, n1: { seen: '2026-11-27', misses: 1 } } };
+  const { rows, dropped } = localRows(shops, elements, status);
+  assert.deepEqual(rows.map((r) => r[2]), ['Big City Diner', 'Kualoa Ranch']);
+  // Positions come from OpenStreetMap (a way's center), not the saved ones.
+  assert.deepEqual(rows[0].slice(0, 2), [21.4, -157.74]);
+  assert.deepEqual(rows[1].slice(0, 2), [21.52, -157.84]);
+  assert.equal(rows[0].length, 8);
+  // The date shown is the last time the offer was seen on the shop's page, if that's later.
+  const shop2 = { ...shop('n1', 'Big City Diner'), checked: '2026-11-01' };
+  assert.equal(localRows([shop2], null, { shops: { n1: { seen: '2026-12-02', misses: 0 } } }).rows[0][7], '2026-12-02');
+  assert.equal(localRows([shop2], null, { shops: { n1: { seen: '2026-10-02', misses: 0 } } }).rows[0][7], '2026-11-01');
+  assert.equal(localRows([shop2], null, { shops: { n1: { seen: 'soon', misses: 0 } } }).rows[0][7], '2026-11-01');
+  assert.equal(dropped.length, 5);
+  assert.match(dropped.find((d) => d.startsWith('Island Outfitters')), /gun shop/);
+  assert.match(dropped.find((d) => d.startsWith('Ocean Grill')), /marked closed/);
+  assert.match(dropped.find((d) => d.startsWith('Surf Shack')), /Poke Bar/);
+  assert.match(dropped.find((d) => d.startsWith('Lava Tattoo')), /no longer on its website/);
+  assert.match(dropped.find((d) => d.startsWith('Moved Away')), /no longer on OpenStreetMap/);
+  // If the OpenStreetMap download failed, the saved positions are used and only the offer check applies.
+  const offline = localRows(shops, null, status);
+  assert.equal(offline.rows.length, 6);
+  assert.deepEqual(offline.rows.find((r) => r[2] === 'Big City Diner').slice(0, 2), [21.3, -157.8]);
 });
