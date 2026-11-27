@@ -52,6 +52,9 @@ test('closed, vacant and planned places are dropped', () => {
   assert.equal(isClosed({ shop: 'vacant' }), true);
   assert.equal(isClosed({ shop: 'shoes', name: 'Foot Locker (closed)' }), true);
   assert.equal(isClosed({ amenity: 'cinema', opening_hours: 'closed' }), true);
+  // A yoga studio that took over an empty mall unit (OpenStreetMap way 1085921022): "disused:shop=no" isn't closed.
+  assert.equal(isClosed({ leisure: 'fitness_centre', 'disused:shop': 'no', name: 'Lady Kels Yoga' }), false);
+  assert.equal(isClosed({ 'disused:shop': 'no' }), true); // still nothing open there
 });
 
 test('brand rules: Take 5 car washes and Topgolf Swing Suites are left out', () => {

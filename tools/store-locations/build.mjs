@@ -186,7 +186,8 @@ const LIFECYCLE = /^(disused|abandoned|demolished|removed|razed|destroyed|constr
 /** True if OSM says this place is closed, empty or not built yet. */
 export function isClosed(tags) {
   if (!FEATURE_KEYS.some((k) => typeof tags[k] === 'string' && tags[k] !== 'vacant')) return true;
-  if (Object.keys(tags).some((k) => LIFECYCLE.test(k) && FEATURE_KEYS.includes(k.split(':')[1]))) return true;
+  // ("disused:shop=no" says the opposite: a mapper's note that the place is in use again.)
+  if (Object.keys(tags).some((k) => LIFECYCLE.test(k) && FEATURE_KEYS.includes(k.split(':')[1]) && tags[k] !== 'no')) return true;
   if (/^(closed|off)$/i.test(tags.opening_hours ?? '')) return true;
   if (/\b(permanently )?closed\b/i.test(tags.name ?? '')) return true;
   return false;
