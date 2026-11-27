@@ -1,0 +1,13 @@
+{
+ "points": 68020,
+ "agree": 68019,
+ "disagree": 1,
+ "examples": [
+  {
+   "lat": 35.449602,
+   "lon": -97.423682,
+   "shapely": "",
+   "plain": "73110"
+  }
+ ]
+}
