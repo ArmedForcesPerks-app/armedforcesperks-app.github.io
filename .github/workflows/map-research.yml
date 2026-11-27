@@ -1,0 +1,87 @@
+# TEMPORARY research runner for the Near me map work (never merged into main).
+# Each push that changes research/jobs.json runs the listed jobs in parallel on GitHub's free
+# servers and commits what they write to research/out/<batch>/<job>/ on this same branch.
+# Nothing here touches the website or the published store list.
+name: Map research (temporary)
+
+on:
+  push:
+    branches: ['claude/project-thread-2p6b4o-research']
+    paths: ['research/jobs.json']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: map-research
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      jobs: ${{ steps.p.outputs.jobs }}
+      batch: ${{ steps.p.outputs.batch }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        run: |
+          echo "jobs=$(jq -c '.jobs' research/jobs.json)" >> "$GITHUB_OUTPUT"
+          echo "batch=$(jq -r '.batch' research/jobs.json)" >> "$GITHUB_OUTPUT"
+
+  run:
+    needs: plan
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        job: ${{ fromJSON(needs.plan.outputs.jobs) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: python3 -m pip install --quiet shapely==2.0.6 pyshp==2.3.1 duckdb==1.1.3
+      - name: Run job
+        env:
+          JOB: ${{ matrix.job }}
+          BATCH: ${{ needs.plan.outputs.batch }}
+        run: |
+          slug=$(echo "$JOB" | tr -c 'A-Za-z0-9_\n-' '_')
+          export OUT="out/$BATCH/$slug"
+          mkdir -p "$OUT"
+          set -o pipefail
+          bash research/jobs/run-one.sh "$JOB" "$OUT" 2>&1 | tee "$OUT/log.txt" || echo "job failed: $?" >> "$OUT/log.txt"
+          du -sh "$OUT"
+          echo "SLUG=$slug" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: out-${{ env.SLUG }}
+          path: out/
+          retention-days: 7
+
+  collect:
+    needs: [plan, run]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: out-*
+          merge-multiple: true
+      - name: Commit results to this branch
+        run: |
+          mkdir -p research/out
+          cp -r artifacts/. research/out/
+          # Big files are split so git accepts them (rejoin with cat).
+          find research/out -type f -size +45M -print0 | while IFS= read -r -d '' f; do split -b 40M -d "$f" "$f.part"; rm "$f"; done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/out
+          git commit -qm "Research results ${{ needs.plan.outputs.batch }}" || exit 0
+          for i in 1 2 3 4 5; do git pull --rebase -q origin "${GITHUB_REF_NAME}" && git push -q && break; sleep 15; done
