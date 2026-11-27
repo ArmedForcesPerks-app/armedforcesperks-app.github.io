@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+# The Deals page builds its list from deals.json, so search engines may read that one file.
+Allow: /data/deals.json
 Disallow: /data/
 Sitemap: https://armedforcesperks.com/sitemap.xml

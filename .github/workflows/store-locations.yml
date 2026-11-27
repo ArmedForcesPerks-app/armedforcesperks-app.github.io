@@ -1,7 +1,11 @@
 # Refreshes data/locations.json (stores for the app's "Near me" map) from OpenStreetMap.
 # Free: runs on GitHub Actions (free for public repositories) and the public Overpass API.
 #
-# - Monthly on the 3rd at 09:17 UTC, or any time from Actions > Store locations > Run workflow.
+# - Checked daily at 04:17 UTC (a quiet time for the public servers); a full download happens
+#   once the list is 27 days old. On other days it only fills in chains the last run couldn't
+#   get (listed in data/locations-status.json), if any. Or any time from Actions > Store locations > Run workflow.
+# - If the public servers are too busy, the run ends quietly (no failure email) and the next
+#   day's run tries again. It only fails (and emails) if the list gets over 40 days old.
 # - Pull requests that change tools/store-locations/ run the tests and a trial download
 #   without publishing anything.
 # - If a chain suddenly loses more than half its stores, last month's stores are kept for it
@@ -11,8 +15,13 @@ name: Store locations
 
 on:
   schedule:
-    - cron: '17 9 3 * *'
+    - cron: '17 4 * * *'
   workflow_dispatch:
+    inputs:
+      fill:
+        description: 'Only download the chains the last run missed'
+        type: boolean
+        default: false
   pull_request:
     types: [opened, synchronize, reopened, labeled]
     paths:
@@ -25,7 +34,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 200
     permissions:
       contents: read
       checks: write
@@ -35,17 +44,22 @@ jobs:
         with:
           node-version: 22
       - run: node --test tools/store-locations/test.mjs
-      # A quick check with three chains that the download still works (all chains if the pull
+      # A quick check with three chains (Regal and AMC among them, to check their participating-theatre lists) that the download still works (all chains if the pull
       # request has the "full store trial" label). It's a heads-up only: the free map servers
       # are sometimes busy, so a failed trial doesn't fail the check (and doesn't email anyone).
       # The "Store locations report" check shows what happened.
+      - name: Get store-locator data for the full trial
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'full store trial')
+        continue-on-error: true
+        timeout-minutes: 100
+        run: python3 tools/store-locations/atp-extract.py atp-stores.geojson
       - name: Trial download (nothing is published)
         if: github.event_name == 'pull_request'
         continue-on-error: true
         timeout-minutes: 80
         env:
-          ONLY: ${{ !contains(github.event.pull_request.labels.*.name, 'full store trial') && '--only homedepot,outback,amc' || '' }}
-        run: node tools/store-locations/build.mjs --dry-run $ONLY --report report.md
+          ONLY: ${{ !contains(github.event.pull_request.labels.*.name, 'full store trial') && '--only homedepot,regal,amc' || '' }}
+        run: node tools/store-locations/build.mjs --dry-run $ONLY --atp atp-stores.geojson --budget-min 70 --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:
@@ -67,7 +81,7 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 260
     permissions:
       contents: write
       pages: write
@@ -81,8 +95,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Anything to do today?
+        id: due
+        run: node tools/store-locations/build.mjs --should-run ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }}
+      # Each chain's own store-locator data (All the Places), used to add stores OpenStreetMap is
+      # missing and to check pins. If it's unavailable, the list is built from OpenStreetMap alone.
+      - name: Get store-locator data
+        if: steps.due.outputs.run == 'true'
+        continue-on-error: true
+        timeout-minutes: 100
+        run: python3 tools/store-locations/atp-extract.py atp-stores.geojson
       - name: Build store list
-        run: node tools/store-locations/build.mjs --report report.md
+        if: steps.due.outputs.run == 'true'
+        run: node tools/store-locations/build.mjs --atp atp-stores.geojson --budget-min 120 --soft-fail-days 40 ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }} ${{ inputs.fill && '--fill' || '' }} --report report.md
       - name: Post the run report as a check
         if: always() && hashFiles('report.md') != ''
         env:
@@ -101,15 +126,26 @@ jobs:
           PY
       - name: Commit if changed
         run: |
-          if git diff --quiet -- data/locations.json && git ls-files --error-unmatch data/locations.json >/dev/null 2>&1; then
+          if [ ! -f data/locations.json ]; then
+            echo "No store list yet (the servers were busy). The next run will try again."
+            exit 0
+          fi
+          git add data/locations.json data/locations-status.json 2>/dev/null || git add data/locations.json
+          if git diff --cached --quiet; then
             echo "No changes."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/locations.json
           git commit -m "Update store locations from OpenStreetMap"
-          git push
+          # The download takes about 45 minutes, and main may have moved on meanwhile
+          # (for example the nightly deal sync), so catch up before pushing.
+          pushed=""
+          for i in 1 2 3; do
+            if git pull --rebase -q origin main && git push; then pushed=1; break; fi
+            sleep 20
+          done
+          [ -n "$pushed" ] || { echo "Couldn't push the store list."; exit 1; }
           # Ask GitHub Pages to rebuild the site (a push from this job may not start it on its own).
           curl -sS -X POST -H "Authorization: Bearer ${{ github.token }}" -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/pages/builds" || true
