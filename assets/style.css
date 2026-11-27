@@ -178,6 +178,12 @@ table.elig td{font-weight:700;width:9rem}
 .small{font-size:.88rem}
 .muted{color:var(--muted)}
 .deal-links{margin:.9rem 0 .2rem}
+.deal-links .report{font-weight:700}
+.legal-notes{margin:.3rem 0 .4rem;padding-left:1.2rem;color:var(--muted)}
+.legal-notes li{margin:.15rem 0}
+.sources-list{padding-left:1.2rem}
+.sources-list li{margin:.45rem 0}
+.sources-list .src{overflow-wrap:anywhere}
 .more-row{text-align:center;margin:1.5rem 0 .5rem}
 .btn-navy{background:var(--navy);color:#fff;border:0;font:inherit;font-weight:600;cursor:pointer}
 .btn-navy:hover{background:var(--navy-2);color:#fff}

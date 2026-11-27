@@ -20,6 +20,7 @@ import {
   headlineOf,
   hostOf,
   isExpired,
+  isVaClaimRelated,
   sortDeals,
   STATUS_OPTIONS,
   todayIso,
@@ -29,13 +30,25 @@ import { buildIndex, searchDeals } from './search.js';
 window.afpDealsStarted = true;
 
 const PAGE_SIZE = 40;
-const EMAIL = 'armedforcesperks@gmail.com';
 const PAID_LINK_BADGE = 'Paid link';
 const PAID_LINK_NOTICE = 'Paid link: we earn a commission if you buy. You pay nothing extra.';
 const GOVERNMENT_NOTICE =
   'Armed Forces Perks is not a government website and does not represent any government agency. This summary is based on the official government source linked below. Check that source for the full, current rules.';
 const FINANCIAL_NOTICE =
   'Financial or insurance product. Shown as a plain link to the official site for information only. We do not recommend, compare or earn money from financial products.';
+// Legal notes on every deal and benefit, worded the same as the app (src/constants/site.ts).
+const LEGAL_NOTES = [
+  'Armed Forces Perks is independent and not affiliated with the VA, the DoD or any branch of the military.',
+  'This is general information, not legal, financial, tax, medical or official benefits advice.',
+  'The business or agency decides who qualifies. Check the official source before you rely on it.',
+];
+// VA benefits and perks that depend on a VA rating (isVaClaimRelated). Same wording as the app.
+const VA_CLAIMS_NOTICE =
+  'Armed Forces Perks doesn’t help with VA disability claims or ratings and takes no responsibility for them. We only share public information and point you to official sources. Filing a VA claim is free. For free help, use VA.gov or a VA-accredited representative, such as a Veterans Service Organization (VSO).';
+const VA_ACCREDITED_HELP = 'https://www.va.gov/get-help-from-accredited-representative/';
+// "Report a problem" goes where the app's Suggestion Box sends deal fixes (same address and
+// subject prefix, so the same Gmail filter files both).
+const SUGGESTIONS_EMAIL = 'armedforcesperks+suggestions@gmail.com';
 const ELIG_TEXT = { yes: 'Yes', no: 'No', unknown: 'Not stated' };
 const STATUS_WORDS = {
   activeDuty: 'active duty',
@@ -294,6 +307,19 @@ function dealDetails(deal) {
     box.append(el('div', { class: 'notice notice-info' }, el('strong', null, 'Government program. '), GOVERNMENT_NOTICE));
   }
   if (deal.financial) box.append(el('div', { class: 'notice' }, FINANCIAL_NOTICE));
+  if (isVaClaimRelated(deal)) {
+    box.append(
+      el(
+        'div',
+        { class: 'notice notice-info' },
+        el('strong', null, 'VA claims and ratings. '),
+        VA_CLAIMS_NOTICE,
+        ' ',
+        el('a', { href: VA_ACCREDITED_HELP, target: '_blank', rel: 'noopener' }, 'Find free, VA-accredited help'),
+        el('span', { class: 'visually-hidden', text: ' (opens in a new tab)' }),
+      ),
+    );
+  }
 
   // The link. FTC: the paid-link disclosure sits right above the button, before the click.
   const cta = el('div', { class: 'cta' });
@@ -320,13 +346,24 @@ function dealDetails(deal) {
   );
   box.append(cta);
 
-  const subject = `Deal fix: ${deal.name} (${deal.id})`;
-  const mailBody = `${deal.name} (deal ${deal.id}, last verified ${deal.lastConfirmed}): `;
+  // Legal notes, on every deal and benefit.
+  const notes = el('ul', { class: 'legal-notes small' });
+  for (const n of LEGAL_NOTES) notes.append(el('li', { text: n }));
+  box.append(el('h4', { text: 'Legal notes' }), notes, el('p', { class: 'small' }, el('a', { href: '/terms.html' }, 'Terms of Use')));
+
+  const subject = `[AFP Suggestion] Deal fix (${deal.id})`;
+  const mailBody =
+    `Type: Fix a deal\nDeal: ${deal.id}\nWhat's wrong (ended, different amount, broken link, who qualifies): \n\n` +
+    `${deal.name} (deal ${deal.id}, last verified ${deal.lastConfirmed}): `;
   box.append(
     el(
       'p',
       { class: 'deal-links small' },
-      el('a', { href: `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(mailBody)}` }, 'Deal wrong? Tell us'),
+      el(
+        'a',
+        { class: 'report', href: `mailto:${SUGGESTIONS_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(mailBody)}` },
+        'Report a problem',
+      ),
       ' · ',
       el('a', { href: `#${deal.id}` }, 'Link to this deal'),
     ),
