@@ -11,6 +11,9 @@
 # - If a chain suddenly loses more than half its stores, last month's stores are kept for it
 #   and the run summary says so. If the whole list collapses, nothing is published and the
 #   run fails (GitHub emails the repository owner).
+# - Local shops (tools/local-shops/shops.json, hand-checked) are rechecked about once a month:
+#   each shop's own offer page is read again, and a shop whose page stops showing the offer two
+#   months running leaves the map (data/local-shops-status.json keeps the count).
 name: Store locations
 
 on:
@@ -26,6 +29,7 @@ on:
     types: [opened, synchronize, reopened, labeled]
     paths:
       - 'tools/store-locations/**'
+      - 'tools/local-shops/**'
       - '.github/workflows/store-locations.yml'
 
 permissions:
@@ -105,6 +109,12 @@ jobs:
         continue-on-error: true
         timeout-minutes: 100
         run: python3 tools/store-locations/atp-extract.py atp-stores.geojson
+      # Re-reads each local shop's offer page (skipped if it was done in the last 20 days).
+      - name: Check local shops' offers
+        if: steps.due.outputs.run == 'true'
+        continue-on-error: true
+        timeout-minutes: 20
+        run: python3 tools/local-shops/recheck.py
       - name: Build store list
         if: steps.due.outputs.run == 'true'
         run: node tools/store-locations/build.mjs --atp atp-stores.geojson --budget-min 120 --soft-fail-days 40 ${{ github.event_name == 'schedule' && '--if-older-than 27' || '' }} ${{ inputs.fill && '--fill' || '' }} --report report.md
@@ -130,7 +140,10 @@ jobs:
             echo "No store list yet (the servers were busy). The next run will try again."
             exit 0
           fi
-          git add data/locations.json data/locations-status.json 2>/dev/null || git add data/locations.json
+          git add data/locations.json
+          for f in data/locations-status.json data/local-shops-status.json; do
+            if [ -f "$f" ]; then git add "$f"; fi
+          done
           if git diff --cached --quiet; then
             echo "No changes."
             exit 0
