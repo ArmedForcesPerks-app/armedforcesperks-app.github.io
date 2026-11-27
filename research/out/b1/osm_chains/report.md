@@ -1,0 +1,342 @@
+## Store locations
+
+OSM data as of 2026-11-27. 31175 stores from 43 chains. Still missing (tried again daily): ASICS, Dave & Buster's, GameStop, Helzberg Diamonds.
+Skipped: 68 closed, 150 duplicates, 0 without a usable position, 25 other matches, 267 not on a participating-locations list.
+
+| Chain | Stores | Added from the chain's store locator |
+| --- | ---: | ---: |
+| Adidas | 132 | – |
+| AMC Theatres | 423 | – |
+| Ariat | 12 | – |
+| ASICS | 59 | – |
+| AutoZone | 4266 | – |
+| Bass Pro Shops | 99 | – |
+| Big 5 Sporting Goods | 350 | – |
+| Bonefish Grill | 139 | – |
+| Boscov's | 45 | – |
+| Cabela's | 61 | – |
+| Cinemark | 236 | – |
+| CubeSmart | 1667 | – |
+| Dave & Buster's | 189 | – |
+| Eyemart Express | 39 | – |
+| Foot Locker | 386 | – |
+| GameStop | 2294 | – |
+| Helzberg Diamonds | 165 | – |
+| The Home Depot | 2020 | – |
+| Kohl's | 1083 | – |
+| LasikPlus | 50 | – |
+| Lowe's | 1751 | – |
+| Lululemon | 277 | – |
+| Luna Grill | 40 | – |
+| Marcus Theatres | 45 | – |
+| Mavis Tires & Brakes | 1170 | – |
+| Michaels | 1030 | – |
+| Nike | 218 | – |
+| The North Face | 93 | – |
+| O'Reilly Auto Parts | 3564 | – |
+| Outback Steakhouse | 653 | – |
+| Penske Truck Rental | 1775 | – |
+| Pep Boys | 548 | – |
+| Purple | 28 | – |
+| Regal | 234 | – |
+| Rogers & Hollands | 45 | – |
+| Sherwin-Williams | 1995 | – |
+| Showcase Cinemas | 9 | – |
+| Take 5 Oil Change | 1468 | – |
+| Texas de Brazil | 59 | – |
+| Topgolf | 88 | – |
+| Valvoline Instant Oil Change | 2286 | – |
+| Vineyard Vines | 81 | – |
+| YETI | 3 | – |
+
+### Check these
+
+- ASICS: download failed, kept last month's stores.
+- Dave & Buster's: download failed, kept last month's stores.
+- GameStop: download failed, kept last month's stores.
+- Helzberg Diamonds: download failed, kept last month's stores.
+- CubeSmart: 1667 → 458 stores. Kept last month's 1667 instead; check OSM.
+- LasikPlus: 50 → 6 stores. Kept last month's 50 instead; check OSM.
+- Mavis Tires & Brakes: 1170 → 384 stores. Kept last month's 1170 instead; check OSM.
+- Penske Truck Rental: 1775 → 135 stores. Kept last month's 1775 instead; check OSM.
+- Rogers & Hollands: 45 → 5 stores. Kept last month's 45 instead; check OSM.
+- Take 5 Oil Change: 1468 → 407 stores. Kept last month's 1468 instead; check OSM.
+- Texas de Brazil: 59 → 27 stores. Kept last month's 59 instead; check OSM.
+- Valvoline Instant Oil Change: 2286 → 955 stores. Kept last month's 2286 instead; check OSM.
+
+### Hand-checked corrections
+
+- Outback Steakhouse: 2 removed, Outback closed its last three Hawaii restaurants (Waipio, Kapolei, Kona) in 2024; Hawaii Kai and Kihei closed the year before
+- Foot Locker, Lahaina Gateway, Lahaina, HI: removed, not on Foot Locker's own store list for Hawaii, and not among the center's current shops
+
+### Left off: not on a participating-locations list
+
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC Arizona Center 24, Phoenix, AZ
+- AMC Broadway 4, Santa Monica, CA
+- AMC CLASSIC Bismarck 8
+- AMC CLASSIC Bloomfield 8
+- AMC CLASSIC Bloomsburg 11, Bloomsburg, PA
+- AMC CLASSIC Crawfordsville 8, Crawfordsville, IN
+- AMC CLASSIC East Pointe 12
+- AMC CLASSIC Hamilton 8, Hamilton
+- AMC CLASSIC Morgantown 12
+- AMC CLASSIC Mount Lebanon 6
+- AMC CLASSIC Ohio Valley Mall 11
+- AMC CLASSIC Richmond 11
+- AMC Causeway 13, MA
+- AMC Centerpoint 11, Tempe, AZ
+- AMC Cinemas 8, Brooklyn, OH
+- AMC Classic Brazos 14
+- AMC Classic Cobblestone 9
+- AMC Classic Harrison 8, Harrison, AR
+- AMC Classic Londonderry 10, Londonderry
+- AMC Classic Madisonville 8, Madisonville, KY
+- AMC Classic North Platte 6
+- AMC Classic Sauk Valley 8
+- AMC Classic Sunnyland 10
+- AMC Classic Village Mall 6
+- AMC Classic theatre
+- AMC Dine-In, Atlanta, GA
+- AMC Evanston 12, Evanston, IL
+- AMC Galaxy 16, Waco, TX
+- AMC Grove City 14
+- AMC Kennewick 12, Kennewick, WA
+- AMC Lexington Park 6, Lexington Park, MD
+- AMC Loews Lakewood Town Center 12, Lakewood, WA
+- AMC Loews Village 7, New York
+- AMC Movie Theatres
+- AMC Oakview Plaza 24, Omaha, NE
+- AMC Palm Promenade 24, San Diego, CA
+- AMC Rivercenter 11 with Alamo IMAX, San Antonio, TX
+- AMC Salina 10
+- AMC Seacourt 10
+- AMC Showplace 8, Springfield, IL
+- AMC Showplace Galewood 14, Chicago, IL
+- AMC South Bend 16
+- AMC St. Lucie West 14, Port Saint Lucie, FL
+- AMC Theaters, East Brunswick, NJ
+- AMC Theatre
+- AMC, Alpena, MI
+- AMC, Arlington, VA
+- AMC, Birmingham, AL
+- AMC, Findlay, OH
+- AMC, Kansas City, MO
+- AMC, Largo, MD
+- AMC, Olathe, KS
+- AMC, Rockville Centre
+- AMC, Westbury, NY
+- Hollywood Theaters, Beaumont, TX
+- IMAX & AMC Star Cinemas, Council Bluffs, IA
+- Littleton, CO
+- Maui Mall Megaplex Cinema, Kahului, HI
+- Regal
+- Regal
+- Regal @ Austell, Austell, GA
+- Regal Amarillo Star Stadium 14 & IMAX, Amarillo, TX
+- Regal Arnot Mall, Horseheads, NY
+- Regal Atlas Park Stadium 8
+- Regal Aviation Mall
+- Regal Battery Park, New York, NY
+- Regal Bella Bottega 11, Redmond, WA
+- Regal Bellingham, Bellingham, MA
+- Regal Bossier Corners Cinema, Bossier City, LA
+- Regal Bowling Green, Bowling Green, KY
+- Regal Brandywine Town Center, Wilmington, DE
+- Regal Brass Mill Stadium 12
+- Regal Bricktown Charleston
+- Regal Brunswick 10, Brunswick, ME
+- Regal Carrollton Cinemas 10, Carrollton, GA
+- Regal Cinebarre Palace Station
+- Regal Cinema 16
+- Regal Cinema Nitro 12, Nitro, WV
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas (Closed)
+- Regal Cinemas 10, Noblesville, IN
+- Regal Cinemas 12
+- Regal Cinemas 14
+- Regal Cinemas 16
+- Regal Cinemas 16, Willoughby, OH
+- Regal Cinemas 20, Sheffield, OH
+- Regal Cinemas Auburn 10, Auburn, CA
+- Regal Cinemas Carlsbad 12, Carlsbad, CA
+- Regal Cinemas Concord 10, Concord, NH
+- Regal Cinemas Eastview Mall 13, Victor, NY
+- Regal Cinemas Great Escape
+- Regal Cinemas Key West 6
+- Regal Cinemas Massillon 12
+- Regal Cinemas New Albany 16, New Albany, IN
+- Regal Cinemas Oakmont 8 Movie Theater
+- Regal Cinemas Oakwood Stadium 18
+- Regal Cinemas South 10, Boardman, OH
+- Regal Cinemas, Binghamton, NY
+- Regal Cinemas, Boone, NC
+- Regal Cinemas, CA
+- Regal Cinemas, Cockeysville, MD
+- Regal Cinemas, Downingtown, PA
+- Regal Cinemas, Gilbert, AZ
+- Regal Cinemas, Issaquah
+- Regal Cinemas, Kingston, MA
+- Regal Cinemas, Lake City, FL
+- Regal Cinemas, Marysville
+- Regal Cinemas, Niles, OH
+- Regal Cinemas, Westlake, OH
+- Regal Citrus Cinemas
+- Regal Citrus Park
+- Regal Clifton Park & RPX, Clifton Park, NY
+- Regal Commerce Center Stadium 18
+- Regal Covington, Covington, LA
+- Regal Crossgates, Albany
+- Regal Crystal River Mall
+- Regal Culver Ridge Plaza 16, Rochester, NY
+- Regal Dawson 10 Cinemas, Dawsonville, GA
+- Regal Destiny USA, Syracuse, NY
+- Regal E-Walk Stadium 13 & RPX, New York, NY
+- Regal East Greenbush, Rensselaer, NY
+- Regal Edgmont Square, Newtown Township, PA
+- Regal Edwards Camarillo Palace, Camarillo, CA
+- Regal Edwards Ontario Mountain Village, Ontario, CA
+- Regal El Dorado Hills Stadium 14 & IMAX, El Dorado Hills, CA
+- Regal Essex 14 & RPX, New York, NY
+- Regal Fishkill, Fishkill, NY
+- Regal Fossil Creek, Fort Worth, TX
+- Regal Fox Run & RPX, Newington, NH
+- Regal Greenville Grande, Greenville, NC
+- Regal Greenwood Mall, Bowling Green, KY
+- Regal Hacienda Crossings, Dublin, CA
+- Regal Hadley Theatre Stadium 16, South Plainfield, NJ
+- Regal Heartland
+- Regal Hollywood 24, Chamblee, GA
+- Regal Hollywood Cinema, Saint Joseph, MO
+- Regal Independence Plaza & RPX, Hamilton, NJ
+- Regal Indio Metro
+- Regal Ithaca Mall Stadium 14, Ithaca, NY
+- Regal Kansas City, Kansas City, MO
+- Regal Modesto Stadium 10
+- Regal Moraine Point Cinema 10
+- Regal New River Valley, Christiansburg, VA
+- Regal Northampton Cinema 14, Easton, PA
+- Regal Northstar, Joplin, MO
+- Regal Paseo, Pasadena, CA
+- Regal Permian Palace & IMAX
+- Regal Placerville Stadium 8, Placerville, CA
+- Regal Plymouth Meeting 10, Conshohocken, PA
+- Regal Rancho Del Rey, Chula Vista, CA
+- Regal San Bernardino Stadium 14 & RPX, San Bernardino, CA
+- Regal Short Pump Stadium 14, Richmond, VA
+- Regal Snellville Oaks Stadium 14, Snellville, GA
+- Regal Sonora Stadium 10
+- Regal Stadium 16 Cinema
+- Regal Stonefield Stadium 14 and IMAX
+- Regal Stonestown Galleria
+- Regal Swansea, Swansea, MA
+- Regal Tangram 4DX, Flushing, NY
+- Regal Theater, Knoxville
+- Regal Tullahoma
+- Regal UA Bonita Lakes
+- Regal UA Broadway Faire, Fresno, CA
+- Regal UA King of Prussia, King of Prussia
+- Regal UA Main Street Theatre, Philadelphia, PA
+- Regal UA Midway, Forest Hills
+- Regal UA Natchez Mall
+- Regal UA Parkway Place, Flowood, MS
+- Regal UA Sheepshead Bay, Brooklyn, NY
+- Regal UA Staten Island & RPX
+- Regal UA Westbrook
+- Regal Union Square Stadium 14
+- Regal Vancouver Plaza 10, Vancouver, WA
+- Regal Village Square Stadium 18, Las Vegas, NV
+- Regal Virginia Center 20
+- Regal Visalia, Visalia, CA
+- Regal Waterford 9, Waterford, CT
+- Regal West Ridge, Topeka, KS
+- Regal Yorba Linda & IMAX, Yorba Linda, CA
+- Ukiah Regal 6, Ukiah, CA
+
+### Download log
+
+```
+1/43 Adidas: 134 places (maps.mail.ru, 213s)
+2/43 AMC Theatres: FAILED after 221s (maps.mail.ru: answered 504; overpass-api.de: fetch failed; overpass.private.coffee: answered 504)
+3/43 Ariat: 13 places (maps.mail.ru, 16s)
+4/43 ASICS: FAILED after 224s (maps.mail.ru: answered 504; overpass-api.de: fetch failed; overpass.private.coffee: answered 504)
+5/43 AutoZone: FAILED after 247s (maps.mail.ru: answered 504; overpass-api.de: fetch failed; overpass.private.coffee: The operation was aborted due to timeout)
+6/43 Bass Pro Shops: 99 places (maps.mail.ru, 30s)
+7/43 Big 5 Sporting Goods: 353 places (maps.mail.ru, 14s)
+8/43 Bonefish Grill: FAILED after 234s (maps.mail.ru: answered 504; overpass-api.de: fetch failed; overpass.private.coffee: its map data is from 2026-07-15 (out of date; not using this server again this run))
+9/43 Boscov's: FAILED after 70s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+10/43 Cabela's: FAILED after 68s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+Servers look overloaded. Waiting 5 minutes (pause 1 of 2)…
+11/43 Cinemark: FAILED after 74s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+12/43 CubeSmart: 489 places (maps.mail.ru, 22s)
+13/43 Dave & Buster's: FAILED after 63s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+14/43 Eyemart Express: 40 places (maps.mail.ru, 11s)
+15/43 Foot Locker: 417 places (maps.mail.ru, 20s)
+16/43 GameStop: FAILED after 63s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+17/43 Helzberg Diamonds: FAILED after 74s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+18/43 The Home Depot: 2036 places (maps.mail.ru, 37s)
+19/43 Kohl's: 1087 places (maps.mail.ru, 50s)
+20/43 LasikPlus: 6 places (maps.mail.ru, 36s)
+21/43 Lowe's: FAILED after 69s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+22/43 Lululemon: FAILED after 32s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+23/43 Luna Grill: FAILED after 31s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+Servers look overloaded. Waiting 5 minutes (pause 1 of 2)…
+24/43 Marcus Theatres: 45 places (maps.mail.ru, 28s)
+25/43 Mavis Tires & Brakes: 384 places (maps.mail.ru, 33s)
+26/43 Michaels: 1034 places (maps.mail.ru, 26s)
+27/43 Nike: FAILED after 54s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+28/43 The North Face: 96 places (maps.mail.ru, 33s)
+29/43 O'Reilly Auto Parts: FAILED after 70s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+30/43 Outback Steakhouse: FAILED after 54s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+31/43 Penske Truck Rental: 135 places (maps.mail.ru, 15s)
+32/43 Pep Boys: 555 places (maps.mail.ru, 48s)
+33/43 Purple: FAILED after 66s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+34/43 Regal: 376 places (maps.mail.ru, 24s)
+35/43 Rogers & Hollands: 5 places (maps.mail.ru, 14s)
+36/43 Sherwin-Williams: 2007 places (maps.mail.ru, 47s)
+37/43 Showcase Cinemas: 11 places (maps.mail.ru, 18s)
+38/43 Take 5 Oil Change: 431 places (maps.mail.ru, 24s)
+39/43 Texas de Brazil: 29 places (maps.mail.ru, 36s)
+40/43 Topgolf: FAILED after 71s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+41/43 Valvoline Instant Oil Change: 960 places (maps.mail.ru, 47s)
+42/43 Vineyard Vines: 83 places (maps.mail.ru, 43s)
+43/43 YETI: 3 places (maps.mail.ru, 11s)
+retry AMC Theatres: 550 places (maps.mail.ru, 59s)
+retry ASICS: FAILED after 71s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+retry AutoZone: 4292 places (maps.mail.ru, 65s)
+retry Bonefish Grill: 142 places (maps.mail.ru, 8s)
+retry Boscov's: 46 places (maps.mail.ru, 18s)
+retry Cabela's: 62 places (maps.mail.ru, 28s)
+retry Cinemark: 237 places (maps.mail.ru, 14s)
+retry Dave & Buster's: FAILED after 55s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+retry GameStop: FAILED after 72s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+retry Helzberg Diamonds: FAILED after 73s (maps.mail.ru: answered 504; overpass-api.de: fetch failed)
+Servers look overloaded. Waiting 5 minutes (pause 1 of 2)…
+retry Lowe's: 1765 places (maps.mail.ru, 55s)
+retry Lululemon: 285 places (maps.mail.ru, 43s)
+retry Luna Grill: 40 places (maps.mail.ru, 37s)
+retry Nike: 219 places (maps.mail.ru, 13s)
+retry O'Reilly Auto Parts: 3587 places (maps.mail.ru, 65s)
+retry Outback Steakhouse: 662 places (maps.mail.ru, 27s)
+retry Purple: 28 places (maps.mail.ru, 37s)
+retry Topgolf: 95 places (maps.mail.ru, 28s)
+```
