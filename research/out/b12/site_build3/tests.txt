@@ -1,0 +1,245 @@
+TAP version 13
+# Subtest: brands.json is valid; only chains waiting for their deal have no deal IDs
+ok 1 - brands.json is valid; only chains waiting for their deal have no deal IDs
+  ---
+  duration_ms: 1.083872
+  type: 'test'
+  ...
+# Subtest: each chain gets its own small query, limited to U.S. areas
+ok 2 - each chain gets its own small query, limited to U.S. areas
+  ---
+  duration_ms: 0.441008
+  type: 'test'
+  ...
+# Subtest: a chain that failed to download keeps last month's stores
+ok 3 - a chain that failed to download keeps last month's stores
+  ---
+  duration_ms: 0.655103
+  type: 'test'
+  ...
+# Subtest: a fill-in run keeps the chains it did not download, without warnings
+ok 4 - a fill-in run keeps the chains it did not download, without warnings
+  ---
+  duration_ms: 0.371984
+  type: 'test'
+  ...
+# Subtest: closed, vacant and planned places are dropped
+ok 5 - closed, vacant and planned places are dropped
+  ---
+  duration_ms: 0.332965
+  type: 'test'
+  ...
+# Subtest: brand rules: Take 5 car washes and Topgolf Swing Suites are left out
+ok 6 - brand rules: Take 5 car washes and Topgolf Swing Suites are left out
+  ---
+  duration_ms: 0.285432
+  type: 'test'
+  ...
+# Subtest: labels use the street address when OSM has one
+ok 7 - labels use the street address when OSM has one
+  ---
+  duration_ms: 0.174535
+  type: 'test'
+  ...
+# Subtest: duplicates merge, positions are rounded, places outside the U.S. are dropped
+ok 8 - duplicates merge, positions are rounded, places outside the U.S. are dropped
+  ---
+  duration_ms: 0.767914
+  type: 'test'
+  ...
+# Subtest: a brand that suddenly shrinks keeps last month's stores
+ok 9 - a brand that suddenly shrinks keeps last month's stores
+  ---
+  duration_ms: 0.377241
+  type: 'test'
+  ...
+# Subtest: a collapse of the whole list stops the update
+ok 10 - a collapse of the whole list stops the update
+  ---
+  duration_ms: 0.657677
+  type: 'test'
+  ...
+# Subtest: chains find their current deal IDs by business name
+ok 11 - chains find their current deal IDs by business name
+  ---
+  duration_ms: 0.377121
+  type: 'test'
+  ...
+# Subtest: every chain in brands.json has a deal in the site deal list
+ok 12 - every chain in brands.json has a deal in the site deal list
+  ---
+  duration_ms: 13.5305
+  type: 'test'
+  ...
+# Subtest: Regal: only theatres on the participating list
+ok 13 - Regal: only theatres on the participating list
+  ---
+  duration_ms: 0.696946
+  type: 'test'
+  ...
+# Subtest: Regal places are dropped from the map unless listed
+ok 14 - Regal places are dropped from the map unless listed
+  ---
+  duration_ms: 0.219092
+  type: 'test'
+  ...
+# Subtest: AMC: only theatres on the participating list
+ok 15 - AMC: only theatres on the participating list
+  ---
+  duration_ms: 0.280144
+  type: 'test'
+  ...
+# Subtest: generic-named theatres match by state and city; aliases cover OSM spellings
+ok 16 - generic-named theatres match by state and city; aliases cover OSM spellings
+  ---
+  duration_ms: 0.334437
+  type: 'test'
+  ...
+# Subtest: street addresses compare loosely: directions, abbreviations, Hawaii numbers
+ok 17 - street addresses compare loosely: directions, abbreviations, Hawaii numbers
+  ---
+  duration_ms: 0.40922
+  type: 'test'
+  ...
+# Subtest: stores missing from OpenStreetMap are added from the chain locator, without duplicates
+ok 18 - stores missing from OpenStreetMap are added from the chain locator, without duplicates
+  ---
+  duration_ms: 2.000491
+  type: 'test'
+  ...
+# Subtest: a map pin far from its street address is moved when the chain's pin and the address agree
+ok 19 - a map pin far from its street address is moved when the chain's pin and the address agree
+  ---
+  duration_ms: 0.306624
+  type: 'test'
+  ...
+# Subtest: a new store whose pin and geocoded address disagree goes where the evidence points
+ok 20 - a new store whose pin and geocoded address disagree goes where the evidence points
+  ---
+  duration_ms: 0.322148
+  type: 'test'
+  ...
+# Subtest: a geocoder guess is told apart from a match of the street address
+ok 21 - a geocoder guess is told apart from a match of the street address
+  ---
+  duration_ms: 0.06658
+  type: 'test'
+  ...
+# Subtest: which of pin and address to trust is learned from the stores OpenStreetMap has too
+ok 22 - which of pin and address to trust is learned from the stores OpenStreetMap has too
+  ---
+  duration_ms: 0.375579
+  type: 'test'
+  ...
+# Subtest: two stores the chain gives the same pin: the one whose address is elsewhere goes to its address
+ok 23 - two stores the chain gives the same pin: the one whose address is elsewhere goes to its address
+  ---
+  duration_ms: 0.252182
+  type: 'test'
+  ...
+# Subtest: the same store with its street named two ways is one store
+ok 24 - the same store with its street named two ways is one store
+  ---
+  duration_ms: 0.253805
+  type: 'test'
+  ...
+# Subtest: a highway address the geocoder puts miles off neither adds a second pin nor moves the map pin
+ok 25 - a highway address the geocoder puts miles off neither adds a second pin nor moves the map pin
+  ---
+  duration_ms: 0.178621
+  type: 'test'
+  ...
+# Subtest: a locator store with only an address (placed by the geocoder) is added but never moves a map pin
+ok 26 - a locator store with only an address (placed by the geocoder) is added but never moves a map pin
+  ---
+  duration_ms: 0.185501
+  type: 'test'
+  ...
+# Subtest: an address-only store is left off when the geocoder only guessed where it is
+ok 27 - an address-only store is left off when the geocoder only guessed where it is
+  ---
+  duration_ms: 0.265061
+  type: 'test'
+  ...
+# Subtest: a new store is left off when its pin is outside its ZIP code and the address is only a guess
+ok 28 - a new store is left off when its pin is outside its ZIP code and the address is only a guess
+  ---
+  duration_ms: 0.251672
+  type: 'test'
+  ...
+# Subtest: ZIP code areas: the Census file reader finds the right area (holes and multi-part areas too)
+ok 29 - ZIP code areas: the Census file reader finds the right area (holes and multi-part areas too)
+  ---
+  duration_ms: 44.408404
+  type: 'test'
+  ...
+# Subtest: hand-checked corrections remove closed stores and add confirmed ones
+ok 30 - hand-checked corrections remove closed stores and add confirmed ones
+  ---
+  duration_ms: 0.608282
+  type: 'test'
+  ...
+# Subtest: a trial run with only a few chains leaves out the other chains' corrections
+ok 31 - a trial run with only a few chains leaves out the other chains' corrections
+  ---
+  duration_ms: 0.335439
+  type: 'test'
+  ...
+# Subtest: corrections.json: every fix names a chain in brands.json and has what it needs
+ok 32 - corrections.json: every fix names a chain in brands.json and has what it needs
+  ---
+  duration_ms: 0.549993
+  type: 'test'
+  ...
+# Subtest: a hand-checked move puts a misplaced store where it is
+ok 33 - a hand-checked move puts a misplaced store where it is
+  ---
+  duration_ms: 0.344782
+  type: 'test'
+  ...
+# Subtest: a store taken off because its chain dropped it comes back once the chain lists it again
+ok 34 - a store taken off because its chain dropped it comes back once the chain lists it again
+  ---
+  duration_ms: 0.305092
+  type: 'test'
+  ...
+# Subtest: locator stores respect participating lists and excluded names
+ok 35 - locator stores respect participating lists and excluded names
+  ---
+  duration_ms: 0.25737
+  type: 'test'
+  ...
+# Subtest: a chain whose own store list is complete loses mapped stores the list no longer has
+ok 36 - a chain whose own store list is complete loses mapped stores the list no longer has
+  ---
+  duration_ms: 0.519508
+  type: 'test'
+  ...
+# Subtest: in Puerto Rico a locator pin is trusted over a far-off geocoded address
+ok 37 - in Puerto Rico a locator pin is trusted over a far-off geocoded address
+  ---
+  duration_ms: 0.143738
+  type: 'test'
+  ...
+# Subtest: local shops: the hand-checked list is valid and each entry is checked
+ok 38 - local shops: the hand-checked list is valid and each entry is checked
+  ---
+  duration_ms: 3.663691
+  type: 'test'
+  ...
+# Subtest: local shops leave the map when closed, renamed, gone from OpenStreetMap or the offer page stops showing it
+ok 39 - local shops leave the map when closed, renamed, gone from OpenStreetMap or the offer page stops showing it
+  ---
+  duration_ms: 0.710997
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 145.340519
+tests exit 0

@@ -1,0 +1,1076 @@
+== site_build3 () started 2026-11-27T07:25:53Z
+# todo 0
+# duration_ms 145.340519
+tests exit 0
+sherwinwilliams ['sherwin_williams']
+take5 ['take_5_us']
+texasdebrazil ['texas_de_brazil_us']
+tiresplus ['bsro']
+tommyhilfiger ['tommy_hilfiger_us']
+topgolf ['topgolf_us']
+untuckit ['untuckit_ca_us']
+valvoline ['valvoline_us']
+611 of 615 local shop offers still on their websites.
+ - BRAKEMax (w564004345): page not readable, 1 check(s) in a row
+ - Kernels & Kandies (n12177555286): page not readable, 1 check(s) in a row
+ - The LA Squared (n853994074): page not readable, 1 check(s) in a row
+ - Sakura Japanese Restaurant (n12668971328): page not readable, 1 check(s) in a row
+1/62 Adidas: 134 places (overpass-api.de, 44s)
+2/62 Aeropostale: 247 places (overpass-api.de, 47s)
+3/62 ALDO: 137 places (overpass-api.de, 35s)
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: The operation was aborted due to timeout
+4/62 AMC Theatres: 550 places (maps.mail.ru, 271s)
+  maps.mail.ru failed: answered 504
+5/62 American Girl: 8 places (overpass-api.de, 62s)
+6/62 Ariat: 13 places (overpass-api.de, 53s)
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: answered 504
+7/62 ASICS: 41 places (maps.mail.ru, 189s)
+8/62 Aspen Dental: 614 places (maps.mail.ru, 44s)
+  maps.mail.ru failed: answered 504
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: answered 504
+9/62 AutoZone: FAILED after 227s (maps.mail.ru: answered 504; overpass-api.de: answered 502; overpass.private.coffee: answered 504)
+  maps.mail.ru failed: answered 504
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: answered 504
+10/62 Bass Pro Shops: FAILED after 225s (maps.mail.ru: answered 504; overpass-api.de: answered 502; overpass.private.coffee: answered 504)
+  maps.mail.ru failed: answered 504
+11/62 Big 5 Sporting Goods: 353 places (overpass-api.de, 109s)
+12/62 Bonefish Grill: 142 places (overpass-api.de, 41s)
+13/62 Boscov's: 46 places (overpass-api.de, 42s)
+14/62 Brooks Brothers: 120 places (overpass-api.de, 48s)
+15/62 Cabela's: 62 places (overpass-api.de, 43s)
+16/62 Carrabba's Italian Grill: 188 places (overpass-api.de, 36s)
+17/62 Cinemark: 237 places (overpass-api.de, 48s)
+18/62 Cracker Barrel: 649 places (overpass-api.de, 56s)
+19/62 CubeSmart: 489 places (overpass-api.de, 56s)
+20/62 Dave & Buster's: 148 places (overpass-api.de, 51s)
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: answered 504
+21/62 Discount Tire: 898 places (maps.mail.ru, 243s)
+  maps.mail.ru failed: answered 504
+22/62 Duluth Trading Company: 29 places (overpass-api.de, 87s)
+23/62 Eyemart Express: 40 places (overpass-api.de, 39s)
+24/62 Famous Footwear: 596 places (overpass-api.de, 69s)
+25/62 Foot Locker: 417 places (overpass-api.de, 43s)
+26/62 GameStop: 1724 places (overpass-api.de, 69s)
+27/62 Helzberg Diamonds: 85 places (overpass-api.de, 55s)
+28/62 The Home Depot: 2036 places (overpass-api.de, 81s)
+29/62 J.Crew: 264 places (overpass-api.de, 52s)
+30/62 Kohl's: 1087 places (overpass-api.de, 64s)
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: answered 504
+31/62 LasikPlus: 6 places (maps.mail.ru, 187s)
+  maps.mail.ru failed: answered 504
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: answered 504
+32/62 Lowe's: FAILED after 168s (maps.mail.ru: answered 504; overpass-api.de: answered 502; overpass.private.coffee: answered 504)
+  maps.mail.ru failed: answered 504
+33/62 Lululemon: 285 places (overpass-api.de, 70s)
+34/62 Luna Grill: 40 places (overpass-api.de, 48s)
+35/62 Marcus Theatres: 45 places (overpass-api.de, 43s)
+36/62 Mavis Tires & Brakes: 384 places (overpass-api.de, 51s)
+37/62 Michaels: 1034 places (overpass-api.de, 57s)
+38/62 Nike: 219 places (overpass-api.de, 47s)
+39/62 Northern Tool + Equipment: 76 places (overpass-api.de, 33s)
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: The operation was aborted due to timeout
+40/62 The North Face: 96 places (maps.mail.ru, 257s)
+41/62 O'Reilly Auto Parts: 3587 places (maps.mail.ru, 34s)
+42/62 Outback Steakhouse: 662 places (maps.mail.ru, 20s)
+43/62 Penske Truck Rental: 135 places (maps.mail.ru, 13s)
+44/62 Pep Boys: 555 places (maps.mail.ru, 21s)
+45/62 Purple: 28 places (maps.mail.ru, 13s)
+  maps.mail.ru failed: answered 504
+46/62 Rack Room Shoes: 267 places (overpass-api.de, 99s)
+47/62 Regal: 376 places (overpass-api.de, 55s)
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: The operation was aborted due to timeout
+  maps.mail.ru failed: answered 504
+48/62 Rhone: FAILED after 285s (overpass-api.de: answered 502; overpass.private.coffee: The operation was aborted due to timeout; maps.mail.ru: answered 504)
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: The operation was aborted due to timeout
+49/62 Rogers & Hollands: 5 places (maps.mail.ru, 252s)
+50/62 Rothy's: 16 places (maps.mail.ru, 20s)
+51/62 SCHEELS: 5 places (maps.mail.ru, 24s)
+  maps.mail.ru failed: answered 504
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: The operation was aborted due to timeout
+52/62 Sherwin-Williams: FAILED after 246s (maps.mail.ru: answered 504; overpass-api.de: answered 502; overpass.private.coffee: The operation was aborted due to timeout)
+53/62 Showcase Cinemas: 11 places (maps.mail.ru, 25s)
+54/62 Take 5 Oil Change: 431 places (maps.mail.ru, 30s)
+  maps.mail.ru failed: answered 504
+55/62 Texas de Brazil: 29 places (overpass-api.de, 102s)
+  overpass-api.de failed: answered 504
+  overpass.private.coffee failed: The operation was aborted due to timeout
+  maps.mail.ru failed: answered 504
+56/62 Tires Plus: FAILED after 294s (overpass-api.de: answered 504; overpass.private.coffee: The operation was aborted due to timeout; maps.mail.ru: answered 504)
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: The operation was aborted due to timeout
+57/62 Tommy Hilfiger: 131 places (maps.mail.ru, 253s)
+58/62 Topgolf: 95 places (maps.mail.ru, 15s)
+59/62 UNTUCKit: 34 places (maps.mail.ru, 29s)
+60/62 Valvoline Instant Oil Change: 960 places (maps.mail.ru, 31s)
+61/62 Vineyard Vines: 83 places (maps.mail.ru, 11s)
+  maps.mail.ru failed: answered 504
+62/62 YETI: 3 places (overpass-api.de, 92s)
+retry AutoZone: 4292 places (overpass-api.de, 103s)
+retry Bass Pro Shops: 99 places (overpass-api.de, 39s)
+retry Lowe's: 1765 places (overpass-api.de, 59s)
+retry Rhone: 10 places (overpass-api.de, 44s)
+retry Sherwin-Williams: 2007 places (overpass-api.de, 75s)
+retry Tires Plus: 198 places (overpass-api.de, 55s)
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: answered 502
+Local shops: 615 of 615 found on OpenStreetMap
+## Store locations
+
+OSM data as of 2026-11-27. 44885 stores from 62 chains.
+Skipped: 113 closed, 221 duplicates, 0 without a usable position, 29 other matches, 267 not on a participating-locations list.
+
+| Chain | Stores | Added from the chain's store locator | Taken off: not on the chain's complete list |
+| --- | ---: | ---: | ---: |
+| Adidas | 191 | 61 | – |
+| Aeropostale | 488 | 243 | – |
+| ALDO | 137 | 0 | – |
+| AMC Theatres | 486 | 63 | – |
+| American Girl | 8 | 0 | – |
+| Ariat | 12 | 0 | – |
+| ASICS | 59 | 18 | – |
+| Aspen Dental | 1134 | 523 | – |
+| AutoZone | 6592 | 2328 | – |
+| Bass Pro Shops | 132 | 33 | – |
+| Big 5 Sporting Goods | 396 | 63 | – |
+| Bonefish Grill | 171 | 32 | – |
+| Boscov's | 51 | 6 | – |
+| Brooks Brothers | 175 | 56 | – |
+| Cabela's | 61 | 0 | – |
+| Carrabba's Italian Grill | 219 | 35 | – |
+| Cinemark | 308 | 78 | – |
+| Cracker Barrel | 625 | 0 | – |
+| CubeSmart | 1573 | 1203 | 81 |
+| Dave & Buster's | 188 | 42 | – |
+| Discount Tire | 1188 | 299 | – |
+| Duluth Trading Company | 66 | 37 | – |
+| Eyemart Express | 39 | 0 | – |
+| Famous Footwear | 859 | 268 | – |
+| Foot Locker | 719 | 340 | – |
+| GameStop | 1575 | 581 | 700 |
+| Helzberg Diamonds | 164 | 80 | – |
+| The Home Depot | 2035 | 23 | 8 |
+| J.Crew | 562 | 306 | – |
+| Kohl's | 1150 | 88 | 20 |
+| LasikPlus | 50 | 44 | – |
+| Lowe's | 1756 | 6 | – |
+| Lululemon | 479 | 202 | – |
+| Luna Grill | 40 | 0 | – |
+| Marcus Theatres | 45 | 0 | – |
+| Mavis Tires & Brakes | 1166 | 782 | – |
+| Michaels | 1252 | 222 | – |
+| Nike | 279 | 62 | – |
+| Northern Tool + Equipment | 143 | 67 | – |
+| The North Face | 147 | 57 | – |
+| O'Reilly Auto Parts | 6624 | 3084 | 24 |
+| Outback Steakhouse | 651 | 67 | 69 |
+| Penske Truck Rental | 1772 | 1637 | – |
+| Pep Boys | 548 | 0 | – |
+| Purple | 28 | 0 | – |
+| Rack Room Shoes | 264 | 0 | – |
+| Regal | 303 | 70 | – |
+| Rhone | 8 | 0 | – |
+| Rogers & Hollands | 45 | 40 | – |
+| Rothy's | 14 | 0 | – |
+| SCHEELS | 34 | 30 | – |
+| Sherwin-Williams | 3288 | 1293 | – |
+| Showcase Cinemas | 9 | 0 | – |
+| Take 5 Oil Change | 1458 | 1051 | – |
+| Texas de Brazil | 57 | 29 | – |
+| Tires Plus | 366 | 170 | – |
+| Tommy Hilfiger | 152 | 29 | – |
+| Topgolf | 109 | 21 | – |
+| UNTUCKit | 78 | 44 | – |
+| Valvoline Instant Oil Change | 2273 | 1319 | – |
+| Vineyard Vines | 81 | 0 | – |
+| YETI | 3 | 0 | – |
+
+### Hand-checked corrections
+
+- Outback Steakhouse: 2 removed, Outback closed its last three Hawaii restaurants (Waipio, Kapolei, Kona) in 2024; Hawaii Kai and Kihei closed the year before
+- Foot Locker, Lahaina Gateway, Lahaina, HI: removed, not on Foot Locker's own store list for Hawaii, and not among the center's current shops
+- Cinemark, 5721 58th Street, Lubbock, TX: removed, Cinemark Southwest Lubbock Movies 16 closed on February 9, 2025
+- Cinemark, 500 Larkspur Landing Circle, Larkspur, CA: removed, closed by Cinemark on September 30, 2022; reopened in 2023 as Cinema West's Larkspur Landing Cinemas (not Cinemark)
+- Cinemark, 206 South 625 West, West Bountiful, UT: removed, Cinemark Bountiful 8 showed its last movies on January 17, 2023
+- Cinemark, 870 W Market St, Tiffin, OH: removed, Cinemark Tiffin Mall 8 closed on August 26, 2024 (Cinemark did not renew the lease; new owners took over)
+- Cinemark, 28250 Diehl Road, Warrenville, IL: removed, Cinemark left on August 1, 2025; Phoenix Theatres runs it now (not Cinemark)
+- Cinemark, 1001 North Interstate 27, Plainview, TX: removed, Cinemark Town Centre Cinema 6 closed for good in December 2023 (Cinemark confirmed it)
+- Big 5 Sporting Goods, 714 W Calle Arroyo Sur, Sahuarita, AZ: removed, closed (Big 5 closed eight stores in Arizona, Idaho and Colorado in early 2026)
+- Big 5 Sporting Goods, 41800 West Maricopa-Casa Grande Highway, Maricopa, AZ: removed, closed (Big 5 closed eight stores in Arizona, Idaho and Colorado in early 2026)
+- Big 5 Sporting Goods, 6762 North Glenwood Street, Garden City, ID: removed, closed (Big 5 closed eight stores in Arizona, Idaho and Colorado in early 2026)
+- Big 5 Sporting Goods, 700 West Quinn Road, Pocatello, ID: removed, closed for good in spring 2026
+- Big 5 Sporting Goods, 10051 East Iliff Avenue, Aurora, CO: removed, closed in early 2026
+- Big 5 Sporting Goods, 1430 South Colorado Boulevard, Denver, CO: removed, closed in early 2026
+- Big 5 Sporting Goods, 3215 E US Hwy 50, Canon City, CO: removed, closed in January 2026
+- Big 5 Sporting Goods, 1919 West Bell Road, Phoenix, AZ: removed, dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)
+- Big 5 Sporting Goods, 20700 Avalon Boulevard, Carson, CA: removed, dropped from Big 5's own store list after 2025-05 and not back since (store-list snapshots through 2026-11-14)
+- Big 5 Sporting Goods, 3600 Peck Road, El Monte, CA: removed, dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)
+- Big 5 Sporting Goods, 7800 Carr Way, Rio Rancho, NM: removed, dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)
+- Big 5 Sporting Goods, 110 Nellen Avenue, Corte Madera, CA: removed, dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)
+- Big 5 Sporting Goods, 7111 West Alameda Avenue, Lakewood, CO: removed, dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)
+- Big 5 Sporting Goods, 5950 South State Street, Murray, UT: removed, dropped from Big 5's own store list after 2025-05 and not back since (store-list snapshots through 2026-11-14)
+- Big 5 Sporting Goods, 8313 Northeast Highway 99, Vancouver, WA: removed, dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)
+- Big 5 Sporting Goods, 1215 Auburn Way North, Auburn, WA: removed, dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)
+- Big 5 Sporting Goods, 31956 N State Hwy 20, Oak Harbor, WA: removed, dropped from Big 5's own store list after 2025-11 and not back since (store-list snapshots through 2026-11-14)
+- Regal, 1120 Lincoln Road, Miami Beach, FL: removed, Regal South Beach closed at the end of September 2025
+- The North Face, 180 El Camino Real, Stanford Shopping Center, Palo Alto, CA: removed, not on The North Face's own Palo Alto store page (only department stores that sell it)
+- The North Face, 8555 San Ysidro Avenue, Gilroy, CA: removed, moved: The North Face's own list now has the Gilroy outlet at 681 Leavesley Road
+- The North Face, 875 North Michigan Avenue, Chicago, IL: removed, moved: The North Face's own list now has its Michigan Avenue store at 605 N. Michigan Avenue
+- Valvoline Instant Oil Change, Isabela, PR: removed, not a Valvoline Instant Oil Change: Valvoline's own store directory lists stores in U.S. states only, none in Puerto Rico
+- Foot Locker, 3535 Military Ave, Isabela, PR: removed, closed: Foot Locker's Puerto Rico store directory (17 stores) has no Isabela store
+- Foot Locker, Fajardo, PR: removed, closed: Foot Locker's Puerto Rico store directory (17 stores) has no Fajardo store
+- Foot Locker, Bayamón, PR: removed, closed: Foot Locker lists two Bayamón stores (Plaza del Sol and Plaza Río Hondo), and this is neither
+- Foot Locker, 200 Ave Fragoso, Space 224A, Carolina, PR: removed, pin about 2 km off: this is the Plaza Carolina store, which is already on the map at the mall
+- Foot Locker, 1 Premium Outlets Blvd, Barceloneta, PR: removed, closed: Foot Locker's Puerto Rico store directory (17 stores) has no store at Puerto Rico Premium Outlets
+- Adidas, Mayagüez Mall, Mayagüez, PR: removed, closed: adidas's own store list has no Mayagüez store, and El Nuevo Día reported that adidas was closing its last Puerto Rico stores
+- Adidas, 1 Premium Outlets Boulevard, Barceloneta, PR: removed, closed: El Nuevo Día reported in December 2025 that adidas would close this store too, leaving it no stores in Puerto Rico
+- Nike, Tumon, Guam: removed, not a Nike-run store: Nike's own U.S. store directory has no Guam store, and Nike's military discount is for Nike stores in the U.S.
+- Texas de Brazil, Ala Moana Center, 1450 Ala Moana Blvd, Honolulu, HI: added
+
+### Local shops: 614 on the map
+
+Left off this time:
+
+- Lady Kels Yoga, 1400 Dell Range Boulevard, Cheyenne, WY: marked closed on OpenStreetMap
+
+### Pins moved to the store's street address (40)
+
+- AMC Theatres, 134 Foothills Mall Drive, Maryville, TN: moved 0.7 mi
+- AutoZone, 1145 Jesse Jewell Parkway, Gainesville, GA: moved 2.9 mi
+- AutoZone, 1325 W Washington Blvd, Los Angeles, CA: moved 0.6 mi
+- AutoZone, 1205 34th Street, Lubbock, TX: moved 1.5 mi
+- AutoZone, 1565 Jerome Ave, Bronx, NY: moved 0.9 mi
+- AutoZone, 320 State Route 211 East, Middletown, NY: moved 2.5 mi
+- AutoZone, 295 Springfield Ave, Newark, NJ: moved 0.8 mi
+- AutoZone, 9136 Grissom Rd, San Antonio, TX: moved 0.8 mi
+- AutoZone, 1129 W Will Rogers Blvd, Claremore, OK: moved 0.7 mi
+- AutoZone, 28202 Woodward Ave, Royal Oaks, MI: moved 0.8 mi
+- Brooks Brothers, 18 Lightcap Road, Pottstown, PA: moved 0.7 mi
+- CubeSmart, 110 S FM 1660, Hutto, TX: moved 0.8 mi
+- CubeSmart, 34-38 38th St, Long Island City, NY: moved 0.7 mi
+- CubeSmart, 11591 Chitwood Drive, Fort Myers, FL: moved 0.8 mi
+- Discount Tire, 115 West Gage Boulevard, Richland, WA: moved 0.8 mi
+- Famous Footwear, 1934 N Woodland Park Dr, Layton, UT: moved 0.7 mi
+- Foot Locker, 150 East 42nd Street, New York, NY: moved 0.7 mi
+- GameStop, 3801 W 34TH St, Suite 123, Sioux Falls, SD: moved 0.7 mi
+- GameStop, 139 Flatbush Ave, Suite B2, Brooklyn, NY: moved 0.9 mi
+- GameStop, 528 W Bay Area Blvd, Suite 500, Webster, TX: moved 0.8 mi
+- Mavis Tires & Brakes, 1471 Church St., Decatur, GA: moved 0.6 mi
+- O'Reilly Auto Parts, 4404 Matlock Road, Arlington, TX: moved 0.9 mi
+- O'Reilly Auto Parts, 721 North Glenstone Ave, Springfield, MO: moved 0.8 mi
+- O'Reilly Auto Parts, 831 West Broadway Avenue, Forest Lake, MN: moved 0.7 mi
+- O'Reilly Auto Parts, 519 Lake Street South, Forest Lake, MN: moved 0.7 mi
+- O'Reilly Auto Parts, 43989 15th St W, Lancaster, CA: moved 0.7 mi
+- O'Reilly Auto Parts, 3740 East Grant Road: moved 2.7 mi
+- O'Reilly Auto Parts, 3101 Penland Pkwy Ste 1B, Anchorage, AK: moved 0.9 mi
+- O'Reilly Auto Parts, 4245 Debarr Road, Anchorage, AK: moved 0.8 mi
+- Penske Truck Rental, 1907 South 11th Street, Union Gap, WA: moved 0.8 mi
+- Sherwin-Williams, 3936 W Clearwater Ave, Kennewick, WA: moved 0.9 mi
+- Sherwin-Williams, 5601 S Cedar St Ste B, Lansing, MI: moved 0.7 mi
+- Sherwin-Williams, Little League World Champions Boulevard, Toms River, NJ: moved 0.8 mi
+- Sherwin-Williams, Little League World Champions Boulevard, Toms River, NJ: moved 0.8 mi
+- Sherwin-Williams, 791: moved 0.8 mi
+- Take 5 Oil Change, 1362 Union Ave, Memphis, TN: moved 0.6 mi
+- Take 5 Oil Change, 10603 Broad River Rd (Unit B), Irmo, SC: moved 0.7 mi
+- Take 5 Oil Change, 7104 Hwy 23, Belle Chasse, LA: moved 0.8 mi
+- Take 5 Oil Change, 2317 Crawfordville Hwy., Crawfordville, FL: moved 0.9 mi
+- Tommy Hilfiger, 18 Lightcap Road, Pottstown, PA: moved 0.8 mi
+
+### Chain's pin or street address? (stores where the two are more than 1 km apart)
+
+Stores on both maps show which one is right for each chain; new stores go where the evidence points (choosePoint in build.mjs).
+
+| Chain | Both maps: the pin was right | Both maps: the address was right | New stores put at the chain's pin | New stores put at the address | New stores left off: no spot could be trusted |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Adidas | 2 | 1 | 1 | 0 | 0 |
+| Aeropostale | 4 | 1 | 7 | 0 | 0 |
+| AMC Theatres | 10 | 2 | 3 | 0 | 0 |
+| ASICS | 1 | 0 | 0 | 0 | 0 |
+| Aspen Dental | 26 | 1 | 15 | 0 | 1 |
+| AutoZone | 74 | 18 | 57 | 2 | 3 |
+| Bass Pro Shops | 4 | 0 | 1 | 0 | 0 |
+| Big 5 Sporting Goods | 3 | 0 | 1 | 0 | 1 |
+| Bonefish Grill | 3 | 0 | 0 | 0 | 0 |
+| Boscov's | 1 | 0 | 2 | 0 | 0 |
+| Brooks Brothers | 2 | 0 | 1 | 0 | 0 |
+| Carrabba's Italian Grill | 1 | 0 | 0 | 0 | 1 |
+| Cinemark | 2 | 4 | 5 | 0 | 0 |
+| CubeSmart | 6 | 2 | 14 | 0 | 1 |
+| Dave & Buster's | 3 | 0 | 0 | 0 | 0 |
+| Discount Tire | 20 | 3 | 5 | 0 | 0 |
+| Duluth Trading Company | 0 | 0 | 1 | 0 | 1 |
+| Famous Footwear | 19 | 13 | 10 | 0 | 2 |
+| Foot Locker | 10 | 4 | 7 | 1 | 0 |
+| GameStop | 20 | 29 | 29 | 3 | 1 |
+| Helzberg Diamonds | 4 | 0 | 0 | 0 | 0 |
+| The Home Depot | 45 | 21 | 0 | 0 | 0 |
+| J.Crew | 2 | 1 | 9 | 1 | 0 |
+| Kohl's | 22 | 3 | 2 | 0 | 0 |
+| LasikPlus | 0 | 0 | 2 | 0 | 0 |
+| Lowe's | 0 | 0 | 0 | 0 | 11 |
+| Lululemon | 6 | 0 | 7 | 0 | 0 |
+| Mavis Tires & Brakes | 2 | 2 | 30 | 1 | 4 |
+| Michaels | 20 | 3 | 7 | 2 | 0 |
+| Nike | 1 | 1 | 0 | 0 | 0 |
+| Northern Tool + Equipment | 2 | 2 | 5 | 0 | 0 |
+| The North Face | 1 | 0 | 2 | 0 | 1 |
+| O'Reilly Auto Parts | 84 | 4 | 75 | 1 | 1 |
+| Outback Steakhouse | 18 | 0 | 2 | 0 | 0 |
+| Penske Truck Rental | 1 | 0 | 68 | 14 | 3 |
+| Regal | 3 | 12 | 3 | 7 | 0 |
+| Sherwin-Williams | 16 | 6 | 28 | 0 | 3 |
+| Take 5 Oil Change | 12 | 7 | 28 | 9 | 4 |
+| Texas de Brazil | 2 | 0 | 0 | 0 | 0 |
+| Tires Plus | 4 | 3 | 2 | 0 | 0 |
+| Tommy Hilfiger | 0 | 0 | 1 | 0 | 0 |
+| Topgolf | 1 | 0 | 2 | 0 | 0 |
+| Valvoline Instant Oil Change | 18 | 4 | 28 | 1 | 0 |
+
+### New stores left off: no spot could be trusted (38)
+
+- Aspen Dental, 9898 E. Roosevelt Blvd Ste 107, Philadelphia, PA: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- AutoZone, 1005 W Main St, Haw River, NC: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- AutoZone, 3033 S Congress Blvd, Palm Springs, FL: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- AutoZone, 3834 N Highway 7, Hot Springs, AR: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Big 5 Sporting Goods, 480 East Shaw Avenue, Clovis, CA: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Carrabba's Italian Grill, 2999 Cumberland Blvd, Atlanta, GA: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- CubeSmart, 3755 N Las Vegas Blvd, Las Vegas, NV: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Duluth Trading Company, 1817 Village West Parkway, Space #S101, Kansas City, KS: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Famous Footwear, 200 Baychester Ave #310B Suite 310B, Bronx, NY: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Famous Footwear, 790 Arlington Ridge #309, Akron, OH: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- GameStop, 2825 W Highway 74, Suite 1G, Monroe, NC: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Lowe's, 6161 E. Sam Houston Pkwy North, Houston, TX: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 118 E Interstate 20, Weatherford, TX: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 150 South Fm 1069, Aransas Pass, TX: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 2001 Ford Street Extension, Ogdensburg, NY: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 400 Davis Blvd., Pittsburgh, PA: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 1300-A East Broad Avenue, Rockingham, NC: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 820 Nc 24-27 Bypass East, Albemarle, NC: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 1502 River Liberty Grove Road, North Wilkesboro, NC: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 4701 N. Harlem Ave. Suite B, Harwood Heights, IL: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 1934 Highway A1A, Indian Harbour Beach, FL: the chain gives only an address, which the geocoder could only guess
+- Lowe's, 44400 W. Honeycutt Avenue, Maricopa, AZ: the chain gives only an address, which the geocoder could only guess
+- Mavis Tires & Brakes, 11540 Memorial Pkwy, Huntsville, AL: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Mavis Tires & Brakes, 6710 S Military Trail, Lake Worth, FL: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Mavis Tires & Brakes, 16113 NW Hwy 441, Alachua, FL: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Mavis Tires & Brakes, 301 Chelsea Crossroads, Chelsea, AL: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- The North Face, 5715-66A Richmond Road, Williamsburg, VA: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- O'Reilly Auto Parts, 820 E Roosevelt Rd Ste 110, Wheaton, IL: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Penske Truck Rental, 224 S Royal Oaks Blvd, Franklin, TN: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Penske Truck Rental, 150 Pocono Commons, Stroudsburg, PA: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Penske Truck Rental, 11500 Panama City Bch Pk, Panama City, FL: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Sherwin-Williams, 749 N Overland Ave, Burley, ID: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Sherwin-Williams, 4001 N US Highway 75 Ste 500, Sherman, TX: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Sherwin-Williams, 7158 N Perryville Rd, Machesney Park, IL: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Take 5 Oil Change, 7895 Hwy 6 South, Houston, TX: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Take 5 Oil Change, 7506 Hwy 6 North, Houston, TX: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Take 5 Oil Change, 935 Coshocton Ave, Vernon, OH: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+- Take 5 Oil Change, 2606 S Broadway Ave, Boise, ID: the chain's pin is outside the store's ZIP code and the geocoder could only guess the address
+
+### Taken off as closed: on the map, but not on the chain's own complete store list (902)
+
+- CubeSmart, 2460 South Falkenburg Road, Tampa, FL
+- CubeSmart, 3935 West Cypress Street, Tampa, FL
+- CubeSmart, 2310 North Loop 1604 West, San Antonio, TX
+- CubeSmart, 29.62523, -95.23517
+- CubeSmart, 29.85615, -97.66934
+- CubeSmart, 3701 Highway 90, Waggaman, LA
+- CubeSmart, 5141 Cromwell Drive, Kyle, TX
+- CubeSmart, 30.03485, -90.23766
+- CubeSmart, 30.06119, -81.51206
+- CubeSmart, 510 State Highway 71 West, Bastrop, TX
+- CubeSmart, 30.40537, -97.63671
+- CubeSmart, 1301 Northeast Inner Loop, Georgetown, TX
+- CubeSmart, 3901 Shell Road, Georgetown, TX
+- CubeSmart, 32.42074, -84.94646
+- CubeSmart, 32.56232, -97.08221
+- CubeSmart, 800 Enterprise Drive, Grapevine, TX
+- CubeSmart, 4701 West I-30, Caddo Mills, TX
+- CubeSmart, 33.01299, -96.85853
+- CubeSmart, 33.13055, -96.72287
+- CubeSmart, 1919 East Ray Road, Chandler, AZ
+- CubeSmart, 7110 East Southern Avenue, Mesa, AZ
+- CubeSmart, 240 East Southern Avenue, Mesa, AZ
+- CubeSmart, 2235 West 1st Street, Tempe, AZ
+- CubeSmart, 33.46615, -81.9645
+- CubeSmart, 12500 West Thunderbird Road, El Mirage, AZ
+- CubeSmart, 2393 Metropolitan Parkway Southwest, Atlanta
+- CubeSmart, 33.8491, -83.91395
+- CubeSmart, 33.9776, -83.70711
+- CubeSmart, 33.9887, -84.34918
+- CubeSmart, 3420 Sandy Plains Road
+- CubeSmart, 1320 South Pleasantburg Drive, Greenville
+- CubeSmart, 25 Airview Drive, Greenville
+- CubeSmart, 1900 Old Buncombe Road, Greenville, SC
+- CubeSmart, 899 East Main Street, Spartanburg, SC
+- CubeSmart, 35.07878, -106.59846
+- CubeSmart, 35.20526, -89.89884
+- CubeSmart, 1010 East 10th Street, Charlotte, NC
+- CubeSmart, 35.36288, -97.50467
+- CubeSmart, 35.7904, -78.64183
+- CubeSmart, 35.87062, -78.72472
+- CubeSmart, 35.95013, -83.97332
+- CubeSmart, 382 Harden Street, Burlington, NC
+- CubeSmart, 36.59294, -86.5179
+- CubeSmart, 1750 Apple Valley Road, Harrisonburg, VA
+- CubeSmart, 9461 Lorton Market Street, Lorton, VA
+- CubeSmart, 3775 East Pikes Peak Avenue, Colorado Springs
+- CubeSmart, 5301
+- CubeSmart, 39.686, -104.98776
+- CubeSmart, 5885 West Colfax Avenue, Lakewood, CO
+- CubeSmart, 3270 Blake Street, Denver, CO
+- CubeSmart, 2050 West 6th Avenue, Broomfield, CO
+- CubeSmart, 39.9378, -75.26449
+- CubeSmart, 1519 Prospect Street, Lakewood, NJ
+- CubeSmart, 40.07357, -74.23463
+- CubeSmart, 150 Arndt Road, Pittsburgh, PA
+- CubeSmart, 40.58744, -74.19047
+- CubeSmart, 92 Caton Place
+- CubeSmart, 25 Remsen Avenue
+- CubeSmart, 40.70933, -74.24395
+- CubeSmart, 999 Long Island Avenue, Deer Park, NY
+- CubeSmart, 40.85643, -74.17817
+- CubeSmart, 40.91592, -74.36712
+- CubeSmart, 631 West Gordon Avenue, Layton, UT
+- CubeSmart, 94 Dolson Avenue, Middletown, NY
+- CubeSmart, 13820 Lorain Avenue, Cleveland, OH
+- CubeSmart, 571 West Lincoln Highway, Chicago Heights, IL
+- CubeSmart, 305 South Larkin Avenue, Joliet, IL
+- CubeSmart, 334 Southwest 8th Street, Des Moines, IA
+- CubeSmart, 41.59807, -87.97743
+- CubeSmart, 41.6263, -73.9165
+- CubeSmart, 2708 Forgue Drive, Naperville, IL
+- CubeSmart, 315 South 16th Street, Ames, IA
+- CubeSmart, 42.72155, -73.83566
+- CubeSmart, 43.00995, -87.97989
+- CubeSmart, 668 Stillwater Avenue, Bangor, ME
+- CubeSmart, 631 Transfer Road, Saint Paul, MN
+- CubeSmart, 6155 Balustrade Boulevard Southeast, Lacey, WA
+- CubeSmart, 47.14678, -122.50715
+- CubeSmart, 9309 Aurora Avenue North, Seattle, WA
+- CubeSmart, 15902 Woodinville Redmond Road Northeast
+- CubeSmart, 47.83404, -122.20755
+- GameStop, 21.34492, -157.9289
+- GameStop, 94-821 Lumiaina Street, Waipahu, HI
+- GameStop, 16375 Southwest 88th Street, Miami, FL
+- GameStop, 8743 Southwest 24th Street, Miami, FL
+- GameStop, 25.76926, -80.35773
+- GameStop, 25.8314, -80.2651
+- GameStop, 12112 Biscayne Boulevard, North Miami, FL
+- GameStop, 7725 Hialeah/Hialeah Gardens Boulevard, Hialeah, FL
+- GameStop, 2821 Boca Chica Boulevard, Brownsville, TX
+- GameStop, 19575 Biscayne Boulevard, Aventura, FL
+- GameStop, 19833 Northwest 2nd Avenue, Miami Gardens, FL
+- GameStop, 105 Northwest 136th Avenue, Sunrise, FL
+- GameStop, 3300 Expressway 83, McAllen, TX
+- GameStop, 7600 North 10th Street, McAllen, TX
+- GameStop, 26.44363, -80.06999
+- GameStop, 26.60594, -81.81187
+- GameStop, 27.15489, -80.21843
+- GameStop, 27.4922, -97.85115
+- GameStop, 6310 20th Street, Vero Beach, FL
+- GameStop, 6418 South Staples Street
+- GameStop, Tyrone Boulevard North, Saint Petersburg, FL
+- GameStop, 7259 Park Blvd, Pinellas Park
+- GameStop, 27.85543, -97.63194
+- GameStop, 27.89438, -82.50681
+- GameStop, 2723 Mall Perimeter Dr, Clearwater, FL
+- GameStop, West Hillsborough Avenue, Tampa, FL
+- GameStop, 28.01384, -81.73152
+- GameStop, 8530 North Wickham Road, Melbourne, FL
+- GameStop, 1875 Commercial Way, Spring Hill
+- GameStop, 28.50415, -81.3127
+- GameStop, 28.66052, -81.33929
+- GameStop, 1700 International Speedway Boulevard, Daytona Beach, FL
+- GameStop, 6228 Broadway Street, Galveston, TX
+- GameStop, 29.49384, -98.48019
+- GameStop, 7117 Blanco Road, San Antonio, TX
+- GameStop, 6018 Natural Bridge Caverns Road, Schertz, TX
+- GameStop, 1742 North Loop 1604 East, San Antonio, TX
+- GameStop, 29.61075, -98.5109
+- GameStop, 850 South Moody Road
+- GameStop, 8138 Kirby Drive, Houston, TX
+- GameStop, 29.69647, -95.29724
+- GameStop, 29.70576, -95.54072
+- GameStop, 29.70965, -82.35466
+- GameStop, 29.72924, -95.31037
+- GameStop, 8592 Westheimer Road
+- GameStop, 2612 South Shepherd Drive, Houston, TX
+- GameStop, 13706 East Freeway
+- GameStop, 29.81164, -90.81543
+- GameStop, 520 Rousseau Street
+- GameStop, 19759 Eastex Freeway, Humble, TX
+- GameStop, 708 Kingwood Drive, Kingwood, TX
+- GameStop, 1304 Junction Highway, Kerrville, TX
+- GameStop, 200 Brodie Lane
+- GameStop, 30.18591, -81.55406
+- GameStop, 30.19619, -81.82758
+- GameStop, 30.21971, -95.56524
+- GameStop, 30.22143, -97.75668
+- GameStop, 30.22377, -85.87224
+- GameStop, 30.2345, -93.32677
+- GameStop, 30.32285, -81.39729
+- GameStop, 1231 West Cartwright Road, Conroe, TX
+- GameStop, 4227 Denny Avenue
+- GameStop, 30.39557, -97.72751
+- GameStop, 30.40622, -88.90958
+- GameStop, 12901 North Interstate 35, Austin, TX
+- GameStop, 30.42835, -81.66325
+- GameStop, 70 Park Place, Covington, LA
+- GameStop, 11066 Pecan Park Boulevard, Cedar Park, TX
+- GameStop, 8948 Pensacola Boulevard, Pensacola, FL
+- GameStop, 2400 Highway 281, Marble Falls, TX
+- GameStop, 30.64728, -81.45785
+- GameStop, 30.67537, -88.13432
+- GameStop, 30.70871, -95.56599
+- GameStop, 31.11794, -93.27191
+- GameStop, 3255 South Oates Street, Dothan, AL
+- GameStop, 5891 US 49, Hattiesburg, MS
+- GameStop, 31.44576, -83.5446
+- GameStop, 31.53384, -97.19064
+- GameStop, 31.61518, -81.87361
+- GameStop, 9411 Alameda Avenue, El Paso, TX
+- GameStop, 929 Keyser Ave, Natchitoches
+- GameStop, 1614 Pleasonton Road, Fort Bliss, TX
+- GameStop, 31.83552, -106.54754
+- GameStop, 32.06836, -96.50716
+- GameStop, Richland, MS
+- GameStop, 2910 North Campbell Avenue, Tucson, AZ
+- GameStop, 32.28712, -110.96568
+- GameStop, 1455 Hickory Drive, Las Cruces, NM
+- GameStop, 32.35381, -95.34725
+- GameStop, 1060 East County Line Road, Ridgeland, MS
+- GameStop, 32.43309, -87.01036
+- GameStop, 1630 Highway 351, Abilene, TX
+- GameStop, 32.50912, -84.94233
+- GameStop, 2770 Louisville Avenue, Monroe, LA
+- GameStop, 32.54261, -82.9499
+- GameStop, 32.62623, -93.25337
+- GameStop, 32.65027, -117.08705
+- GameStop, 4333 Gannon Lane, Dallas, TX
+- GameStop, 32.6645, -97.40282
+- GameStop, 32.6807, -115.49964
+- GameStop, 32.68613, -96.82618
+- GameStop, 8626 Jamacha Boulevard, Spring Valley, CA
+- GameStop, 32.73778, -96.30571
+- GameStop, 32.76444, -97.47983
+- GameStop, 5454 Grossmont Center Drive, La Mesa, CA
+- GameStop, 32.81918, -83.71421
+- GameStop, 32.82831, -117.20405
+- GameStop, 32.82945, -79.82829
+- GameStop, 32.84979, -96.68425
+- GameStop, 32.87665, -80.02067
+- GameStop, 32.884, -97.38546
+- GameStop, 32.88875, -97.25839
+- GameStop, 32.908, -97.18978
+- GameStop, 32.91009, -96.95936
+- GameStop, 1332 South Plano Road, Richardson, TX
+- GameStop, 32.93456, -80.03759
+- GameStop, 1251 East Southlake Boulevard
+- GameStop, 32.94439, -80.04417
+- GameStop, 3000 Grapevine Mills Parkway, Grapevine, TX
+- GameStop, 607 Saint James Avenue, Goose Creek, SC
+- GameStop, 33.04037, -80.15809
+- GameStop, 33.04382, -84.9817
+- GameStop, 33.04811, -117.25805
+- GameStop, 816 West McDermott Drive, Allen, TX
+- GameStop, 1250 Auto Park Way, Escondido
+- GameStop, 1021 Hickory Creek Boulevard, Hickory Creek, TX
+- GameStop, 33.13572, -117.12173
+- GameStop, 595 Grand Avenue
+- GameStop, 33.22649, -117.39339
+- GameStop, 3731 South Arizona Avenue, Chandler, AZ
+- GameStop, 33.27509, -93.21264
+- GameStop, 4802 East Ray Road, Phoenix, AZ
+- GameStop, 1385 East Warner Road, Gilbert, AZ
+- GameStop, 1766 South Greenfield Road, Mesa, AZ
+- GameStop, 33.39466, -79.28769
+- GameStop, 33.42285, -82.06242
+- GameStop, 4507 Riverview Parkway, Birmingham, AL
+- GameStop, 33.44457, -84.32531
+- GameStop, 437 Green Springs Highway, Birmingham
+- GameStop, 7333 West Thomas Road, Phoenix, AZ
+- GameStop, 2239 Bessemer Road, Birmingham, AL
+- GameStop, 33.5264, -80.89053
+- GameStop, 1632 Montclair Road, Birmingham, AL
+- GameStop, 33.52884, -90.22314
+- GameStop, 33.5803, -112.15199
+- GameStop, 33.58869, -101.85688
+- GameStop, 33.6003, -111.97868
+- GameStop, 33.60836, -85.78453
+- GameStop, 49255 Grapefruit Boulevard, Coachella, CA
+- GameStop, 33.69792, -84.09496
+- GameStop, 2501 West Happy Valley Road, Phoenix, AZ
+- GameStop, 33.78327, -78.76777
+- GameStop, 1801 Howell Mill Road Northwest
+- GameStop, 33.80766, -118.27219
+- GameStop, 33.82304, -117.5168
+- GameStop, 33.83956, -117.88848
+- GameStop, 33.84147, -118.26229
+- GameStop, 33.85035, -84.25481
+- GameStop, 33.85559, -84.20642
+- GameStop, 7540 Orangethorpe Avenue, Buena Park, CA
+- GameStop, 33.85919, -117.92511
+- GameStop, 3201 Lawrence Road, Wichita Falls, TX
+- GameStop, 33.87741, -84.01192
+- GameStop, 200 Towne Center Drive, Compton, CA
+- GameStop, 33.91189, -117.86665
+- GameStop, 33.93524, -84.02795
+- GameStop, 33.94488, -118.33451
+- GameStop, 33.94593, -118.3313
+- GameStop, 2600 Central Freeway, Wichita Falls, TX
+- GameStop, 4757 Firestone Boulevard, South Gate, CA
+- GameStop, 33.96247, -80.93862
+- GameStop, 33.98038, -84.2177
+- GameStop, 33.98296, -80.9673
+- GameStop, 34.02961, -81.10664
+- GameStop, 34.03457, -81.08943
+- GameStop, 34.06816, -80.95297
+- GameStop, 34.07872, -118.11458
+- GameStop, 9015 Central Avenue
+- GameStop, 333 East Main Street, Alhambra, CA
+- GameStop, 34.11968, -93.0938
+- GameStop, 34.1284, -117.89216
+- GameStop, 58132 29 Palms Highway, Yucca Valley, CA
+- GameStop, 34.13265, -117.98568
+- GameStop, 34.13452, -80.96784
+- GameStop, 34.14092, -118.22487
+- GameStop, 455 Cherokee Place
+- GameStop, 34.17565, -92.00593
+- GameStop, 5857 Spout Springs Road, Flowery Branch, GA
+- GameStop, 34.20169, -84.78756
+- GameStop, 1517
+- GameStop, 34.25727, -88.73843
+- GameStop, 112 Columbus Corners Drive, Whiteville, NC
+- GameStop, 1001 Barnes Crossing Road, Tupelo, MS
+- GameStop, 2580 Jackson Avenue West, Oxford, MS
+- GameStop, 34.45278, -86.94741
+- GameStop, 922 East Main Street, Laurens
+- GameStop, 34.55878, -118.04648
+- GameStop, 5601 Highway 95 North, Lake Havasu City, AZ
+- GameStop, 34.59956, -118.14714
+- GameStop, 34.66698, -92.37883
+- GameStop, 34.69027, -118.09533
+- GameStop, 34.73397, -80.78712
+- GameStop, 5620 NC-41, Wallace, NC
+- GameStop, 519 West Avalon Avenue, Muscle Shoals, AL
+- GameStop, 34.7885, -92.21449
+- GameStop, 1511 Woodruff Road, Greenville
+- GameStop, 34.82953, -92.39116
+- GameStop, 34.91153, -76.93881
+- GameStop, 2201 Virginia Lane, Corinth, MS
+- GameStop, 34.94214, -80.96204
+- GameStop, 34.94224, -80.97916
+- GameStop, 14039 East Wade Hampton Boulevard, Greer, SC
+- GameStop, 35.01199, -80.85149
+- GameStop, 2840 AZ-95, Bullhead City, AZ
+- GameStop, 35.10735, -84.00729
+- GameStop, 11231 Menaul Boulevard Northeast, Albuquerque, NM
+- GameStop, 35.11674, -89.91248
+- GameStop, 4411 San Mateo Boulevard Northeast, Albuquerque, NM
+- GameStop, 1824 Galleria Boulevard, Charlotte, NC
+- GameStop, 35.1379, -89.7965
+- GameStop, 2750 South Woodlands Village Boulevard, Flagstaff, AZ
+- GameStop, 701 Unser Boulevard, Rio Rancho, NM
+- GameStop, 35.25995, -120.67764
+- GameStop, 510 Pat D'Arco Highway, Rio Rancho, NM
+- GameStop, 35.34961, -94.33689
+- GameStop, 35.51146, -120.69738
+- GameStop, 35.51161, -86.45362
+- GameStop, 35.5461, -89.66267
+- GameStop, 35.55279, -88.80968
+- GameStop, 7640 Northwest Expressway, Oklahoma City, OK
+- GameStop, 35.57541, -82.51516
+- GameStop, 35.60953, -78.55399
+- GameStop, 1137 Vann Drive
+- GameStop, 7 Northridge Commons Parkway
+- GameStop, 4454 Fayetteville Street, Raleigh, NC
+- GameStop, 35.79881, -78.55873
+- GameStop, 35.82147, -78.59175
+- GameStop, 35.88999, -94.98454
+- GameStop, 8301 Brier Creek Parkway, Raleigh, NC
+- GameStop, 35.92982, -81.52909
+- GameStop, 35.9666, -78.96058
+- GameStop, 35.9722, -86.49394
+- GameStop, 1508 North Riverside Drive, Española, NM
+- GameStop, 36.02182, -115.11921
+- GameStop, 36.02945, -80.26143
+- GameStop, 36.04694, -86.71502
+- GameStop, 560 Marks Street, Henderson, NV
+- GameStop, 7036 Highway 70 South, Nashville, TN
+- GameStop, 36.09567, -115.29635
+- GameStop, 36.09965, -115.10716
+- GameStop, 36.11101, -115.06328
+- GameStop, 36.12657, -83.46705
+- GameStop, 36.14307, -115.06613
+- GameStop, 36.14892, -86.8051
+- GameStop, 36.18067, -86.63905
+- GameStop, 36.18669, -82.75781
+- GameStop, 36.2032, -86.69285
+- GameStop, 36.28325, -88.30889
+- GameStop, 36.2916, -119.3145
+- GameStop, 2840 Appalachian Hwy, Jacksboro, TN
+- GameStop, 36.34306, -82.40178
+- GameStop, 36.41544, -89.07699
+- GameStop, 36.51127, -87.26917
+- GameStop, 36.55596, -82.6008
+- GameStop, 1077 Branson Hills Parkway
+- GameStop, 901 East Prospect Avenue, Ponca City, OK
+- GameStop, 36.76172, -76.00994
+- GameStop, 36.76873, -76.24727
+- GameStop, 36.77284, -76.08554
+- GameStop, 36.79489, -76.16457
+- GameStop, Chesapeake
+- GameStop, 36.82603, -87.47295
+- GameStop, 2370 US 421, Harlan
+- GameStop, 36.85281, -76.01759
+- GameStop, 1063 Independence Boulevard, Virginia Beach, VA
+- GameStop, 36.96762, -82.59974
+- GameStop, 36.97519, -84.1015
+- GameStop, 37.00281, -121.55129
+- GameStop, 890 Renz Lane, Gilroy, CA
+- GameStop, 1363 West Pacheco Boulevard, Los Banos
+- GameStop, 37.18218, -77.36812
+- GameStop, 37.23787, -81.25601
+- GameStop, 4615 Monticello Avenue, Williamsburg, VA
+- GameStop, 37.27747, -78.40223
+- GameStop, 37.2899, -80.081
+- GameStop, 1 Curtner Avenue, San Jose, CA
+- GameStop, 1110 South King Road, San Jose
+- GameStop, 810 East Rochambeau Drive, York County, VA
+- GameStop, 37.36079, -120.61125
+- GameStop, 3914 Rivermark Plaza, Santa Clara, CA
+- GameStop, 3207E Old Forest Road
+- GameStop, 2527 El Camino Real, Redwood City
+- GameStop, 37.48645, -86.26467
+- GameStop, 1135B
+- GameStop, 37.53654, -77.53076
+- GameStop, 37.5374, -77.5251
+- GameStop, 37.5541, -77.45544
+- GameStop, 1918 North Rock Road, Derby, KS
+- GameStop, 31079 Courthouse Drive, Union City, CA
+- GameStop, 1531 North Parham Road
+- GameStop, 37.63415, -77.45573
+- GameStop, 37.63689, -122.4177
+- GameStop, 37.641, -77.51323
+- GameStop, 11661 East Kellogg Drive, Wichita, KS
+- GameStop, 37.67908, -121.77937
+- GameStop, 37.69503, -121.92905
+- GameStop, 37.701, -122.12827
+- GameStop, 37.75336, -81.21942
+- GameStop, 337 Thacker Avenue, Covington, VA
+- GameStop, 37.81129, -80.43341
+- GameStop, 37.82951, -122.28502
+- GameStop, 1020 North Main Street, Nicholasville
+- GameStop, 37.92896, -86.75633
+- GameStop, 37.93173, -122.32991
+- GameStop, 37.9434, -122.05703
+- GameStop, 37.97314, -120.36229
+- GameStop, 38.00029, -84.44929
+- GameStop, 38.02136, -121.32251
+- GameStop, 38.07404, -75.55393
+- …and 502 more
+
+### Left off: not on a participating-locations list
+
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC
+- AMC Albuquerque 12 + IMAX, Albuquerque, NM
+- AMC Arizona Center 24, Phoenix, AZ
+- AMC Broadway 4, Santa Monica, CA
+- AMC CLASSIC Artesia 2, Artesia, NM
+- AMC CLASSIC Big Rapids 4, Big Rapids, MI
+- AMC CLASSIC Bismarck 8
+- AMC CLASSIC Bloomfield 8
+- AMC CLASSIC Bloomsburg 11, Bloomsburg, PA
+- AMC CLASSIC Central City 10, Hot Springs, AR
+- AMC CLASSIC Crawfordsville 8, Crawfordsville, IN
+- AMC CLASSIC Dubuque 14, Dubuque, IA
+- AMC CLASSIC East Pointe 12
+- AMC CLASSIC Eastgate 6, East Alton, IL
+- AMC CLASSIC Fashion Square 10
+- AMC CLASSIC Forney 12, Forney, TX
+- AMC CLASSIC Fort Moore 10, Fort Moore, GA
+- AMC CLASSIC Hamilton 8, Hamilton
+- AMC CLASSIC Illinois Centre 8, Marion, IL
+- AMC CLASSIC Johnson Creek 12, Johnson Creek, WI
+- AMC CLASSIC Lake 3, Devils Lake, ND
+- AMC CLASSIC Marion 12, Marion, IN
+- AMC CLASSIC Middlesboro 4
+- AMC CLASSIC Morgantown 12
+- AMC CLASSIC Mount Lebanon 6
+- AMC CLASSIC New Smyrna 12, New Smyrna Beach
+- AMC CLASSIC Oakwood 12
+- AMC CLASSIC Ohio Valley Mall 11
+- AMC CLASSIC Peachtree 8
+- AMC CLASSIC Poplar Bluff 8, Poplar Bluff, MO
+- AMC CLASSIC Richmond 11
+- AMC CLASSIC Tifton 6, Tifton, GA
+- AMC CLASSIC Uniontown 6
+- AMC Causeway 13, MA
+- AMC Centerpoint 11, Tempe, AZ
+- AMC Cinemas 6, Rocky River, OH
+- AMC Cinemas 8, Brooklyn, OH
+- AMC Classic 12
+- AMC Classic Auburn 14
+- AMC Classic Bluefield 8
+- AMC Classic Brazos 14
+- AMC Classic Cobblestone 9
+- AMC Classic Crossroads 16, Oklahoma City, OK
+- AMC Classic Farmington 4, Farmington, MO
+- AMC Classic Harlan 4, Harlan
+- AMC Classic Harrison 8, Harrison, AR
+- AMC Classic Havelock 6, Havelock, NC
+- AMC Classic Logan Valley 8, Altoona, PA
+- AMC Classic Londonderry 10, Londonderry
+- AMC Classic Madisonville 8, Madisonville, KY
+- AMC Classic Manitowoc, Manitowoc, WI
+- AMC Classic Morris 10, Morris, IL
+- AMC Classic Mount Vernon 8
+- AMC Classic Nacogdoches 6
+- AMC Classic Normal 14, Normal
+- AMC Classic North Platte 6
+- AMC Classic Quincy 6, Quincy, IL
+- AMC Classic Rio Grande 10, Rio Grande City, TX
+- AMC Classic Sauk Valley 8
+- AMC Classic Sunnyland 10
+- AMC Classic Towne Crossing 8
+- AMC Classic Village Mall 6
+- AMC Classic Woodbridge 5
+- AMC Classic theatre
+- AMC Classic, Cedar Rapids, IA
+- AMC Classic, Olean, NY
+- AMC Classic, Owasso, OK
+- AMC Dine-In, Atlanta, GA
+- AMC Evanston 12, Evanston, IL
+- AMC Festival Plaza 16
+- AMC Galaxy 16, Waco, TX
+- AMC Governor's Square 10
+- AMC Grove City 14
+- AMC Kennewick 12, Kennewick, WA
+- AMC Lake Worth 14, Fort Worth, TX
+- AMC Lee Branch
+- AMC Lexington Park 6, Lexington Park, MD
+- AMC Loews Lakewood Town Center 12, Lakewood, WA
+- AMC Loews Village 7, New York
+- AMC Merchants Crossing 16
+- AMC Movie Theatres
+- AMC Northridge 10, Northridge, CA
+- AMC Oakview Plaza 24, Omaha, NE
+- AMC Palm Promenade 24, San Diego, CA
+- AMC Philadelphia Mills 14, Philadelphia, PA
+- AMC Rivercenter 11 with Alamo IMAX, San Antonio, TX
+- AMC Roosevelt Collection 16, Chicago, IL
+- AMC Salina 10
+- AMC Sarasota 12
+- AMC Seacourt 10
+- AMC Showplace 8, Springfield, IL
+- AMC Showplace Galewood 14, Chicago, IL
+- AMC South Bend 16
+- AMC St. Lucie West 14, Port Saint Lucie, FL
+- AMC Starplex, Corpus Christi, TX
+- AMC Theaters, East Brunswick, NJ
+- AMC Theatre
+- AMC Theatres, Kokomo, IN
+- AMC, Alpena, MI
+- AMC, Arlington, VA
+- AMC, Birmingham, AL
+- AMC, Danvers, MA
+- AMC, Findlay, OH
+- AMC, Kansas City, MO
+- AMC, Largo, MD
+- AMC, Oklahoma City, OK
+- AMC, Olathe, KS
+- AMC, Phoenix, AZ
+- AMC, Rockville Centre
+- AMC, Vero Beach, FL
+- AMC, Vincennes, IN
+- AMC, Westbury, NY
+- AMC, Winston-Salem, NC
+- IMAX & AMC Star Cinemas, Council Bluffs, IA
+- Littleton, CO
+- Maui Mall Megaplex Cinema, Kahului, HI
+- NCG
+- Regal
+- Regal
+- Regal Amarillo Star Stadium 14 & IMAX, Amarillo, TX
+- Regal Atlas Park Stadium 8
+- Regal Aviation Mall
+- Regal Battery Park, New York, NY
+- Regal Bellingham, Bellingham, MA
+- Regal Cinebarre Palace Station
+- Regal Cinema 16
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas
+- Regal Cinemas (Closed)
+- Regal Cinemas 10, Noblesville, IN
+- Regal Cinemas 16, Willoughby, OH
+- Regal Cinemas 20, Sheffield, OH
+- Regal Cinemas Carlsbad 12, Carlsbad, CA
+- Regal Cinemas Concord 10, Concord, NH
+- Regal Cinemas Oakmont 8 Movie Theater
+- Regal Cinemas, Binghamton, NY
+- Regal Cinemas, Boone, NC
+- Regal Cinemas, CA
+- Regal Cinemas, Cockeysville, MD
+- Regal Cinemas, Downingtown, PA
+- Regal Cinemas, Gilbert, AZ
+- Regal Cinemas, Issaquah
+- Regal Cinemas, Marysville
+- Regal Commerce Center Stadium 18
+- Regal Crossgates, Albany
+- Regal Destiny USA, Syracuse, NY
+- Regal E-Walk Stadium 13 & RPX, New York, NY
+- Regal East Greenbush, Rensselaer, NY
+- Regal Edgmont Square, Newtown Township, PA
+- Regal Edwards Camarillo Palace, Camarillo, CA
+- Regal Essex 14 & RPX, New York, NY
+- Regal Fishkill, Fishkill, NY
+- Regal Fossil Creek, Fort Worth, TX
+- Regal Fox Run & RPX, Newington, NH
+- Regal Greenville Grande, Greenville, NC
+- Regal Hacienda Crossings, Dublin, CA
+- Regal Heartland
+- Regal Hollywood 24, Chamblee, GA
+- Regal Moraine Point Cinema 10
+- Regal New River Valley, Christiansburg, VA
+- Regal Northampton Cinema 14, Easton, PA
+- Regal Paseo, Pasadena, CA
+- Regal Plymouth Meeting 10, Conshohocken, PA
+- Regal Short Pump Stadium 14, Richmond, VA
+- Regal Sonora Stadium 10
+- Regal Stadium 16 Cinema
+- Regal Stonefield Stadium 14 and IMAX
+- Regal Stonestown Galleria
+- Regal Tangram 4DX, Flushing, NY
+- Regal Theater, Knoxville
+- Regal UA Broadway Faire, Fresno, CA
+- Regal UA King of Prussia, King of Prussia
+- Regal UA Main Street Theatre, Philadelphia, PA
+- Regal UA Midway, Forest Hills
+- Regal UA Sheepshead Bay, Brooklyn, NY
+- Regal UA Staten Island & RPX
+- Regal Union Square Stadium 14
+- Regal Virginia Center 20
+- Regal Waterford 9, Waterford, CT
+- Regal West Ridge, Topeka, KS
+
+### Download log
+
+```
+1/62 Adidas: 134 places (overpass-api.de, 44s)
+2/62 Aeropostale: 247 places (overpass-api.de, 47s)
+3/62 ALDO: 137 places (overpass-api.de, 35s)
+4/62 AMC Theatres: 550 places (maps.mail.ru, 271s)
+5/62 American Girl: 8 places (overpass-api.de, 62s)
+6/62 Ariat: 13 places (overpass-api.de, 53s)
+7/62 ASICS: 41 places (maps.mail.ru, 189s)
+8/62 Aspen Dental: 614 places (maps.mail.ru, 44s)
+9/62 AutoZone: FAILED after 227s (maps.mail.ru: answered 504; overpass-api.de: answered 502; overpass.private.coffee: answered 504)
+10/62 Bass Pro Shops: FAILED after 225s (maps.mail.ru: answered 504; overpass-api.de: answered 502; overpass.private.coffee: answered 504)
+11/62 Big 5 Sporting Goods: 353 places (overpass-api.de, 109s)
+12/62 Bonefish Grill: 142 places (overpass-api.de, 41s)
+13/62 Boscov's: 46 places (overpass-api.de, 42s)
+14/62 Brooks Brothers: 120 places (overpass-api.de, 48s)
+15/62 Cabela's: 62 places (overpass-api.de, 43s)
+16/62 Carrabba's Italian Grill: 188 places (overpass-api.de, 36s)
+17/62 Cinemark: 237 places (overpass-api.de, 48s)
+18/62 Cracker Barrel: 649 places (overpass-api.de, 56s)
+19/62 CubeSmart: 489 places (overpass-api.de, 56s)
+20/62 Dave & Buster's: 148 places (overpass-api.de, 51s)
+21/62 Discount Tire: 898 places (maps.mail.ru, 243s)
+22/62 Duluth Trading Company: 29 places (overpass-api.de, 87s)
+23/62 Eyemart Express: 40 places (overpass-api.de, 39s)
+24/62 Famous Footwear: 596 places (overpass-api.de, 69s)
+25/62 Foot Locker: 417 places (overpass-api.de, 43s)
+26/62 GameStop: 1724 places (overpass-api.de, 69s)
+27/62 Helzberg Diamonds: 85 places (overpass-api.de, 55s)
+28/62 The Home Depot: 2036 places (overpass-api.de, 81s)
+29/62 J.Crew: 264 places (overpass-api.de, 52s)
+30/62 Kohl's: 1087 places (overpass-api.de, 64s)
+31/62 LasikPlus: 6 places (maps.mail.ru, 187s)
+32/62 Lowe's: FAILED after 168s (maps.mail.ru: answered 504; overpass-api.de: answered 502; overpass.private.coffee: answered 504)
+33/62 Lululemon: 285 places (overpass-api.de, 70s)
+34/62 Luna Grill: 40 places (overpass-api.de, 48s)
+35/62 Marcus Theatres: 45 places (overpass-api.de, 43s)
+36/62 Mavis Tires & Brakes: 384 places (overpass-api.de, 51s)
+37/62 Michaels: 1034 places (overpass-api.de, 57s)
+38/62 Nike: 219 places (overpass-api.de, 47s)
+39/62 Northern Tool + Equipment: 76 places (overpass-api.de, 33s)
+40/62 The North Face: 96 places (maps.mail.ru, 257s)
+41/62 O'Reilly Auto Parts: 3587 places (maps.mail.ru, 34s)
+42/62 Outback Steakhouse: 662 places (maps.mail.ru, 20s)
+43/62 Penske Truck Rental: 135 places (maps.mail.ru, 13s)
+44/62 Pep Boys: 555 places (maps.mail.ru, 21s)
+45/62 Purple: 28 places (maps.mail.ru, 13s)
+46/62 Rack Room Shoes: 267 places (overpass-api.de, 99s)
+47/62 Regal: 376 places (overpass-api.de, 55s)
+48/62 Rhone: FAILED after 285s (overpass-api.de: answered 502; overpass.private.coffee: The operation was aborted due to timeout; maps.mail.ru: answered 504)
+49/62 Rogers & Hollands: 5 places (maps.mail.ru, 252s)
+50/62 Rothy's: 16 places (maps.mail.ru, 20s)
+51/62 SCHEELS: 5 places (maps.mail.ru, 24s)
+52/62 Sherwin-Williams: FAILED after 246s (maps.mail.ru: answered 504; overpass-api.de: answered 502; overpass.private.coffee: The operation was aborted due to timeout)
+53/62 Showcase Cinemas: 11 places (maps.mail.ru, 25s)
+54/62 Take 5 Oil Change: 431 places (maps.mail.ru, 30s)
+55/62 Texas de Brazil: 29 places (overpass-api.de, 102s)
+56/62 Tires Plus: FAILED after 294s (overpass-api.de: answered 504; overpass.private.coffee: The operation was aborted due to timeout; maps.mail.ru: answered 504)
+57/62 Tommy Hilfiger: 131 places (maps.mail.ru, 253s)
+58/62 Topgolf: 95 places (maps.mail.ru, 15s)
+59/62 UNTUCKit: 34 places (maps.mail.ru, 29s)
+60/62 Valvoline Instant Oil Change: 960 places (maps.mail.ru, 31s)
+61/62 Vineyard Vines: 83 places (maps.mail.ru, 11s)
+62/62 YETI: 3 places (overpass-api.de, 92s)
+retry AutoZone: 4292 places (overpass-api.de, 103s)
+retry Bass Pro Shops: 99 places (overpass-api.de, 39s)
+retry Lowe's: 1765 places (overpass-api.de, 59s)
+retry Rhone: 10 places (overpass-api.de, 44s)
+retry Sherwin-Williams: 2007 places (overpass-api.de, 75s)
+retry Tires Plus: 198 places (overpass-api.de, 55s)
+Local shops: 615 of 615 found on OpenStreetMap
+```
+Wrote /home/runner/work/armedforcesperks-app.github.io/armedforcesperks-app.github.io/data/locations.json (2815 KB).
+total 7884
+drwxr-xr-x 2 runner runner    4096 Nov 27 10:05 .
+drwxr-xr-x 3 runner runner    4096 Nov 27 07:25 ..
+-rw-r--r-- 1 runner runner   37358 Nov 27 08:19 atp-extract.log
+-rw-r--r-- 1 runner runner 3113596 Nov 27 10:05 atp-stores.geojson.gz
+-rw-r--r-- 1 runner runner   39380 Nov 27 10:05 local-shops-status.json
+-rw-r--r-- 1 runner runner      20 Nov 27 10:05 locations-status.json
+-rw-r--r-- 1 runner runner 2882537 Nov 27 10:05 locations.json
+-rw-r--r-- 1 runner runner   51699 Nov 27 10:05 log.txt
+-rw-r--r-- 1 runner runner 1855710 Nov 27 10:05 raw.json.gz
+-rw-r--r-- 1 runner runner     351 Nov 27 08:21 recheck.log
+-rw-r--r-- 1 runner runner   44835 Nov 27 10:05 report.md
+-rw-r--r-- 1 runner runner    8431 Nov 27 07:25 tests.txt
+?? data/local-shops-status.json
+?? tools/store-locations/__pycache__/
+== site_build3 finished 2026-11-27T10:05:43Z
