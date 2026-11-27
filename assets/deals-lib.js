@@ -1,4 +1,4 @@
-// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit 1676ff1)
+// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit dfca560)
 // with only the TypeScript types removed, so the website uses exactly the same rules as the app.
 /**
  * Deal data model, validation, compliance text filters and search/filter logic.
@@ -41,7 +41,7 @@
                        
                                                                                           
                      
-                                                                    
+                                                                                                                           
                       
                                                                                        
                      
@@ -49,14 +49,95 @@
                            
   
 
-/** Stable: yearly. Normal: every 6 months. Volatile (seasonal, promos, prices): every 90 days. */
-                                                           
-export const RECHECK_DAYS                              = { stable: 365, normal: 182, volatile: 90 };
+/**
+ * How often a listing is re-checked by hand against its official page (docs/RECHECKS.md).
+ * The sheet's optional recheck_tier column sets it; when that's blank it follows the listing's
+ * group (defaultRecheckTier): VA and federal benefits monthly, state and local benefits every
+ * 3 months, store deals every 6 months (3 for seasonal ones).
+ */
+                                                                        
+export const RECHECK_DAYS                              = { monthly: 30, quarterly: 91, normal: 182, stable: 365 };
+export const RECHECK_LABEL                              = {
+  monthly: 'monthly',
+  quarterly: 'every 3 months',
+  normal: 'every 6 months',
+  stable: 'yearly',
+};
+
+/** Words the sheet may use. "Volatile" is the older name for every 3 months. */
+export function parseRecheckTier(value         )                     {
+  const t = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (t === 'monthly' || t === 'month' || t === '1 month') return 'monthly';
+  if (t === 'quarterly' || t === 'volatile' || t === '3 months' || t === 'every 3 months') return 'quarterly';
+  if (t === 'normal' || t === '6 months' || t === 'every 6 months' || t === 'twice a year') return 'normal';
+  if (t === 'stable' || t === 'yearly' || t === 'annual' || t === 'annually' || t === '12 months') return 'stable';
+  return null;
+}
 
 /** Date the deal is due for its next check, YYYY-MM-DD. */
 export function recheckDue(deal                                             )         {
   const [y, m, d] = deal.lastConfirmed.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d + RECHECK_DAYS[deal.recheckTier])).toISOString().slice(0, 10);
+  const days = RECHECK_DAYS[deal.recheckTier] ?? RECHECK_DAYS.normal;
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/** Which list a listing's recheck falls under. */
+                                                            
+export const RECHECK_GROUP_LABEL                               = {
+  federal: 'VA and federal benefits',
+  state: 'State and local benefits',
+  business: 'Store and business deals',
+};
+
+const STATE_NAMES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida',
+  'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine',
+  'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada',
+  'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma',
+  'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah',
+  'Vermont', 'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming', 'Washington, DC', 'Washington DC',
+  'District of Columbia', 'DC', 'Puerto Rico', 'Guam', 'U.S. Virgin Islands', 'US Virgin Islands', 'Virgin Islands',
+  'American Samoa', 'Northern Mariana Islands',
+];
+/** State benefit rows are named like "Texas: free hunting and fishing license". */
+const STATE_NAME_PREFIX = new RegExp(`^(${STATE_NAMES.map((s) => s.replace(/[.]/g, '\\.')).join('|')})\\s*:`, 'i');
+
+const STATE_LABELS = new RegExp(
+  '^(al|ak|az|ar|ca|co|ct|de|fl|ga|hi|id|il|in|ia|ks|ky|la|me|md|ma|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|oh|ok|' +
+    'or|pa|ri|sc|sd|tn|tx|ut|vt|wa|wv|wi|wy|dc|pr|vi|' +
+    'alabama|alaska|arizona|arkansas|california|colorado|connecticut|delaware|florida|myflorida|georgia|hawaii|' +
+    'idaho|illinois|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|mass|massachusetts|michigan|minnesota|' +
+    'mississippi|missouri|montana|nebraska|nevada|newhampshire|newjersey|newmexico|newyork|northcarolina|' +
+    'northdakota|ohio|oklahoma|oregon|pennsylvania|rhodeisland|southcarolina|southdakota|tennessee|texas|utah|' +
+    'vermont|virginia|washington|westvirginia|wisconsin|wyoming|wyo|guam|' +
+    // State agencies with their own .gov name.
+    'azdor|ksrevenue|mtrevenue|ncparks)$',
+);
+
+/**
+ * True for a state, territory, county or city government site (dmv.ca.gov, revenue.state.mn.us,
+ * laramiecountywy.gov). va.gov is the U.S. Department of Veterans Affairs, not Virginia.
+ */
+export function isStateOrLocalHost(host        )          {
+  const h = host.toLowerCase().replace(/^www\./, '');
+  if (/(^|\.)(state\.)?[a-z]{2}\.us$/.test(h)) return true;
+  const m = /([a-z0-9-]+)\.gov$/.exec(h);
+  if (!m || m[1] === 'va') return false;
+  return STATE_LABELS.test(m[1]) || /(county|city|parish|borough|township)/.test(m[1]);
+}
+
+export function recheckGroup(deal                                               )               {
+  if (STATE_NAME_PREFIX.test(deal.name) || isStateOrLocalHost(hostOf(deal.sourceUrl))) return 'state';
+  if (isGovernmentUrl(deal.sourceUrl) || deal.category === 'Government Benefits') return 'federal';
+  return 'business';
+}
+
+/** The recheck tier used when the sheet's recheck_tier column is blank. */
+export function defaultRecheckTier(deal                                                            )              {
+  const group = recheckGroup(deal);
+  if (group === 'federal') return 'monthly';
+  if (group === 'state') return 'quarterly';
+  return deal.seasonal ? 'quarterly' : 'normal';
 }
 
 /** Highest deals-file format this version of the app understands. */
@@ -131,9 +212,17 @@ export function hostOf(url        )         {
   return m ? m[1].toLowerCase().replace(/^www\./, '') : url;
 }
 
+/**
+ * Official military program sites that don't end in .gov or .mil: the Exchanges, commissaries
+ * and MWR, the Veterans Crisis Line, and the military's own colleges and academies.
+ */
+const OFFICIAL_PROGRAM_HOSTS =
+  /(^|\.)(aafes\.com|shopmyexchange\.com|mynavyexchange\.com|shopcgx\.com|usmc-mccs\.org|commissaries\.com|armymwr\.com|myairforcelife\.com|veteranscrisisline\.net|usncc\.edu|af\.edu|afit\.edu|usna\.edu|westpoint\.edu|nps\.edu|usuhs\.edu|uscga\.edu)$/;
+
+/** A government or official military program source (shown with the "not a government app" notice). */
 export function isGovernmentUrl(url        )          {
   const host = hostOf(url);
-  return /\.(gov|mil)$/.test(host) || host === 'uscode.house.gov';
+  return /\.(gov|mil)$/.test(host) || host === 'uscode.house.gov' || OFFICIAL_PROGRAM_HOSTS.test(host);
 }
 
 // ---------------------------------------------------------------------------
@@ -230,6 +319,74 @@ export function looksFinancial(name        , category        , rawNotes        )
 }
 
 // ---------------------------------------------------------------------------
+// VA claims: the app never helps with, or points people to paid help with, VA claims or ratings
+// ---------------------------------------------------------------------------
+
+/**
+ * Wording that means a listing is selling help with VA claims or ratings. Only VA-accredited
+ * people may help prepare, present or prosecute a claim (38 U.S.C. 5901, 38 CFR 14.629), no one
+ * may charge for an initial claim (38 CFR 14.636(c)), and several states penalize paid "claim
+ * consultants". The app lists none of these, paid or "free consultation", and takes no affiliate
+ * money from them. Free help comes only from VA.gov and VA-accredited representatives.
+ */
+const CLAIM_HELP = new RegExp(
+  [
+    '\\bclaims?\\s+(consultants?|consulting|coach(es|ing)?|preparation\\s+services?|experts?\\s+for\\s+hire)',
+    '\\b(maximi[sz]e|raise|increase|boost|upgrade)\\s+(your\\s+)?(va\\s+)?(disability\\s+)?(rating|claims?|compensation)\\b',
+    '\\b(get|reach|win)\\s+(a\\s+|to\\s+)?100\\s?%\\s+(va\\s+)?(rating|disability)',
+    '\\bnexus\\s+letters?',
+    '\\bindependent\\s+medical\\s+opinions?',
+    '\\bDBQs?\\b',
+    '\\bdisability\\s+benefits\\s+questionnaires?',
+    '\\bc\\s?&\\s?p\\s+exams?\\s+(prep|preparation|coaching|help|training)',
+    '\\bva\\s+(disability\\s+)?(claims?|appeals?)\\s+(lawyers?|attorneys?|law\\s+firms?)',
+    '\\bva\\s+claims\\s+insider\\b',
+    '\\btrajector\\b',
+    '\\bveterans?\\s+guardian\\b',
+    '\\bveterans?\\s+benefits?\\s+guide\\b',
+    '\\bree\\s+medical\\b',
+  ].join('|'),
+  'i',
+);
+
+/** Sites of companies that sell help with VA claims or ratings. */
+const CLAIM_HELP_HOSTS =
+  /(^|\.)(vaclaimsinsider\.com|trajector\.com|trajectormedical\.com|veteransguardian\.com|veteranguardian\.com|vbg\.com|reemedical\.com)$/i;
+
+/** Why a listing looks like paid VA claim help, or null if it doesn't. */
+export function claimHelpReason(deal   
+                
+                   
+                   
+                      
+                        
+                            
+                               
+ )                {
+  for (const url of [deal.sourceUrl, deal.affiliateUrl]) {
+    if (url && CLAIM_HELP_HOSTS.test(hostOf(url))) return `links to ${hostOf(url)}, a company that sells help with VA claims`;
+  }
+  const text = [deal.name, deal.summary, deal.details, deal.howToClaim, deal.notes].filter(Boolean).join(' ');
+  const m = CLAIM_HELP.exec(text);
+  return m ? `mentions "${m[0]}"` : null;
+}
+
+const VA_RATING_WORDS =
+  /\b(VA (disability )?(rating|claims?|compensation)|disability (rating|compensation)|service[- ]connected|rated (at )?\d{1,3}\s?%|\d{1,3}\s?%\s*(or higher |or more |\+ ?)?(disabled|disability|service-connected|rating|rated)|permanent and total|P&T\b|TDIU|IU[- ]rated|unemployab)/i;
+
+/**
+ * True when a listing is a VA benefit or depends on a VA disability rating. These get the
+ * "we don't help with VA claims or ratings" notice.
+ */
+export function isVaClaimRelated(
+  deal                                                                                                     ,
+)          {
+  const host = hostOf(deal.sourceUrl);
+  if (host === 'va.gov' || host.endsWith('.va.gov')) return true;
+  return VA_RATING_WORDS.test([deal.name, deal.summary, deal.details, deal.howToClaim, deal.notes ?? ''].join(' '));
+}
+
+// ---------------------------------------------------------------------------
 // Validation: used for the bundled file in tests and for any remote data at runtime
 // ---------------------------------------------------------------------------
 
@@ -279,6 +436,7 @@ export function parseDeal(input         )              {
     ? (o.audience.filter((a) => (AUDIENCE_TAGS             ).includes(a))                 )
     : [];
   const financial = o.financial === true;
+  const government = isGovernmentUrl(sourceUrl);
   const notes = str(o.notes, 1000) || null;
   const keywords = Array.isArray(o.keywords)
     ? [
@@ -302,8 +460,8 @@ export function parseDeal(input         )              {
     where,
     scope,
     sourceUrl,
-    // Financial brands never use affiliate links.
-    affiliateUrl: financial ? null : safeHttpsUrl(o.affiliateUrl),
+    // Financial brands and government programs never use affiliate links.
+    affiliateUrl: financial || government ? null : safeHttpsUrl(o.affiliateUrl),
     lastConfirmed,
     status,
     seasonal: o.seasonal === true,
@@ -312,10 +470,13 @@ export function parseDeal(input         )              {
     audience,
     notes,
     financial,
-    government: isGovernmentUrl(sourceUrl),
+    government,
     keywords,
-    recheckTier: o.recheckTier === 'stable' || o.recheckTier === 'volatile' ? o.recheckTier : 'normal',
+    recheckTier: parseRecheckTier(o.recheckTier) ?? 'normal',
   };
+
+  // Never list paid help with VA claims or ratings, even if it arrives in remote data.
+  if (claimHelpReason(deal)) return null;
 
   // Defense in depth: never show restricted (weapons) wording, even from remote data.
   for (const field of ['name', 'summary', 'details', 'howToClaim', 'notes']         ) {
