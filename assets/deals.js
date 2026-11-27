@@ -135,9 +135,16 @@ function ctaLabel(deal, host) {
   return `Get ${amount}${rest} at ${host}`;
 }
 
+// The website never uses affiliate links: every deal button goes straight to the business's own
+// page, even when the deal list has an affiliate link for the app. GitHub Pages isn't meant for
+// sites built around commercial transactions, so affiliate links stay in the app (rule 7 in
+// the app repo's docs/LEGAL-COMPLIANCE.md). Before turning this on, move the site to a host
+// that allows commercial sites and update the privacy policy, terms, disclosures and footers.
+const WEBSITE_AFFILIATE_LINKS = false;
+
 function usesAffiliate(deal) {
   // Financial brands always get the plain official link (parseDeal already enforces this too).
-  return !!deal.affiliateUrl && !deal.financial;
+  return WEBSITE_AFFILIATE_LINKS && !!deal.affiliateUrl && !deal.financial;
 }
 
 // ---------------------------------------------------------------------------
