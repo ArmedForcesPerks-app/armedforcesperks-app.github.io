@@ -1,0 +1,26 @@
+== crawl (14/16 crawl_bases.json.gz) started 2026-11-27T05:21:02Z
+sites: 11234 of 179755
+500 sites, 0 with mentions, 97 s
+1000 sites, 4 with mentions, 157 s
+1500 sites, 8 with mentions, 255 s
+2000 sites, 15 with mentions, 335 s
+2500 sites, 16 with mentions, 447 s
+3000 sites, 20 with mentions, 550 s
+3500 sites, 23 with mentions, 599 s
+4000 sites, 28 with mentions, 671 s
+4500 sites, 28 with mentions, 782 s
+5000 sites, 35 with mentions, 850 s
+5500 sites, 39 with mentions, 935 s
+6000 sites, 44 with mentions, 1039 s
+6500 sites, 48 with mentions, 1095 s
+7000 sites, 56 with mentions, 1198 s
+7500 sites, 61 with mentions, 1281 s
+8000 sites, 66 with mentions, 1339 s
+8500 sites, 72 with mentions, 1434 s
+9000 sites, 74 with mentions, 1568 s
+9500 sites, 82 with mentions, 1668 s
+10000 sites, 88 with mentions, 1748 s
+10500 sites, 95 with mentions, 1789 s
+11000 sites, 101 with mentions, 1881 s
+done 11234 sites, 106 with mentions, 1916 s
+== crawl finished 2026-11-27T05:52:58Z
