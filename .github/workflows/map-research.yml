@@ -12,8 +12,9 @@ on:
 permissions:
   contents: write
 
+# Batches may overlap (each job commits only its own folder).
 concurrency:
-  group: map-research
+  group: map-research-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:

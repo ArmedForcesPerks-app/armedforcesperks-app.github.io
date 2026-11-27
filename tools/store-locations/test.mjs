@@ -9,8 +9,9 @@ const idx = (key) => brands.findIndex((b) => b.key === key);
 
 test('brands.json is valid; only chains waiting for their deal have no deal IDs', () => {
   assert.ok(brands.length >= 30);
+  // A chain whose deal has left the sheet may keep an empty list until it comes back; none do now.
   const waiting = brands.filter((b) => !b.deals.length).map((b) => b.key);
-  assert.deepEqual(waiting.sort(), ['amc', 'asics', 'lunagrill', 'regal', 'showcase']);
+  assert.deepEqual(waiting.sort(), []);
 });
 
 test('each chain gets its own small query, limited to U.S. areas', () => {
