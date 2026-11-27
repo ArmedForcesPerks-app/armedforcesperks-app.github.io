@@ -1,0 +1,50 @@
+== pages (pages_islands.json) started 2026-11-27T03:23:34Z
+https://www.kualoa.com/military-and-kamaaina 200 14240
+   https://www.kualoa.com/es-mx/military-and-kamaaina 200 17322
+   https://www.kualoa.com/ja-jp/military-and-kamaaina 200 8257
+   https://www.kualoa.com/ko-kr/military-and-kamaaina 200 8268
+   https://www.kualoa.com/special-events 200 7052
+https://xcelwetsuits.com/pages/promotions 200 5230
+   https://xcelwetsuits.com/pages/verify-military 200 3969
+https://tenore.com/pages/govx 200 7427
+https://tenore.com/pages/tenore-hawaii 200 8029
+https://pacificskydivinghonolulu.com/en/ 200 4433
+   https://pacificskydivinghonolulu.com/en/about/contact-location 200 7318
+   https://pacificskydivinghonolulu.com/en/about/specials 200 1660
+https://mauinuigolfclub.com/ 200 11300
+   https://mauinuigolfclub.com/golf-specials/ HTTPError: HTTP Error 404: Not Found 0
+https://bigcitydinerhawaii.com/events/ 200 1827
+   https://bigcitydinerhawaii.com/locations/ 200 1703
+https://bigcitydinerhawaii.com/ 200 5786
+   https://bigcitydinerhawaii.com/2026/10/20/beer-bucket-specials-oahu/ 200 6802
+https://coconutsfishcafe.com/our-story/ 200 4961
+   https://coconutsfishcafe.com/location-kihei-azeka/ 200 2570
+https://coconutsfishcafe.com/ 200 7080
+https://dolphinquest.com/oahu-hawaii/ 200 22158
+   https://dolphinquest.com/marine-mammal-specialist-for-a-day/ 200 6887
+   https://dolphinquest.com/oahu-hawaii/special-offers/ 200 5197
+https://dolphinquest.com/big-island-hawaii/special-offers/ 200 5807
+   https://dolphinquest.com/big-island-hawaii/marine-mammal-specialist-for-a-day/ 200 7512
+https://www.pearlharboraviationmuseum.org/visit/faq/ 200 13595
+https://bigislandcoffeeroasters.com/pages/military-first-responder-discount 200 2983
+https://www.islandsplashtours.com/turtle-canyon-boat-tours-faq 200 6150
+https://coralcrater.com/discounts/ 200 2009
+   https://coralcrater.com/discounts/holiday-offer/ 200 1866
+   https://coralcrater.com/discounts/kamaaina-discount/ 200 2876
+   https://coralcrater.com/location/ 200 1797
+https://www.thedenhawaii.com/pricing.html 200 8896
+   https://www.thedenhawaii.com/locations.html 200 4286
+https://www.outtoseevision.com/military-tricare-eye-care-kailua-hi 200 7809
+   https://www.outtoseevision.com/location-and-parking 200 8398
+https://blueplanetadventure.com/faq 200 10918
+https://cjjfcentral.com/ 200 21111
+https://dragonupstairs.com/ 200 6161
+https://nszipline.com/ 200 6548
+https://www.hawaiiangraphics.com/ 200 2916
+https://www.hilosurplusstore.com/ 200 4614
+   https://www.hilosurplusstore.com/military-gallery 200 3511
+https://flagsnthings.com/ 200 2309
+https://sunlightonwater.com/ 200 6727
+https://www.tnt.ink/ 200 2699
+https://www.tonysautoair.com/about 200 3628
+== pages finished 2026-11-27T03:24:48Z
