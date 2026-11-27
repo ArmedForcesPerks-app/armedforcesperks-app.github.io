@@ -1,4 +1,4 @@
-// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit 41a89b2)
+// GENERATED, do not edit by hand. Copied from the app repo's src/lib/deals.ts (commit 773a2e8)
 // with only the TypeScript types removed, so the website uses exactly the same rules as the app.
 /**
  * Deal data model, validation, compliance text filters and search/filter logic.
