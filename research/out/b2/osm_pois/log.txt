@@ -1,0 +1,44 @@
+== osm_pois () started 2026-11-27T03:02:24Z
+scratch /mnt/osm 86 GB free
+$ sudo apt-get update -qq
+$ sudo apt-get install -y -qq osmium-tool
+Selecting previously unselected package libboost-program-options1.90.0:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 214296 files and directories currently installed.)
+Preparing to unpack .../libboost-program-options1.90.0_1.90.0-6ubuntu1_amd64v3.deb ...
+Unpacking libboost-program-options1.90.0:amd64 (1.90.0-6ubuntu1) ...
+Selecting previously unselected package osmium-tool.
+Preparing to unpack .../osmium-tool_1.19.0-1build1_amd64v3.deb ...
+Unpacking osmium-tool (1.19.0-1build1) ...
+Setting up libboost-program-options1.90.0:amd64 (1.90.0-6ubuntu1) ...
+Setting up osmium-tool (1.19.0-1build1) ...
+Processing triggers for libc-bin (2.43-2ubuntu2.7) ...
+Processing triggers for man-db (2.13.1-1build1) ...
+Not building database; man-db/auto-update is not 'true'.
+
+Running kernel seems to be up-to-date.
+
+Restarting services...
+
+Service restarts being deferred:
+ systemctl restart hosted-compute-agent.service
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+U.S. regions offered: ['american-oceania', 'australia', 'us', 'us-midwest', 'us-northeast', 'us-pacific', 'us-south', 'us-west', 'us/alabama', 'us/alaska', 'us/arizona', 'us/arkansas', 'us/california', 'us/colorado', 'us/connecticut', 'us/delaware', 'us/district-of-columbia', 'us/florida', 'us/georgia', 'us/hawaii', 'us/idaho', 'us/illinois', 'us/indiana', 'us/iowa', 'us/kansas', 'us/kentucky', 'us/louisiana', 'us/maine', 'us/maryland', 'us/massachusetts', 'us/michigan', 'us/minnesota', 'us/mississippi', 'us/missouri', 'us/montana', 'us/nebraska', 'us/nevada', 'us/new-hampshire', 'us/new-jersey', 'us/new-mexico', 'us/new-york', 'us/north-carolina', 'us/north-dakota', 'us/ohio', 'us/oklahoma', 'us/oregon', 'us/pennsylvania', 'us/puerto-rico', 'us/rhode-island', 'us/south-carolina', 'us/south-dakota', 'us/tennessee', 'us/texas', 'us/us-virgin-islands', 'us/utah', 'us/vermont', 'us/virginia', 'us/washington', 'us/west-virginia', 'us/wisconsin', 'us/wyoming']
+us 11721 MB 7182 s
+$ osmium tags-filter --overwrite /mnt/osm/us.osm.pbf nwr/website nwr/contact:website nwr/url -o /mnt/osm/us.web.pbf
+$ osmium tags-filter --overwrite /mnt/osm/us.web.pbf nwr/shop nwr/amenity nwr/leisure nwr/tourism nwr/craft nwr/healthcare -o /mnt/osm/us.poi.pbf
+$ osmium export --overwrite /mnt/osm/us.poi.pbf -f geojsonseq --geometry-types=point,polygon -a type,id -x print_record_separator=false -o /mnt/osm/us.geojsonseq
+us places with a website: 513444 7604 s
+missing region puerto-rico
+missing region us-virgin-islands
+american-oceania 5 MB 7608 s
+$ osmium tags-filter --overwrite /mnt/osm/american-oceania.osm.pbf nwr/website nwr/contact:website nwr/url -o /mnt/osm/american-oceania.web.pbf
+$ osmium tags-filter --overwrite /mnt/osm/american-oceania.web.pbf nwr/shop nwr/amenity nwr/leisure nwr/tourism nwr/craft nwr/healthcare -o /mnt/osm/american-oceania.poi.pbf
+$ osmium export --overwrite /mnt/osm/american-oceania.poi.pbf -f geojsonseq --geometry-types=point,polygon -a type,id -x print_record_separator=false -o /mnt/osm/american-oceania.geojsonseq
+american-oceania places with a website: 155 7609 s
+total places: 513599 7620 s
+== osm_pois finished 2026-11-27T05:09:34Z
