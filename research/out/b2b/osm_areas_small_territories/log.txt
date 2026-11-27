@@ -1,0 +1,8 @@
+== osm_areas (small_territories) started 2026-11-27T03:02:48Z
+  overpass-api.de failed: answered 502
+  overpass.private.coffee failed: stale data 2026-07-28T02:16:18Z
+small_territories: 2191 elements from maps.mail.ru in 112s
+taginfo discount: ok
+taginfo military: ok
+taginfo veteran: ok
+== osm_areas finished 2026-11-27T03:04:40Z
