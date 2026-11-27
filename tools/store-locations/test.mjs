@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { addFromLocators, addressKey, buildQuery, guardAgainstDrops, isClosed, labelFor, loadBrands, locatorLabel, toStores, brandFor } from './build.mjs';
+import { addFromLocators, applyCorrections, addressKey, buildQuery, guardAgainstDrops, isClosed, labelFor, loadBrands, locatorLabel, toStores, brandFor } from './build.mjs';
 
 const brands = loadBrands(JSON.parse(readFileSync(new URL('./brands.json', import.meta.url), 'utf8')));
 const idx = (key) => brands.findIndex((b) => b.key === key);
@@ -243,6 +243,21 @@ test('a locator store with only an address (placed by the geocoder) is added but
   assert.equal(rows.length, 2);
   assert.deepEqual([rows[1][1], rows[1][2]], [33.0, -97.0]);
   assert.equal(out.moved.length, 0);
+});
+
+test('hand-checked corrections remove closed stores and add confirmed ones', () => {
+  const ob = idx('outback'), az = idx('autozone'), tb = idx('texasdebrazil');
+  const res = { stores: [[ob, 21.3, -158.0, 'Kapolei'], [ob, 30.0, -90.0, 'New Orleans'], [az, 20.9, -156.7, 'Lahaina'], [az, 21.0, -157.0, 'Other']], counts: {} };
+  const out = applyCorrections(res, brands, {
+    closedIn: [{ brand: 'outback', box: [18.8, -160.5, 22.5, -154.5], reason: 'left Hawaii' }],
+    remove: [{ brand: 'autozone', lat: 20.9001, lon: -156.7, within: 300, label: 'Lahaina', reason: 'closed' }],
+    add: [{ brand: 'texasdebrazil', lat: 21.2911, lon: -157.8437, label: 'Ala Moana' }, { brand: 'autozone', lat: 21.0001, lon: -157.0, label: 'dup' }],
+  });
+  assert.deepEqual(out.stores.map((r) => r[3]).sort(), ['Ala Moana', 'New Orleans', 'Other']);
+  assert.equal(out.counts.outback, 1);
+  assert.equal(out.counts.texasdebrazil, 1);
+  assert.equal(out.corrected.length, 3);
+  assert.ok(out.stores.every((r, i, a) => i === 0 || a[i - 1][0] <= r[0]));
 });
 
 test('locator stores respect participating lists and excluded names', () => {

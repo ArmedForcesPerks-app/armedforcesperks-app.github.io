@@ -30,6 +30,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
 const OUT = join(ROOT, 'data', 'locations.json');
 const BRANDS_FILE = join(HERE, 'brands.json');
+const CORRECTIONS = join(HERE, 'corrections.json');
 /** Which chains the last run couldn't download (or got from an out-of-date server); filled in daily. */
 const STATUS = join(ROOT, 'data', 'locations-status.json');
 /** A server whose map data is older than this is a stale copy; its answers are not used. */
@@ -501,6 +502,43 @@ export function addFromLocators(built, brands, features) {
   return { ...built, stores, counts, added, moved, locatorNotListed: skippedNotListed };
 }
 
+/**
+ * Hand-checked fixes from corrections.json, applied last. Each one names its source, so the
+ * fix can be checked again later:
+ *  - "closedIn": a chain that has left a whole area (box = [south, west, north, east]).
+ *  - "remove": one store that has closed (any store of that chain within `within` meters).
+ *  - "add": a store confirmed on the chain's own site that neither data source has yet.
+ */
+export function applyCorrections(result, brands, corrections) {
+  const index = new Map(brands.map((b, i) => [b.key, i]));
+  const done = [];
+  let stores = result.stores;
+  for (const c of corrections?.closedIn ?? []) {
+    const i = index.get(c.brand);
+    const [s, w, n, e] = c.box;
+    const before = stores.length;
+    stores = stores.filter((r) => !(r[0] === i && r[1] >= s && r[1] <= n && r[2] >= w && r[2] <= e));
+    if (before !== stores.length) done.push(`${brands[i].name}: ${before - stores.length} removed, ${c.reason}`);
+  }
+  for (const c of corrections?.remove ?? []) {
+    const i = index.get(c.brand);
+    const before = stores.length;
+    stores = stores.filter((r) => !(r[0] === i && meters([r[1], r[2]], [c.lat, c.lon]) <= (c.within ?? 500)));
+    if (before !== stores.length) done.push(`${brands[i].name}, ${c.label}: removed, ${c.reason}`);
+  }
+  for (const c of corrections?.add ?? []) {
+    const i = index.get(c.brand);
+    if (stores.some((r) => r[0] === i && meters([r[1], r[2]], [c.lat, c.lon]) <= SAME_STORE_METERS)) continue;
+    stores = [...stores, [i, c.lat, c.lon, c.label]];
+    done.push(`${brands[i].name}, ${c.label}: added`);
+  }
+  stores = [...stores].sort((x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2]);
+  const counts = {};
+  for (const b of brands) counts[b.key] = 0;
+  for (const r of stores) counts[brands[r[0]].key]++;
+  return { ...result, stores, counts, corrected: done };
+}
+
 export function guardAgainstDrops(result, brands, previous, failed = new Set(), quiet = new Set()) {
   const warnings = [...[...failed].filter((k) => !quiet.has(k)).map((k) => `${brands.find((b) => b.key === k)?.name ?? k}: download failed, kept last month's stores.`)];
   if (!previous || !Array.isArray(previous.brands) || !Array.isArray(previous.stores)) return { ...result, warnings };
@@ -760,6 +798,8 @@ async function main() {
     for (const [k, n] of Object.entries(again.added)) built.added[k] = (built.added[k] ?? 0) + n;
     result = { ...result, stores: again.stores, counts: again.counts };
   }
+  // Hand-checked fixes (closed stores, stores neither source has yet).
+  if (existsSync(CORRECTIONS)) result = applyCorrections(result, brands, JSON.parse(readFileSync(CORRECTIONS, 'utf8')));
   // (A previous date far older than that list itself came from a stale server copy, whose chains
   // are being filled in now, so it's not carried over.)
   const prevDateOk =
@@ -795,6 +835,7 @@ async function main() {
     ...brands.map((b) => `| ${b.name} | ${result.counts[b.key] ?? 0} | ${built.added?.[b.key] ?? (atp ? 0 : '–')} |`),
   ];
   if (result.warnings.length) lines.push('', '### Check these', '', ...result.warnings.map((w) => `- ${w}`));
+  if (result.corrected?.length) lines.push('', '### Hand-checked corrections', '', ...result.corrected.map((m) => `- ${m}`));
   if (built.moved?.length) lines.push('', `### Pins moved to the store's street address (${built.moved.length})`, '', ...built.moved.map((m) => `- ${m}`));
   if (raw.elements.length && notListed.length) {
     lines.push('', '### Left off: not on a participating-locations list', '', ...notListed.sort().map((n) => `- ${n}`));
