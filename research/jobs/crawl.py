@@ -6,7 +6,7 @@ discounts, specials, FAQ...), one request at a time per site with a pause, and k
 snippets around any mention of a military/veteran discount. Nothing is published from here; the
 snippets are reviewed by hand before a shop goes on the map.
 
-Usage: crawl.py OUTDIR K/N    (input: research/crawl_input.json.gz = [{"site": url, "osm": [...], "name": ...}])
+Usage: crawl.py OUTDIR K/N [INPUT]   (INPUT in research/, default crawl_input.json.gz = [{"site": url, "osm": [...], "name": ...}])
 """
 import concurrent.futures as cf, gzip, html, http.client, json, os, re, socket, ssl, sys, threading, time
 import urllib.error, urllib.parse, urllib.request, urllib.robotparser
@@ -14,6 +14,7 @@ from html.parser import HTMLParser
 
 OUT = sys.argv[1]
 K, N = (int(x) for x in (sys.argv[2] if len(sys.argv) > 2 else '0/1').split('/'))
+INPUT = sys.argv[3] if len(sys.argv) > 3 else 'crawl_input.json.gz'
 UA = 'ArmedForcesPerks-discount-check/1.0 (+https://armedforcesperks.com/contact.html)'
 MAX_BYTES = 2_500_000
 TIMEOUT = 20
@@ -28,8 +29,11 @@ POS = [
     ('percent_military', re.compile(r"\b\d{1,2}\s?%\s*(?:off|discount)\b[^.!?|]{0,60}?\b(?:military|veterans?|active[- ]duty|service\s*members?)\b", re.I)),
     ('military_percent', re.compile(r"\b(?:military|veterans?|active[- ]duty|service\s*members?)\b[^.!?|]{0,60}?\b\d{1,2}\s?%\s*(?:off|discount)\b", re.I)),
     ('veteran_discount', re.compile(r"\b(?:veterans?|vets|heroes?|hero's|first\s+responders?\s+(?:and|&)\s+military)\s+(?:discounts?|pricing|specials?)\b", re.I)),
+    # Spanish (Puerto Rico)
+    ('descuento_militar', re.compile(r"\bdescuentos?\s+(?:especial(?:es)?\s+)?(?:a\s+|para\s+)?(?:los\s+|nuestros\s+)?(?:militar(?:es)?|veteranos?)\b", re.I)),
 ]
-NEG = re.compile(r"\b(?:no|not|don'?t|doesn'?t|do\s+not|does\s+not|cannot|can'?t|unable\s+to|no\s+longer)\b[^.!?]{0,50}\b(?:military|veteran)", re.I)
+CLOSED = re.compile(r"(?:permanently|now)\s+closed|closed\s+permanently|we\s+have\s+closed\s+our\s+doors|(?:has|have)\s+closed\s+(?:its|our)\s+doors", re.I)
+NEG = re.compile(r"\b(?:no|not|don'?t|doesn'?t|do\s+not|does\s+not|cannot|can'?t|unable\s+to|no\s+longer|ya\s+no)\b[^.!?]{0,50}\b(?:military|veteran|militar)", re.I)
 SEASON = re.compile(r"veterans'?\s+day|memorial\s+day|4th\s+of\s+july|fourth\s+of\s+july|independence\s+day|nov(?:ember)?\.?\s+11|military\s+appreciation\s+(?:day|week|month)|\bon\s+11/11\b", re.I)
 PARKED = re.compile(r"domain\s+(?:name\s+)?(?:is\s+)?for\s+sale|buy\s+this\s+domain|parked\s+(?:free|domain)|this\s+domain\s+has\s+expired|account\s+suspended", re.I)
 LINK_WORDS = [
@@ -110,18 +114,19 @@ def fetch(url):
         return r.status, r.geturl(), raw.decode(cs, 'replace')
 
 
-def robots_ok(base):
+def robots(base):
+    """(allowed(url) function, reason it isn't) for this site, from its robots.txt."""
     rp = urllib.robotparser.RobotFileParser()
     try:
         status, _, text = fetch(urllib.parse.urljoin(base, '/robots.txt'))
         rp.parse(text.splitlines())
     except urllib.error.HTTPError as e:
         if e.code >= 500:
-            return False, f'robots {e.code}'
-        return True, ''
+            return (lambda u: False), f'robots {e.code}'
+        return (lambda u: True), ''
     except Exception:
-        return True, ''
-    return rp.can_fetch(UA, base), ''
+        return (lambda u: True), ''
+    return (lambda u: rp.can_fetch(UA, u)), ''
 
 
 def snippets(text):
@@ -167,8 +172,8 @@ def crawl(item):
     site = item['site']
     rec = {'site': site, 'osm': item.get('osm'), 'name': item.get('name'), 'hits': [], 'pages': 0}
     try:
-        ok, why = robots_ok(site)
-        if not ok:
+        allowed, why = robots(site)
+        if not allowed(site):
             rec['err'] = 'robots: ' + (why or 'disallowed')
             return rec
         try:
@@ -187,6 +192,9 @@ def crawl(item):
         rec['chars'] = len(text)
         if PARKED.search(text[:5000]):
             rec['parked'] = True
+        m = CLOSED.search(text[:20000])
+        if m:
+            rec['closed'] = text[max(0, m.start() - 120):m.end() + 120]
         for h in snippets(text):
             h['u'] = final
             rec['hits'].append(h)
@@ -197,7 +205,7 @@ def crawl(item):
                 u = urllib.parse.urljoin(final, href).split('#')[0]
             except ValueError:
                 continue
-            if not u.startswith('http') or u in seen or not same_site(u, final):
+            if not u.startswith('http') or u in seen or not same_site(u, final) or not allowed(u):
                 continue
             if re.search(r'\.(pdf|jpe?g|png|gif|zip|docx?|mp4|mov)(\?|$)', u, re.I):
                 continue
@@ -228,10 +236,10 @@ def crawl(item):
 
 
 def main():
-    items = json.load(gzip.open(os.path.join(os.path.dirname(__file__), '..', 'crawl_input.json.gz'), 'rt'))
+    items = json.load(gzip.open(os.path.join(os.path.dirname(__file__), '..', INPUT), 'rt'))
     mine = [x for i, x in enumerate(items) if i % N == K]
     print('sites:', len(mine), 'of', len(items))
-    path = os.path.join(OUT, f'crawl_{K}_of_{N}.jsonl.gz')
+    path = os.path.join(OUT, f'crawl_{INPUT.split(".")[0]}_{K}_of_{N}.jsonl.gz')
     t0, done, found = time.time(), 0, 0
     with gzip.open(path, 'wt') as f, cf.ThreadPoolExecutor(WORKERS) as ex:
         for rec in ex.map(crawl, mine):

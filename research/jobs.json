@@ -1,1 +1,1 @@
-{ "batch": "b2b", "run": 1, "jobs": ["osm_areas:small_territories"] }
+{ "batch": "b3", "run": 1, "jobs": ["crawl:0/2 crawl_islands1.json.gz", "crawl:1/2 crawl_islands1.json.gz"] }
