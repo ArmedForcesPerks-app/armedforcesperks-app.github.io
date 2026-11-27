@@ -89,14 +89,15 @@ export function checkDealsFile(raw         , notOlderThan        )              
   
 
 /**
- * "Show deals and perks for" choices. Veterans come first: they are by far the largest group.
+ * "Show deals and perks for" choices, in the same order as all the app's, website's and store
+ * listing's wording: active duty, Guard and Reserve, veterans, retirees, then spouses and families.
  * Button labels use title case so every option reads the same way ("Guard" and "Reserve" are
  * proper names, so they are capitalized in sentences too).
  */
 export const STATUS_OPTIONS                                                     = [
-  { key: 'veteran', label: 'Veterans', short: 'Veterans' },
   { key: 'activeDuty', label: 'Active Duty', short: 'Active Duty' },
   { key: 'guardReserve', label: 'Guard & Reserve', short: 'Guard & Reserve' },
+  { key: 'veteran', label: 'Veterans', short: 'Veterans' },
   { key: 'retiree', label: 'Retirees', short: 'Retirees' },
   { key: 'family', label: 'Spouses & Families', short: 'Spouses & Families' },
 ];
