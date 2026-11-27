@@ -1,0 +1,7 @@
+== verify_shops (verify_shops2.json) started 2026-11-27T06:31:15Z
+7 draft shops
+7 pages read in 4 s; 0 unreadable
+pins placed in states and towns in 0 s
+7 street addresses, 6 found by the geocoder
+offer pages: {'ok': 7}
+== verify_shops finished 2026-11-27T06:31:20Z
