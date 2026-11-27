@@ -1,1 +1,1 @@
-{ "batch": "b2", "run": 1, "jobs": ["site_build", "osm_pois"] }
+{ "batch": "b2b", "run": 1, "jobs": ["osm_areas:small_territories"] }
