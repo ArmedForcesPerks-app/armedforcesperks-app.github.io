@@ -1,0 +1,11 @@
+== pin_check () started 2026-11-27T04:13:51Z
+36154 stores
+batch 0: 7870 matched of 9000
+batch 9000: 8204 matched of 9000
+batch failed: HTTP Error 502: 
+batch 18000: 7885 matched of 9000
+batch 27000: 7772 matched of 9000
+batch 36000: 135 matched of 150
+33791 ZCTAs
+done 36154
+== pin_check finished 2026-11-27T04:27:33Z
