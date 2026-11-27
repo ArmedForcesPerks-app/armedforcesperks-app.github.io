@@ -1,0 +1,79 @@
+[
+ {
+  "osm": "n2102155108",
+  "source": "https://bellasvoice.org/weekly-discount-cycle/",
+  "quote": "Active duty military and veterans receive 10% off with a valid ID!",
+  "lat": 47.83858,
+  "lon": -122.29923,
+  "street": "17633 Highway 99",
+  "city": "Lynnwood",
+  "state": "WA",
+  "zip": "98037"
+ },
+ {
+  "osm": "n10727172694",
+  "source": "https://www.daiquirideck.com/",
+  "quote": "Yes, we offer a 10% Hero\u2019s Discount for any active-duty, retired military or first responders",
+  "lat": 27.46525,
+  "lon": -82.69724,
+  "street": "107 Bridge Street",
+  "city": "Bradenton Beach",
+  "state": "FL",
+  "zip": "34217"
+ },
+ {
+  "osm": "n2713490436",
+  "source": "https://gbcollisioncenter.com",
+  "quote": "We offer a Military and Veteran Discount",
+  "lat": 40.67833,
+  "lon": -73.96199,
+  "street": "569 Grand Avenue",
+  "city": "Brooklyn",
+  "state": "NY",
+  "zip": "11238"
+ },
+ {
+  "osm": "n13726574103",
+  "source": "https://www.seasidebuffet.com/",
+  "quote": "Military & Senior discounts available",
+  "lat": 32.89455,
+  "lon": -117.13154,
+  "street": "8998 Miramar Road",
+  "city": "San Diego",
+  "state": "CA",
+  "zip": "92126"
+ },
+ {
+  "osm": "n12633830398",
+  "source": "https://milkandhoneyhealthfoods.bravesites.com/",
+  "quote": "We give an everyday 10% discount on most supplements to seniors (60 and older), military veterans and members of a fitness club",
+  "lat": 43.08996,
+  "lon": -88.04997,
+  "street": "10948 West Capitol Drive",
+  "city": "Wauwatosa",
+  "state": "WI",
+  "zip": "53222"
+ },
+ {
+  "osm": "w1456821748",
+  "source": "https://www.helmwoodvet.com/specials-and-promos",
+  "quote": "WE PROUDLY OFFER MILITARY 10% OFF",
+  "lat": 37.70837,
+  "lon": -85.87308,
+  "street": "804 North Dixie Avenue",
+  "city": "Elizabethtown",
+  "state": "KY",
+  "zip": "42701"
+ },
+ {
+  "osm": "w959682151",
+  "source": "https://www.metalcreekautobody.com/special-discounts",
+  "quote": "We proudly offer a military discount as a token of our gratitude to veterans and active service members",
+  "lat": 61.61161,
+  "lon": -149.11903,
+  "street": "450 North Glenn Highway",
+  "city": "Palmer",
+  "state": "AK",
+  "zip": "99645"
+ }
+]
