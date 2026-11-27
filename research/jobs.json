@@ -1,1 +1,1 @@
-{ "batch": "b3", "run": 1, "jobs": ["crawl:0/2 crawl_islands1.json.gz", "crawl:1/2 crawl_islands1.json.gz"] }
+{ "batch": "b3b", "run": 1, "jobs": ["crawl:0/1 crawl_islands2.json.gz"] }
