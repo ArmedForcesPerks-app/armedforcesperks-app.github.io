@@ -310,7 +310,11 @@ function clean(s) {
 
 /** "1234 Main St, Springfield, IL", or the branch name, or "". */
 export function labelFor(tags) {
-  const street = [clean(tags['addr:housenumber']), clean(tags['addr:street'])].filter(Boolean).join(' ');
+  // A building with several numbers ("1677;1671") shows the first. A house number with no
+  // street ("791") isn't an address anyone can use.
+  const first = (k) => clean(typeof tags[k] === 'string' ? tags[k].split(';')[0] : tags[k]);
+  const road = first('addr:street');
+  const street = road ? [first('addr:housenumber'), road].filter(Boolean).join(' ') : '';
   const city = clean(tags['addr:city']);
   const state = clean(tags['addr:state']);
   const parts = [street, city, state].filter(Boolean);

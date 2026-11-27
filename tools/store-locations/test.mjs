@@ -71,6 +71,13 @@ test('labels use the street address when OSM has one', () => {
   assert.equal(labelFor({ 'addr:housenumber': '12', 'addr:street': 'Main St', 'addr:city': 'Killeen', 'addr:state': 'TX' }), '12 Main St, Killeen, TX');
   assert.equal(labelFor({ 'addr:city': 'Killeen', 'addr:state': 'TX' }), 'Killeen, TX');
   assert.equal(labelFor({}), '');
+  // A house number alone isn't shown as an address.
+  assert.equal(labelFor({ 'addr:housenumber': '791' }), '');
+  assert.equal(labelFor({ 'addr:housenumber': '300', 'addr:city': 'McAllen', 'addr:state': 'TX' }), 'McAllen, TX');
+  assert.equal(labelFor({ 'addr:housenumber': '5370', 'addr:state': 'FL', branch: 'Pine Island' }), 'Pine Island');
+  // A building with several house numbers (or streets) shows the first.
+  assert.equal(labelFor({ 'addr:housenumber': '1677;1671', 'addr:street': 'West Chandler Boulevard', 'addr:city': 'Chandler', 'addr:state': 'AZ' }), '1677 West Chandler Boulevard, Chandler, AZ');
+  assert.equal(labelFor({ 'addr:housenumber': '2172;3792', 'addr:street': 'Nicholasville Road;Palomar Centre Drive', 'addr:city': 'Lexington' }), '2172 Nicholasville Road, Lexington');
 });
 
 test('duplicates merge, positions are rounded, places outside the U.S. are dropped', () => {
