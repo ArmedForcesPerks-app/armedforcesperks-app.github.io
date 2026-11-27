@@ -418,6 +418,46 @@ test('hand-checked corrections remove closed stores and add confirmed ones', () 
   assert.ok(out.stores.every((r, i, a) => i === 0 || a[i - 1][0] <= r[0]));
 });
 
+test('a trial run with only a few chains leaves out the other chains\' corrections', () => {
+  // As the pull request trial does (--only homedepot,regal,amc).
+  const few = brands.filter((b) => ['homedepot', 'regal', 'amc'].includes(b.key));
+  const hd = few.findIndex((b) => b.key === 'homedepot');
+  const res = { stores: [[hd, 33.0, -117.0, '1 Main St'], [hd, 34.0, -118.0, '2 Main St']], counts: {} };
+  const out = applyCorrections(res, few, {
+    ...JSON.parse(readFileSync(new URL('./corrections.json', import.meta.url), 'utf8')),
+    remove: [{ brand: 'homedepot', lat: 34.0001, lon: -118.0, within: 300, label: '2 Main St', reason: 'closed' }, { brand: 'footlocker', lat: 33.0, lon: -117.0, within: 300, label: 'x', reason: 'closed' }],
+  });
+  assert.deepEqual(out.stores.map((r) => r[3]), ['1 Main St']);
+  assert.ok(out.stores.every((r) => few[r[0]]));
+  assert.deepEqual(out.counts, { homedepot: 1, regal: 0, amc: 0 });
+  assert.deepEqual(out.corrected, ['The Home Depot, 2 Main St: removed, closed']);
+});
+
+test('corrections.json: every fix names a chain in brands.json and has what it needs', () => {
+  const corrections = JSON.parse(readFileSync(new URL('./corrections.json', import.meta.url), 'utf8'));
+  const keys = new Set(brands.map((b) => b.key));
+  const lat = (x) => typeof x === 'number' && x >= -15 && x <= 72;
+  const lon = (x) => typeof x === 'number' && ((x >= -180 && x <= -64) || (x >= 144 && x <= 146));
+  const kinds = { closedIn: ['box', 'reason'], remove: ['lat', 'lon', 'label', 'reason'], add: ['lat', 'lon', 'label'], move: ['lat', 'lon', 'to', 'label', 'reason'] };
+  for (const k of Object.keys(corrections)) assert.ok(k === '_about' || kinds[k], `corrections.json: unknown section ${k}`);
+  for (const [kind, needs] of Object.entries(kinds)) {
+    for (const c of corrections[kind] ?? []) {
+      const where = `corrections.json ${kind} ${c.brand} ${c.label ?? c.reason}`;
+      assert.ok(keys.has(c.brand), `${where}: no such chain in brands.json`);
+      for (const f of [...needs, 'source', 'checked']) assert.ok(c[f] !== undefined && c[f] !== '', `${where}: needs ${f}`);
+      assert.match(c.source, /^https:\/\//, `${where}: source`);
+      assert.match(c.checked, /^\d{4}-\d{2}-\d{2}$/, `${where}: checked`);
+      if (kind === 'closedIn') {
+        const [s, w, n, e] = c.box;
+        assert.ok(lat(s) && lat(n) && lon(w) && lon(e) && s < n && w < e, `${where}: box`);
+      } else {
+        assert.ok(lat(c.lat) && lon(c.lon), `${where}: position`);
+      }
+      if (kind === 'move') assert.ok(lat(c.to[0]) && lon(c.to[1]), `${where}: to`);
+    }
+  }
+});
+
 test('a hand-checked move puts a misplaced store where it is', () => {
   const db = idx('davebusters');
   const res = { stores: [[db, 39.94378, -75.14191, '325 Christopher Columbus Boulevard, Philadelphia, NJ'], [db, 40.09179, -74.961, 'Franklin Mills']], counts: {} };
@@ -510,7 +550,7 @@ test('local shops: the hand-checked list is valid and each entry is checked', ()
   const shops = loadLocalShops(JSON.parse(readFileSync(new URL('../local-shops/shops.json', import.meta.url), 'utf8')));
   assert.ok(shops.length >= 20);
   for (const s of shops) assert.ok(s.source.startsWith('https://') && s.checked.length === 10, s.name);
-  const good = { osm: 'n1', name: 'Joe\'s Diner', category: 'Food and Restaurants', offer: '10% off with military ID', source: 'https://joesdiner.example.com/military', quote: '10% off for military', checked: '2026-11-27', lat: 32.7, lon: -117.1, label: '1 Main Street, San Diego, CA' };
+  const good = { osm: 'n1', name: 'Joe\'s Diner', category: 'Food and Restaurants', offer: '10% off with military ID', source: 'https://joesdiner.example.com/military', quote: '10% off for military', checked: '2026-11-27', lat: 39.8, lon: -89.6, label: '1 Main Street, Springfield, IL' };
   assert.equal(loadLocalShops({ shops: [good] }).length, 1);
   assert.throws(() => loadLocalShops({ shops: [good, good] }), /listed twice/);
   assert.throws(() => loadLocalShops({ shops: [{ ...good, osm: '123' }] }), /bad osm id/);

@@ -1,1 +1,1 @@
-{"batch": "b11", "run": 1, "jobs": ["verify_shops:verify_shops2.json"]}
+{"batch": "b12", "run": 1, "jobs": ["osm_check:osm_check1.json", "site_build3"]}
