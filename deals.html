@@ -42,7 +42,8 @@
     <div class="page-head">
       <div class="wrap">
         <h1>Military discounts and benefits</h1>
-        <p class="lead">Every deal in the free Armed Forces Perks app, for active duty, Guard and Reserve, veterans, retirees, and military families. Each one links to the business's own page and shows when we last checked it. No account, no ads, no sign-up.</p>
+        <p class="lead">Every deal, freebie and perk in the free Armed Forces Perks app, for veterans, active duty, Guard and Reserve, retirees, and military families. Each one links to the business's own page and shows when we last checked it.</p>
+        <p class="lead no-catch"><strong>No ads. No subscription. No account needed.</strong></p>
       </div>
     </div>
 
@@ -53,17 +54,20 @@
           <p><strong>How we keep it free.</strong> Some deals in our app use affiliate links, marked <strong>"Paid link"</strong>. If you buy after tapping one, the business pays us a small commission. <strong>You are never charged anything extra</strong>: you pay exactly what you would pay without our link. Commissions never decide which deals we list. The deal links on this page go straight to each business, with no affiliate link. <a href="/disclosures.html">Affiliate disclosure</a>.</p>
         </div>
 
+        <a class="vet-free" id="vet-free" href="/deals.html?for=veteran&amp;free=1&amp;confirmed=1" hidden>
+          <span class="vet-free-title">Free for veterans</span>
+          <span class="vet-free-body" id="vet-free-body">Free items, services and benefits from the VA and from businesses</span>
+        </a>
+
         <div class="filters" id="filters" hidden>
           <div class="field field-search">
             <label for="q">Search</label>
             <input id="q" type="search" placeholder="Stores or things, like boots" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="80">
           </div>
-          <div class="field">
-            <label for="status">Show deals for</label>
-            <select id="status">
-              <option value="">Everyone</option>
-            </select>
-          </div>
+          <fieldset class="field field-for">
+            <legend>Show deals &amp; perks for <span class="hint">(pick all that apply)</span></legend>
+            <div class="for-checks" id="for"></div>
+          </fieldset>
           <div class="field">
             <label for="cat">Category</label>
             <select id="cat">
@@ -71,7 +75,8 @@
             </select>
           </div>
           <div class="field field-checks">
-            <label class="check"><input type="checkbox" id="confirmed" disabled> <span>Only deals that name my status</span></label>
+            <label class="check"><input type="checkbox" id="free"> <span>Only free stuff</span></label>
+            <label class="check"><input type="checkbox" id="confirmed" disabled> <span>Only deals that clearly include me</span></label>
             <label class="check"><input type="checkbox" id="hide-review"> <span>Hide deals that need review</span></label>
           </div>
           <div class="field field-reset">
