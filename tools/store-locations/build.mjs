@@ -31,6 +31,9 @@ const ROOT = join(HERE, '..', '..');
 const OUT = join(ROOT, 'data', 'locations.json');
 const BRANDS_FILE = join(HERE, 'brands.json');
 const CORRECTIONS = join(HERE, 'corrections.json');
+// Local businesses with a military discount, checked by hand (see tools/local-shops/).
+const LOCAL_SHOPS = join(ROOT, 'tools', 'local-shops', 'shops.json');
+const LOCAL_STATUS = join(ROOT, 'data', 'local-shops-status.json');
 /** Which chains the last run couldn't download (or got from an out-of-date server); filled in daily. */
 const STATUS = join(ROOT, 'data', 'locations-status.json');
 /** A server whose map data is older than this is a stale copy; its answers are not used. */
@@ -73,6 +76,8 @@ const USER_AGENT = 'ArmedForcesPerks-store-locations/1.0 (+https://armedforcespe
 
 /** Two places of the same chain closer than this are the same store mapped twice. */
 const DUPLICATE_METERS = 80;
+/** ...or this close with the same street address (one copy is drawn on the wrong building). */
+const DUPLICATE_ADDRESS_METERS = 2000;
 /** A brand that shrinks by more than half since last month is more likely an OSM edit mistake than real closures. */
 const BRAND_DROP_LIMIT = 0.5;
 /** If the whole list shrinks this much, something went wrong: stop and publish nothing. */
@@ -120,6 +125,16 @@ export function loadBrands(raw) {
       if (typeof b.onlyListed !== 'string' || !/^participating\/[a-z0-9-]+\.json$/.test(b.onlyListed)) throw new Error(`${where}: bad onlyListed`);
       listed = loadListed(JSON.parse(readFileSync(join(HERE, b.onlyListed), 'utf8')), where);
     }
+    // The chain's own store list is complete (its count matches the chain's official total), so a
+    // mapped store it doesn't list has closed. minStores: below this, the list is taken to be broken.
+    let locatorComplete = null;
+    if (b.locatorComplete !== undefined) {
+      const lc = b.locatorComplete;
+      if (!lc || !Number.isInteger(lc.minStores) || lc.minStores < 1 || typeof lc.source !== 'string' || typeof lc.evidence !== 'string') {
+        throw new Error(`${where}: locatorComplete needs minStores, evidence and source`);
+      }
+      locatorComplete = { minStores: lc.minStores };
+    }
     return {
       key: b.key,
       name: b.name.trim(),
@@ -131,6 +146,7 @@ export function loadBrands(raw) {
       locatorExclude,
       requireTag: req,
       listed,
+      locatorComplete,
       /** Other names the deal sheet may use for this business, e.g. "Regal Cinemas". */
       dealNames: Array.isArray(b.dealNames) ? b.dealNames.filter((n) => typeof n === 'string') : [],
     };
@@ -170,7 +186,8 @@ const LIFECYCLE = /^(disused|abandoned|demolished|removed|razed|destroyed|constr
 /** True if OSM says this place is closed, empty or not built yet. */
 export function isClosed(tags) {
   if (!FEATURE_KEYS.some((k) => typeof tags[k] === 'string' && tags[k] !== 'vacant')) return true;
-  if (Object.keys(tags).some((k) => LIFECYCLE.test(k) && FEATURE_KEYS.includes(k.split(':')[1]))) return true;
+  // ("disused:shop=no" says the opposite: a mapper's note that the place is in use again.)
+  if (Object.keys(tags).some((k) => LIFECYCLE.test(k) && FEATURE_KEYS.includes(k.split(':')[1]) && tags[k] !== 'no')) return true;
   if (/^(closed|off)$/i.test(tags.opening_hours ?? '')) return true;
   if (/\b(permanently )?closed\b/i.test(tags.name ?? '')) return true;
   return false;
@@ -293,7 +310,11 @@ function clean(s) {
 
 /** "1234 Main St, Springfield, IL", or the branch name, or "". */
 export function labelFor(tags) {
-  const street = [clean(tags['addr:housenumber']), clean(tags['addr:street'])].filter(Boolean).join(' ');
+  // A building with several numbers ("1677;1671") shows the first. A house number with no
+  // street ("791") isn't an address anyone can use.
+  const first = (k) => clean(typeof tags[k] === 'string' ? tags[k].split(';')[0] : tags[k]);
+  const road = first('addr:street');
+  const street = road ? [first('addr:housenumber'), road].filter(Boolean).join(' ') : '';
   const city = clean(tags['addr:city']);
   const state = clean(tags['addr:state']);
   const parts = [street, city, state].filter(Boolean);
@@ -348,14 +369,18 @@ export function toStores(elements, brands) {
     }
     const list = byBrand.get(brand.key);
     const label = labelFor(tags);
-    const dup = list.find((s) => meters(s.at, at) < DUPLICATE_METERS);
+    const addr = addressKey(label);
+    const dup = list.find((s) => {
+      const d = meters(s.at, at);
+      return d < DUPLICATE_METERS || (addr && s.addr === addr && d < DUPLICATE_ADDRESS_METERS);
+    });
     if (dup) {
       skipped.duplicate++;
       // Keep whichever copy has the better address.
-      if (!dup.label && label) dup.label = label;
+      if (!dup.label && label) Object.assign(dup, { label, addr });
       continue;
     }
-    list.push({ at, label });
+    list.push({ at, label, addr });
   }
   const stores = [];
   const counts = {};
@@ -387,21 +412,112 @@ const SAME_ADDRESS_METERS = 10000;
 const PIN_CHECK_METERS = 1000;
 /** ...or within this distance when the OSM store has no street address to compare. */
 const NO_ADDRESS_METERS = 1500;
+/** ...or this close with the same house number, or this close with the number and a street word in common. */
+const SAME_NUMBER_METERS = 1000;
+const SAME_NUMBER_STREET_METERS = 5000;
+/** A complete store list only takes stores off where it lists that chain within this distance. */
+const LOCATOR_COVERAGE_METERS = 150_000;
+/**
+ * Puerto Rico and the island territories ([south, west, north, east]). Their addresses ("Km 84.3,
+ * Carr. 2", "Urb. ...") are often placed kilometers off by the Census geocoder, so there a
+ * locator's own pin is trusted over the geocoded address.
+ */
+const TERRITORY_BOXES = [
+  [17.6, -68.1, 18.7, -65.1], // Puerto Rico
+  [17.6, -65.1, 18.5, -64.5], // U.S. Virgin Islands
+  [13.2, 144.5, 13.8, 145.0], // Guam
+  [14.0, 144.8, 20.7, 146.2], // Northern Mariana Islands
+  [-14.6, -171.2, -14.1, -168.0], // American Samoa
+];
+
+/**
+ * For matching a locator store to a mapped one: where its street address geocodes if that's far
+ * from its own pin (callers check the pin too). Where a new store is put is choosePoint's job.
+ */
+export function locatorPoint(at, census) {
+  if (!census || meters(at, census) <= PIN_CHECK_METERS) return at;
+  const island = TERRITORY_BOXES.some(([s, w, n, e]) => at[0] >= s && at[0] <= n && at[1] >= w && at[1] <= e);
+  return island ? at : census; // a locator pin far from its own street address: trust the address
+}
+
+// Words too common in street names to tell two streets apart.
+const STREET_GENERIC = new Set(['street', 'avenue', 'road', 'boulevard', 'drive', 'lane', 'highway', 'parkway', 'expressway', 'freeway',
+  'court', 'place', 'trail', 'turnpike', 'circle', 'center', 'centre', 'plaza', 'suite', 'unit', 'north', 'south', 'east', 'west',
+  'northeast', 'northwest', 'southeast', 'southwest', 'route', 'state', 'county', 'frontage', 'service', 'business', 'shopping',
+  'square', 'mall', 'commons', 'crossing', 'village', 'town', 'city', 'park', 'space', 'building', 'level', 'floor',
+  'blvd', 'pkwy', 'expy', 'frwy', 'fwy', 'tpke', 'hwys', 'ctr', 'plz', 'ste']);
+
+/**
+ * What two addresses are compared on: the address key (see addressKey), the house number, and the
+ * street's distinctive words ("10480 Kenai Spur Highway" -> 10480, {kenai, spur}).
+ */
+export function addressInfo(label) {
+  const first = String(label ?? '').split(',')[0].toLowerCase();
+  const addr = addressKey(label);
+  const num = addr.split(' ')[0];
+  const words = new Set(first.replace(/^\s*\S+/, '').normalize('NFKD').replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter((w) => w.length >= 4 && !/^\d/.test(w) && !STREET_GENERIC.has(w)));
+  return { addr, num, words };
+}
+
+/**
+ * Same store? o = a store already on the map ({ at, addr, num, words }); q = where a locator puts a
+ * store, info = its addressInfo. Same if within 300 m; or within 10 km at the same street address;
+ * or within 1 km with the same house number (the street named two ways: "Burlington Pike" =
+ * "Route 130"); or within 5 km with the same house number and a street word in common ("Kenai
+ * Spur Highway" = "Spur Hwy"); or within 1.5 km when the mapped store has no address to compare.
+ */
+function sameStore(o, q, info) {
+  if (Math.abs(o.at[0] - q[0]) > 0.1) return false; // more than ~11 km apart north-south
+  const d = meters(o.at, q);
+  if (d <= SAME_STORE_METERS) return true;
+  if (d <= SAME_ADDRESS_METERS && info.addr && o.addr === info.addr) return true;
+  if (info.num && o.num === info.num) {
+    if (d <= SAME_NUMBER_METERS) return true;
+    if (d <= SAME_NUMBER_STREET_METERS && [...info.words].some((w) => o.words?.has(w))) return true;
+  }
+  return d <= NO_ADDRESS_METERS && !o.addr;
+}
 
 const DIRECTIONS = new Set(['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw', 'north', 'south', 'east', 'west', 'northeast', 'northwest', 'southeast', 'southwest']);
+
+// Words that begin a numbered road: "State Route 211", "US Hwy 50", "County Rd 419", "Farm to Market 1960".
+const ROUTE_WORDS = new Set(['route', 'rte', 'rt', 'highway', 'hwy', 'hiway', 'interstate', 'i', 'ih', 'state', 'sr', 'sh', 'us', 'u', 's', 'usa',
+  'county', 'co', 'cr', 'cty', 'fm', 'rr', 'rm', 'farm', 'ranch', 'to', 'market', 'road', 'rd', 'hwys', 'loop', 'spur', 'united', 'states',
+  'al', 'ak', 'az', 'ar', 'ca', 'ct', 'de', 'fl', 'ga', 'hi', 'id', 'il', 'in', 'ia', 'ks', 'ky', 'la', 'me', 'md', 'ma', 'mi', 'mn',
+  'ms', 'mo', 'mt', 'nc', 'nd', 'nh', 'nj', 'nm', 'nv', 'ny', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 'tn', 'tx', 'ut', 'vt', 'va',
+  'wa', 'wi', 'wv', 'wy', 'pr', 'm', 'k']);
+const NUMBER_WORDS = { one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10',
+  eleven: '11', twelve: '12', first: '1st', second: '2nd', third: '3rd', fourth: '4th', fifth: '5th', sixth: '6th', seventh: '7th',
+  eighth: '8th', ninth: '9th', tenth: '10th', eleventh: '11th', twelfth: '12th', st: 'saint', ste: 'sainte', mt: 'mount', ft: 'fort' };
 
 /**
  * "1601 Walden Avenue, ..." -> "1601 wal": house number + the first 3 letters of the street
  * name, so "SW 27th Ave" = "Southwest 27th Avenue" and "E.Basse" = "East Basse Road".
+ * Numbered roads use the road's number, so "320 State Route 211 East" = "320 Route 211 E",
+ * "1404 NY-300" = "1404 Route 300" and "148 I-20" = "148 East Interstate 20" ("320 r211").
+ * "Ten Mile Dr" = "10 Mile Dr", "First St" = "1st St", "St Michael Dr" = "Saint Michael Drive";
+ * a leading "#200" (a unit) is skipped.
  * Hawaii-style numbers ("98-1005") are kept whole. '' when there's no street number.
  */
 export function addressKey(label) {
-  const words = String(label ?? '').split(',')[0].toLowerCase().replace(/[.#]/g, ' ').split(/\s+/).filter(Boolean);
+  const words = String(label ?? '').split(',')[0].toLowerCase().replace(/#\s*\S+/g, ' ').replace(/[.]/g, ' ').split(/\s+/).filter(Boolean);
   const num = /^(\d+(?:-\d+)?)[a-z]?$/.exec(words[0] ?? '');
   if (!num) return '';
+  // "98-1005" (Hawaii) and "107-24" (Queens) are whole numbers; "10401-015" is number 10401, unit 015.
+  if (/^\d{4,}-/.test(num[1])) num[1] = num[1].split('-')[0];
   let i = 1;
   while (i < words.length - 1 && (DIRECTIONS.has(words[i]) || (words[i] === 'north' && words[i + 1] === 'west'))) i++;
-  const street = (words[i] ?? '').replace(/[^a-z0-9]/g, '');
+  // A numbered road: route words, then the number ("state route 211", "us hwy 50"), or one word ("ny-300", "i-20").
+  const joined = /^([a-z]{1,4})-?(\d+[a-z]?)$/.exec(words[i] ?? '');
+  if (joined && (ROUTE_WORDS.has(joined[1]) || words[i].includes('-'))) return `${num[1]} r${joined[2]}`;
+  if (ROUTE_WORDS.has(words[i] ?? '')) {
+    let j = i;
+    while (j < words.length && j < i + 4 && ROUTE_WORDS.has(words[j])) j++;
+    const road = /^(\d+[a-z]?)$/.exec(words[j] ?? '');
+    if (road && j > i) return `${num[1]} r${road[1]}`;
+  }
+  const first = NUMBER_WORDS[words[i]] ?? words[i] ?? '';
+  const street = first.replace(/[^a-z0-9]/g, '');
   return street ? `${num[1]} ${street.slice(0, 3)}` : '';
 }
 
@@ -428,6 +544,59 @@ export function locatorLabel(p) {
  * the OSM pin is kept (it's usually drawn on the building itself). Chains with no locator data
  * this month are left as they are.
  */
+/** In Puerto Rico or an island territory (see TERRITORY_BOXES)? */
+function inTerritory(at) {
+  return TERRITORY_BOXES.some(([s, w, n, e]) => at[0] >= s && at[0] <= n && at[1] >= w && at[1] <= e);
+}
+
+/** The store's 5-digit ZIP code from the locator, or ''. */
+function zipOf(p) {
+  const zip = String(p?.['addr:postcode'] ?? '').slice(0, 5);
+  return /^\d{5}$/.test(zip) ? zip : '';
+}
+
+/** The Census geocoder only guessed: no exact match of the street address, or found it in another ZIP code. */
+export function addressGuessed(p) {
+  const zip = zipOf(p);
+  return p?.census_exact === false || !!(zip && p?.census_zip && p.census_zip !== zip);
+}
+
+/**
+ * Whether a point is outside the store's own ZIP code area, as atp-extract.py looked it up
+ * (field: 'pin_zip_area' for the chain's pin, 'census_zip_area' for the geocoded address).
+ * False when it wasn't looked up.
+ */
+function outsideZip(p, field) {
+  const zip = zipOf(p);
+  return !!zip && typeof p?.[field] === 'string' && p[field] !== zip;
+}
+
+/**
+ * Where to put a locator store that isn't on the map yet, when the chain's own pin and the
+ * geocoded street address are more than PIN_CHECK_METERS apart. Checked against OpenStreetMap
+ * stores at the same address (November 2026, 290 stores): the chain's pin was the right one about
+ * three times in four, so it wins unless there's a reason to doubt it:
+ *  - the pin is outside the store's own ZIP code area and the address is inside it (the address
+ *    was right 14 times in 16 then);
+ *  - another of the chain's stores, at a different address, has the same pin (a copied pin);
+ *  - for this chain, the address was right much more often than the pin (trust, counted from this
+ *    run's stores that OpenStreetMap has too: Regal's and Cinemark's pins are often a mile off).
+ * The geocoder's point is never used when it only guessed (addressGuessed). If it only guessed AND
+ * the pin is outside the store's ZIP code area, neither can be trusted (each was right 4 times in
+ * 11): null, and the store is left off. In Puerto Rico and the territories the chain's pin always
+ * wins (addresses there like "Km 84.3, Carr. 2" geocode badly).
+ * On those 290 stores these rules put 236 in the right spot and 42 in a wrong one, and left 12 off
+ * (always the pin: 218 right; always the address, the old rule: 66).
+ */
+export function choosePoint(at, census, p, { shared = false, trust = null } = {}) {
+  if (!census || meters(at, census) <= PIN_CHECK_METERS || inTerritory(at)) return at;
+  const pinOutside = outsideZip(p, 'pin_zip_area') && p.census_zip_area === zipOf(p);
+  if (addressGuessed(p)) return pinOutside ? null : at;
+  if (shared || pinOutside) return census;
+  if (trust && trust.address >= 3 && trust.address > 2 * trust.pin) return census;
+  return at;
+}
+
 export function addFromLocators(built, brands, features) {
   const byKey = new Map();
   for (const f of features ?? []) {
@@ -446,13 +615,18 @@ export function addFromLocators(built, brands, features) {
   const added = {};
   const moved = [];
   const skippedNotListed = [];
+  const removed = {};
+  const unlisted = [];
+  const notes = [];
+  const pinChecks = {};
+  const placed = {};
+  const unplaced = [];
   brands.forEach((b, i) => {
     const list = rows.get(b.key);
-    const osm = list.map((r) => ({ at: [r[1], r[2]], addr: addressKey(r[3]), row: r }));
-    let n = 0;
+    const osm = list.map((r) => ({ at: [r[1], r[2]], ...addressInfo(r[3]), row: r }));
+    // The chain's stores that count (exclusions and participating lists applied).
+    const located = [];
     for (const { at: locatorAt, p, census } of byKey.get(b.key) ?? []) {
-      // A locator pin far from where its own street address is: trust the address.
-      const at = census && meters(locatorAt, census) > PIN_CHECK_METERS ? census : locatorAt;
       const name = clean(p.name);
       if (b.exclude && (b.exclude.test(name) || b.exclude.test(clean(p.branch)))) continue;
       if (b.locatorExclude && b.locatorExclude.test(name)) continue;
@@ -461,36 +635,105 @@ export function addFromLocators(built, brands, features) {
         continue;
       }
       const label = locatorLabel(p);
-      const addr = addressKey(label);
-      const known = osm.find((o) => {
-        const d = meters(o.at, at);
-        if (d <= SAME_STORE_METERS) return true;
-        // Same street address: the same store, with one of the two pins a bit off.
-        if (d <= SAME_ADDRESS_METERS && addr && o.addr === addr) return true;
-        // An OSM store with no address can't be compared that way; nearby counts as the same.
-        return d <= NO_ADDRESS_METERS && !o.addr;
-      });
-      if (known) {
-        // The OSM store has no address: show the locator's.
-        if (known.row && !known.row[3] && label) {
-          known.row[3] = label;
-          known.addr = addr;
-        }
-        // Same store, pins far apart: if the address agrees with the locator, the OSM pin is the
-        // one that's off, so move it.
-        if (known.row && census && !p.from_address && meters(known.at, census) > PIN_CHECK_METERS && meters(at, census) <= SAME_STORE_METERS) {
-          moved.push(`${b.name}, ${known.row[3] || label}: moved ${(meters(known.at, at) / 1609.34).toFixed(1)} mi`);
-          known.row[1] = at[0];
-          known.row[2] = at[1];
-          known.at = at;
-        }
+      // Only a real pin of its own can be doubted (address-only stores were placed by the geocoder).
+      const far = !!census && !p.from_address && meters(locatorAt, census) > PIN_CHECK_METERS;
+      located.push({ locatorAt, p, census, label, info: addressInfo(label), far });
+    }
+    // Pins the chain gives two of its stores at different addresses: one of them is copied.
+    const byPin = new Map();
+    for (const s of located) {
+      const k = `${s.locatorAt[0].toFixed(4)},${s.locatorAt[1].toFixed(4)}`;
+      if (!byPin.has(k)) byPin.set(k, new Set());
+      byPin.get(k).add(s.info.addr || s.label);
+    }
+    const copied = (s) => byPin.get(`${s.locatorAt[0].toFixed(4)},${s.locatorAt[1].toFixed(4)}`).size > 1;
+    // The store already on the map that this locator store is: by its pin or (when that's far from
+    // the address) by its geocoded address, preferring one with the same street address. A pin the
+    // chain gave two stores only counts with the same street address.
+    const findKnown = ({ locatorAt, census, info, far }, pinCopied) => {
+      let first = null;
+      for (const o of osm) {
+        const byPinOk = sameStore(o, locatorAt, info) && (!pinCopied || (info.addr && o.addr === info.addr));
+        if (!byPinOk && !(far && sameStore(o, census, info))) continue;
+        if (info.addr && o.addr === info.addr) return o;
+        first ??= o;
+      }
+      return first;
+    };
+    const trust = { pin: 0, address: 0 };
+    // First the stores OpenStreetMap has too (they also say which of pin and address to trust).
+    const fresh = [];
+    for (const s of located) {
+      const { locatorAt, p, census, label, info, far } = s;
+      const known = findKnown(s, copied(s));
+      if (!known) {
+        fresh.push(s);
         continue;
       }
-      osm.push({ at, addr }); // also stops the locator's own duplicates
+      if (far) {
+        const dPin = meters(known.at, locatorAt);
+        const dAddress = meters(known.at, census);
+        if (dPin <= 750 && dPin < dAddress) trust.pin++;
+        else if (dAddress <= 750 && dAddress < dPin) trust.address++;
+      }
+      // The OSM store has no address: show the locator's.
+      if (known.row && !known.row[3] && label) {
+        known.row[3] = label;
+        Object.assign(known, info);
+      }
+      // Same store, pins far apart: if the address agrees with the locator, the OSM pin is the
+      // one that's off, so move it.
+      if (known.row && census && !p.from_address && meters(known.at, census) > PIN_CHECK_METERS && meters(locatorAt, census) <= SAME_STORE_METERS) {
+        moved.push(`${b.name}, ${known.row[3] || label}: moved ${(meters(known.at, locatorAt) / 1609.34).toFixed(1)} mi`);
+        known.row[1] = locatorAt[0];
+        known.row[2] = locatorAt[1];
+        known.at = locatorAt;
+      }
+    }
+    if (trust.pin || trust.address) pinChecks[b.key] = trust;
+    // Then the stores the map doesn't have yet.
+    let n = 0;
+    const tally = { pin: 0, address: 0, skipped: 0 };
+    for (const s of fresh) {
+      const { locatorAt, p, census, label, info, far } = s;
+      const shared = copied(s);
+      const at = choosePoint(locatorAt, census, p, { shared, trust });
+      // A store added a moment ago (the locator's own duplicate), or an OSM store moved onto it.
+      if (findKnown(s, shared)) continue;
+      // Left off where no spot can be trusted (a store left off beats a pin in the wrong place):
+      //  - the chain gives only the address (no pin), and the geocoder only guessed where it is or
+      //    put it outside its ZIP code (then more than 1 km off for one Lowe's in eight, against
+      //    one in a hundred otherwise);
+      //  - choosePoint found both the chain's pin and the address doubtful.
+      const why = p.from_address && (addressGuessed(p) || outsideZip(p, 'census_zip_area'))
+        ? 'the chain gives only an address, which the geocoder could only guess'
+        : at === null ? "the chain's pin is outside the store's ZIP code and the geocoder could only guess the address" : '';
+      if (why) {
+        tally.skipped++;
+        if (unplaced.length < 300) unplaced.push(`${b.name}, ${label || p['addr:city'] || ''}: ${why}`);
+        continue;
+      }
+      if (far) tally[at === locatorAt ? 'pin' : 'address']++;
+      osm.push({ at, ...info });
       list.push([i, at[0], at[1], label]);
       n++;
     }
     if (n) added[b.key] = n;
+    if (tally.pin || tally.address || tally.skipped) placed[b.key] = tally;
+    const lc = b.locatorComplete;
+    const all = byKey.get(b.key) ?? [];
+    if (lc && all.length) {
+      if (all.length < lc.minStores) {
+        notes.push(`${b.name}: the chain's store list has only ${all.length} stores this time (expected ${lc.minStores} or more), so no store was taken off as closed.`);
+      } else {
+        const gone = unlistedStores(list, all);
+        if (gone.size) {
+          rows.set(b.key, list.filter((r) => !gone.has(r)));
+          removed[b.key] = gone.size;
+          for (const r of gone) if (unlisted.length < 2000) unlisted.push(`${b.name}, ${r[3] || `${r[1]}, ${r[2]}`}`);
+        }
+      }
+    }
   });
   const stores = [];
   const counts = {};
@@ -499,7 +742,27 @@ export function addFromLocators(built, brands, features) {
     counts[b.key] = list.length;
     stores.push(...list);
   });
-  return { ...built, stores, counts, added, moved, locatorNotListed: skippedNotListed };
+  return { ...built, stores, counts, added, moved, locatorNotListed: skippedNotListed, removed, unlisted, locatorNotes: notes, pinChecks, placed, unplaced };
+}
+
+/**
+ * Mapped stores that a complete store list (every location the chain has) doesn't include, by the
+ * same rules that decide two pins are one store. Only where the list has this chain within
+ * LOCATOR_COVERAGE_METERS, so a list that leaves out, say, Puerto Rico can't empty Puerto Rico.
+ */
+export function unlistedStores(rows, located) {
+  const pts = located.map(({ at, p, census }) => {
+    const point = locatorPoint(at, census);
+    return { at: point, other: point === at ? null : at, info: addressInfo(locatorLabel(p)) };
+  });
+  const near = (a, b, m) => Math.abs(a[0] - b[0]) * 111_000 <= m && meters(a, b) <= m;
+  const gone = new Set();
+  for (const r of rows) {
+    const o = { at: [r[1], r[2]], ...addressInfo(r[3]) };
+    const listed = pts.some((q) => sameStore(o, q.at, q.info) || (q.other && sameStore(o, q.other, q.info)));
+    if (!listed && pts.some((q) => near(q.at, o.at, LOCATOR_COVERAGE_METERS))) gone.add(r);
+  }
+  return gone;
 }
 
 /**
@@ -507,30 +770,63 @@ export function addFromLocators(built, brands, features) {
  * fix can be checked again later:
  *  - "closedIn": a chain that has left a whole area (box = [south, west, north, east]).
  *  - "remove": one store that has closed (any store of that chain within `within` meters).
+ *    With "unlessListed": true it's skipped (and the report says so) once the chain's own store
+ *    list has that store again, so a store that reopens comes back by itself.
  *  - "add": a store confirmed on the chain's own site that neither data source has yet.
+ *  - "move": a store whose pin is in the wrong place (any store of that chain within `within`
+ *    meters of lat/lon goes to `to` = [lat, lon], with `label`). If the chain already has a
+ *    store at `to`, the misplaced one is just taken off.
+ * features: this run's store-locator data (All the Places), for "unlessListed".
  */
-export function applyCorrections(result, brands, corrections) {
+export function applyCorrections(result, brands, corrections, features = null) {
   const index = new Map(brands.map((b, i) => [b.key, i]));
+  // A trial run with only a few chains (--only) leaves out the other chains' fixes.
+  // (test.mjs checks that every fix names a chain in brands.json.)
+  const ours = (list) => (list ?? []).filter((c) => index.has(c.brand));
   const done = [];
   let stores = result.stores;
-  for (const c of corrections?.closedIn ?? []) {
+  const listedAgain = (c) =>
+    (features ?? []).some((f) => {
+      const p = f?.properties ?? {};
+      const xy = f?.geometry?.coordinates;
+      if (p.key !== c.brand || !Array.isArray(xy)) return false;
+      const raw = [xy[1], xy[0]];
+      const census = Array.isArray(p.census) ? [p.census[0], p.census[1]] : null;
+      const info = addressInfo(locatorLabel(p));
+      const o = { at: [c.lat, c.lon], ...addressInfo(c.label) };
+      return sameStore(o, locatorPoint(raw, census), info) || sameStore(o, raw, info);
+    });
+  for (const c of ours(corrections?.closedIn)) {
     const i = index.get(c.brand);
     const [s, w, n, e] = c.box;
     const before = stores.length;
     stores = stores.filter((r) => !(r[0] === i && r[1] >= s && r[1] <= n && r[2] >= w && r[2] <= e));
     if (before !== stores.length) done.push(`${brands[i].name}: ${before - stores.length} removed, ${c.reason}`);
   }
-  for (const c of corrections?.remove ?? []) {
+  for (const c of ours(corrections?.remove)) {
     const i = index.get(c.brand);
+    if (c.unlessListed && listedAgain(c)) {
+      done.push(`${brands[i].name}, ${c.label}: NOT removed, the chain's own store list has it again (check corrections.json)`);
+      continue;
+    }
     const before = stores.length;
     stores = stores.filter((r) => !(r[0] === i && meters([r[1], r[2]], [c.lat, c.lon]) <= (c.within ?? 500)));
     if (before !== stores.length) done.push(`${brands[i].name}, ${c.label}: removed, ${c.reason}`);
   }
-  for (const c of corrections?.add ?? []) {
+  for (const c of ours(corrections?.add)) {
     const i = index.get(c.brand);
     if (stores.some((r) => r[0] === i && meters([r[1], r[2]], [c.lat, c.lon]) <= SAME_STORE_METERS)) continue;
     stores = [...stores, [i, c.lat, c.lon, c.label]];
     done.push(`${brands[i].name}, ${c.label}: added`);
+  }
+  for (const c of ours(corrections?.move)) {
+    const i = index.get(c.brand);
+    const wrong = (r) => r[0] === i && meters([r[1], r[2]], [c.lat, c.lon]) <= (c.within ?? 300);
+    if (!stores.some(wrong)) continue;
+    const there = stores.some((r) => r[0] === i && !wrong(r) && meters([r[1], r[2]], c.to) <= SAME_STORE_METERS);
+    stores = stores.filter((r) => !wrong(r));
+    if (!there) stores = [...stores, [i, c.to[0], c.to[1], c.label]];
+    done.push(`${brands[i].name}, ${c.label}: ${there ? 'misplaced duplicate removed' : 'moved'}, ${c.reason}`);
   }
   stores = [...stores].sort((x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2]);
   const counts = {};
@@ -583,6 +879,129 @@ export function guardAgainstDrops(result, brands, previous, failed = new Set(), 
     }
   });
   return { stores, counts, skipped: result.skipped, warnings };
+}
+
+// ---------------------------------------------------------------------------
+// Local shops (not chains): hand-checked on each business's own website
+// ---------------------------------------------------------------------------
+
+/**
+ * The app's deal categories (the narrower ones from the app's scripts/categories.json), so local
+ * shops filter the same way, plus Personal Care for barbers, salons and tattoo shops.
+ */
+export const LOCAL_CATEGORIES = [
+  'Auto', 'Baby and Kids', 'Child Care and Family', 'Clothing and Shoes', 'Electronics', 'Entertainment',
+  'Food and Restaurants', 'Health', 'Home', 'Jewelry and Watches', 'Moving and Storage', 'Outdoors and Fitness',
+  'Personal Care', 'Pets', 'Phone and Internet', 'Retail', 'Sports and Event Tickets', 'Theme Parks and Attractions', 'Travel',
+];
+/**
+ * Google Play doesn't allow apps that help sell firearms or ammunition, so a local shop about them
+ * never goes on the map. Same words as the app's RESTRICTED_WORDS (src/lib/deals.ts).
+ */
+export const RESTRICTED_WORDS = /\b(fire ?arms?|ammo|ammunition|guns?|handguns?|rifles?|pistols?|shotguns?)\b/i;
+const RESTRICTED_ALLOWED = /\bBlack Rifle Coffee\b/gi;
+export function mentionsWeapons(text) {
+  return RESTRICTED_WORDS.test(String(text ?? '').replace(RESTRICTED_ALLOWED, ''));
+}
+/** OpenStreetMap tags of gun shops and shooting ranges. */
+function weaponsPlace(tags) {
+  return (
+    /^(weapons|guns|gunsmith|hunting)$/.test(tags.shop ?? '') ||
+    tags.craft === 'gunsmith' ||
+    /shooting|clay_pigeon/.test(tags.sport ?? '') ||
+    tags.leisure === 'shooting_ground' ||
+    mentionsWeapons(tags.name)
+  );
+}
+/** A shop whose offer page hasn't shown the offer this many monthly checks in a row leaves the map. */
+const LOCAL_MAX_MISSES = 2;
+
+export function loadLocalShops(raw) {
+  const list = raw?.shops;
+  if (!Array.isArray(list)) throw new Error('shops.json has no shops');
+  const ids = new Set();
+  return list.map((s, i) => {
+    const where = `shops[${i}] (${s?.name})`;
+    const str = (v, max) => typeof v === 'string' && v.trim().length > 0 && v.length <= max;
+    if (!s || typeof s.osm !== 'string' || !/^[nwr]\d+$/.test(s.osm)) throw new Error(`${where}: bad osm id`);
+    if (ids.has(s.osm)) throw new Error(`${where}: listed twice`);
+    ids.add(s.osm);
+    if (!str(s.name, 80) || !str(s.offer, 170) || !str(s.quote, 300) || !str(s.label, 100)) throw new Error(`${where}: name, offer, quote and label are required`);
+    if (!LOCAL_CATEGORIES.includes(s.category)) throw new Error(`${where}: unknown category ${s.category}`);
+    if (mentionsWeapons(s.name) || mentionsWeapons(s.offer) || mentionsWeapons(s.quote)) throw new Error(`${where}: firearms wording (not allowed on Google Play)`);
+    if (typeof s.source !== 'string' || !/^https:\/\/[^\s/]+\.[^\s/]+/.test(s.source) || s.source.length > 300) throw new Error(`${where}: source must be an https link`);
+    if (typeof s.checked !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s.checked)) throw new Error(`${where}: bad checked date`);
+    if (!coordsOf({ type: 'node', lat: s.lat, lon: s.lon })) throw new Error(`${where}: position outside the U.S. areas`);
+    return { ...s, name: s.name.trim() };
+  });
+}
+
+/** Overpass query for the shops' current OSM entries, by ID. */
+export function localQuery(shops) {
+  const ids = (t) => shops.filter((s) => s.osm[0] === t).map((s) => s.osm.slice(1));
+  const part = (t, name) => (ids(t).length ? `  ${name}(id:${ids(t).join(',')});\n` : '');
+  return `[out:json][timeout:180];\n(\n${part('n', 'node')}${part('w', 'way')}${part('r', 'relation')});\nout center tags;`;
+}
+
+const NAME_STOP = new Set(['the', 'and', 'shop', 'store', 'cafe', 'restaurant', 'grill', 'company', 'hawaii', 'center', 'centre', 'studio']);
+function nameWords(n) {
+  return new Set(
+    String(n ?? '')
+      .normalize('NFKD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 4 && !NAME_STOP.has(w)),
+  );
+}
+
+/**
+ * Published rows for the local shops: [lat, lon, name, label, category, offer, source, checked].
+ * elements: this run's OSM entries for them (null if that download failed: the saved positions
+ * are used). status: data/local-shops-status.json from the monthly offer check.
+ */
+export function localRows(shops, elements, status) {
+  const byId = new Map();
+  for (const el of elements ?? []) byId.set(`${el.type?.[0]}${el.id}`, el);
+  const rows = [];
+  const dropped = [];
+  for (const s of shops) {
+    const misses = status?.shops?.[s.osm]?.misses ?? 0;
+    if (misses >= LOCAL_MAX_MISSES) {
+      dropped.push(`${s.name}, ${s.label}: the offer is no longer on its website (${misses} monthly checks)`);
+      continue;
+    }
+    let at = [s.lat, s.lon];
+    if (elements) {
+      const el = byId.get(s.osm);
+      if (!el) {
+        dropped.push(`${s.name}, ${s.label}: no longer on OpenStreetMap`);
+        continue;
+      }
+      if (isClosed(el.tags ?? {})) {
+        dropped.push(`${s.name}, ${s.label}: marked closed on OpenStreetMap`);
+        continue;
+      }
+      if (weaponsPlace(el.tags ?? {})) {
+        dropped.push(`${s.name}, ${s.label}: OpenStreetMap lists it as a gun shop or shooting range (not allowed on Google Play)`);
+        continue;
+      }
+      const mine = nameWords(s.name);
+      const theirs = nameWords(el.tags?.name);
+      if (mine.size && ![...mine].some((w) => theirs.has(w))) {
+        dropped.push(`${s.name}, ${s.label}: OpenStreetMap now has "${el.tags?.name ?? 'no name'}" there`);
+        continue;
+      }
+      at = coordsOf(el) ?? at;
+    }
+    // The date shown in the app: the last time the offer was seen on the shop's page (the monthly
+    // recheck), or the date it was first checked by hand, whichever is later.
+    const seen = status?.shops?.[s.osm]?.seen;
+    const checked = typeof seen === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(seen) && seen > s.checked ? seen : s.checked;
+    rows.push([at[0], at[1], s.name, s.label, s.category, s.offer, s.source, checked]);
+  }
+  rows.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  return { rows, dropped };
 }
 
 /** Business name reduced for comparing ("The Home Depot" = "Home Depot", "&" = "and"). Same rule as the app. */
@@ -796,10 +1215,12 @@ async function main() {
     for (const k of failed) delete built.added[k]; // those were replaced by last month's list
     const again = addFromLocators(result, brands, atp.features);
     for (const [k, n] of Object.entries(again.added)) built.added[k] = (built.added[k] ?? 0) + n;
+    for (const [k, n] of Object.entries(again.removed)) built.removed[k] = (built.removed[k] ?? 0) + n;
+    built.unlisted.push(...again.unlisted);
     result = { ...result, stores: again.stores, counts: again.counts };
   }
   // Hand-checked fixes (closed stores, stores neither source has yet).
-  if (existsSync(CORRECTIONS)) result = applyCorrections(result, brands, JSON.parse(readFileSync(CORRECTIONS, 'utf8')));
+  if (existsSync(CORRECTIONS)) result = applyCorrections(result, brands, JSON.parse(readFileSync(CORRECTIONS, 'utf8')), atp?.features);
   // (A previous date far older than that list itself came from a stale server copy, whose chains
   // are being filled in now, so it's not carried over.)
   const prevDateOk =
@@ -811,6 +1232,23 @@ async function main() {
   // in the site's current deal list (data/deals.json) instead of trusting brands.json.
   const dealIds = currentDealIds(brands, result.warnings);
 
+  // Local shops: their current OSM entries (by ID) and last month's offer check.
+  let local = { rows: previous?.local ?? [], dropped: [] };
+  const shops = existsSync(LOCAL_SHOPS) ? loadLocalShops(JSON.parse(readFileSync(LOCAL_SHOPS, 'utf8'))) : [];
+  if (shops.length && !(fill && previous?.local)) {
+    const status = existsSync(LOCAL_STATUS) ? JSON.parse(readFileSync(LOCAL_STATUS, 'utf8')) : null;
+    let elements = null;
+    if (!input) {
+      try {
+        elements = (await overpass(localQuery(shops))).json.elements;
+        log(`Local shops: ${elements.length} of ${shops.length} found on OpenStreetMap`);
+      } catch (e) {
+        log(`Local shops: OpenStreetMap download failed (${e.message}); using their saved positions.`);
+      }
+    }
+    local = localRows(shops, elements, status);
+  }
+
   const file = {
     schema: 1,
     // A fill-in run doesn't make the whole list new, so it keeps the date of the last full run.
@@ -819,9 +1257,11 @@ async function main() {
     license: 'ODbL-1.0',
     attribution: '© OpenStreetMap contributors',
     notice:
-      'Store locations from OpenStreetMap (openstreetmap.org/copyright), available under the Open Database License (opendatacommons.org/licenses/odbl/1-0/), with stores missing from OpenStreetMap added from the chains\' own store locators as collected by All the Places (alltheplaces.xyz, CC0). Locations can be missing, closed or out of date.',
+      'Store locations from OpenStreetMap (openstreetmap.org/copyright), available under the Open Database License (opendatacommons.org/licenses/odbl/1-0/), with stores missing from OpenStreetMap added from the chains\' own store locators as collected by All the Places (alltheplaces.xyz, CC0). Local shops\' offers were read on each business\'s own website on the date shown. Locations can be missing, closed or out of date.',
     brands: brands.map((b) => ({ key: b.key, name: b.name, deals: dealIds.get(b.key) ?? b.deals, participating: b.participating })),
     stores: result.stores,
+    // Local businesses (not chains): [lat, lon, name, address, category, offer, source page, date checked].
+    local: local.rows,
   };
 
   const lines = [
@@ -830,13 +1270,43 @@ async function main() {
     `${fill ? 'Fill-in run. ' : ''}OSM data as of ${osmDate ?? 'unknown'}. ${result.stores.length} stores from ${brands.length} chains.${failed.size ? ` Still missing (tried again daily): ${brands.filter((b) => failed.has(b.key)).map((b) => b.name).join(', ')}.` : ''}`,
     `Skipped: ${result.skipped.closed} closed, ${result.skipped.duplicate} duplicates, ${result.skipped.noCoords} without a usable position, ${result.skipped.noBrand} other matches, ${result.skipped.notListed ?? 0} not on a participating-locations list.`,
     ``,
-    `| Chain | Stores | Added from the chain's store locator |`,
-    `| --- | ---: | ---: |`,
-    ...brands.map((b) => `| ${b.name} | ${result.counts[b.key] ?? 0} | ${built.added?.[b.key] ?? (atp ? 0 : '–')} |`),
+    `| Chain | Stores | Added from the chain's store locator | Taken off: not on the chain's complete list |`,
+    `| --- | ---: | ---: | ---: |`,
+    ...brands.map(
+      (b) =>
+        `| ${b.name} | ${result.counts[b.key] ?? 0} | ${built.added?.[b.key] ?? (atp ? 0 : '–')} | ${b.locatorComplete ? (built.removed?.[b.key] ?? 0) : '–'} |`,
+    ),
   ];
-  if (result.warnings.length) lines.push('', '### Check these', '', ...result.warnings.map((w) => `- ${w}`));
+  const lcNotes = built.locatorNotes ?? [];
+  if (result.warnings.length || lcNotes.length) lines.push('', '### Check these', '', ...[...result.warnings, ...lcNotes].map((w) => `- ${w}`));
   if (result.corrected?.length) lines.push('', '### Hand-checked corrections', '', ...result.corrected.map((m) => `- ${m}`));
+  lines.push('', `### Local shops: ${local.rows.length} on the map`);
+  if (local.dropped.length) lines.push('', 'Left off this time:', '', ...local.dropped.map((m) => `- ${m}`));
   if (built.moved?.length) lines.push('', `### Pins moved to the store's street address (${built.moved.length})`, '', ...built.moved.map((m) => `- ${m}`));
+  const placedKeys = brands.map((b) => b.key).filter((k) => built.placed?.[k] || built.pinChecks?.[k]);
+  if (placedKeys.length) {
+    const nameOf = new Map(brands.map((b) => [b.key, b.name]));
+    lines.push(
+      '',
+      `### Chain's pin or street address? (stores where the two are more than ${PIN_CHECK_METERS / 1000} km apart)`,
+      '',
+      "Stores on both maps show which one is right for each chain; new stores go where the evidence points (choosePoint in build.mjs).",
+      '',
+      "| Chain | Both maps: the pin was right | Both maps: the address was right | New stores put at the chain's pin | New stores put at the address | New stores left off: no spot could be trusted |",
+      '| --- | ---: | ---: | ---: | ---: | ---: |',
+      ...placedKeys.map((k) => {
+        const t = built.pinChecks?.[k] ?? { pin: 0, address: 0 };
+        const q = built.placed?.[k] ?? { pin: 0, address: 0, skipped: 0 };
+        return `| ${nameOf.get(k)} | ${t.pin} | ${t.address} | ${q.pin} | ${q.address} | ${q.skipped} |`;
+      }),
+    );
+  }
+  if (built.unplaced?.length) lines.push('', `### New stores left off: no spot could be trusted (${built.unplaced.length})`, '', ...built.unplaced.map((m) => `- ${m}`));
+  if (built.unlisted?.length) {
+    const n = Object.values(built.removed ?? {}).reduce((a, x) => a + x, 0);
+    lines.push('', `### Taken off as closed: on the map, but not on the chain's own complete store list (${n})`, '', ...built.unlisted.slice(0, 400).map((m) => `- ${m}`));
+    if (built.unlisted.length > 400) lines.push(`- …and ${n - 400} more`);
+  }
   if (raw.elements.length && notListed.length) {
     lines.push('', '### Left off: not on a participating-locations list', '', ...notListed.sort().map((n) => `- ${n}`));
   }

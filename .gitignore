@@ -10,4 +10,6 @@
 .DS_Store
 Thumbs.db
 desktop.ini
+# Python caches
 __pycache__/
+*.pyc
