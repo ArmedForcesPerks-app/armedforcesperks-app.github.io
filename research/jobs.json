@@ -1,1 +1,1 @@
-{ "batch": "b4", "run": 1, "jobs": ["atp_history", "pages:pages_islands.json"] }
+{ "batch": "b5", "run": 1, "jobs": ["pin_check"] }
