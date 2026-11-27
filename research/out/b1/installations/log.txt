@@ -1,0 +1,11 @@
+== installations () started 2026-11-27T02:45:04Z
+TIGER 2025 2848 KB [('tiger2025_tl_2025_us_mil.geojson', 706, ['AREAID', 'FULLNAME', 'MTFCC', 'ALAND', 'AWATER', 'INTPTLAT', 'INTPTLON'])]
+page failed https://www.acq.osd.mil/eie/imr/rpid/disdi/index.html <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)>
+page failed https://www.acq.osd.mil/eie/imr/rpid/disdi/Downloads.html <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1011)>
+Wikidata military_base 1247
+Wikidata air_base 607
+Wikidata military_facility 3081
+Wikidata naval_base 55
+Wikidata army_post 1059
+Wikidata coast_guard_station 0
+== installations finished 2026-11-27T02:45:38Z
