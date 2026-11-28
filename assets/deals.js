@@ -478,6 +478,9 @@ function syncControls() {
   }
   els.free.checked = filters.freeOnly;
   els.vetFree.classList.toggle('on', vetFreeOn());
+  // Screen readers hear that the "Free for veterans" shortcut is the view being shown.
+  if (vetFreeOn()) els.vetFree.setAttribute('aria-current', 'true');
+  else els.vetFree.removeAttribute('aria-current');
   els.cat.value = filters.category || '';
   els.confirmed.disabled = !filters.statuses.length;
   els.confirmed.checked = filters.confirmedOnly;
